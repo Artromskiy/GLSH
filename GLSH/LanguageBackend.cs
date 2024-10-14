@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
@@ -360,9 +361,9 @@ public abstract class LanguageBackend
         return CorrectIdentifier(mapped);
     }
 
-    protected bool TryDiscoverStructure(string setName, string name, out StructureDefinition sd)
+    protected bool TryDiscoverStructure(string setName, string name,[NotNullWhen(true)] out StructureDefinition? sd)
     {
-        INamedTypeSymbol type = Compilation.GetTypeByMetadataName(name);
+        INamedTypeSymbol? type = Compilation.GetTypeByMetadataName(name);
         if (type == null || type.OriginalDefinition.DeclaringSyntaxReferences.Length == 0)
         {
             sd = null;

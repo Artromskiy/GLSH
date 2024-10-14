@@ -1,7 +1,6 @@
+using Microsoft.CodeAnalysis;
 using System.Diagnostics;
 using System.Text;
-using GLSH;
-using Microsoft.CodeAnalysis;
 
 namespace GLSH.Glsl;
 
@@ -128,7 +127,7 @@ public class Glsl450Backend : GlslBackendBase
     {
         string qualifier = isInVar ? "in" : "out";
         string identifier;
-        if (isVertexStage && isInVar || !isVertexStage && !isInVar)
+        if ((isVertexStage && isInVar) || (!isVertexStage && !isInVar))
         {
             identifier = normalizedIdentifier;
         }

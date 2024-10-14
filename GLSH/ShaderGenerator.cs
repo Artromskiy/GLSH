@@ -8,7 +8,7 @@ namespace GLSH;
 public partial class ShaderGenerator
 {
     private readonly Compilation _compilation;
-    private readonly IReadOnlyList<ShaderSetInfo> _shaderSets = new List<ShaderSetInfo>();
+    private readonly IReadOnlyList<ShaderSetInfo> _shaderSets = [];
     private readonly IReadOnlyList<LanguageBackend> _languages;
     private readonly IShaderSetProcessor[] _processors;
 
@@ -22,7 +22,7 @@ public partial class ShaderGenerator
         Compilation compilation,
         LanguageBackend language,
         params IShaderSetProcessor[] processors)
-        : this(compilation, new[] { language }, null, null, null, processors) { }
+        : this(compilation, [language], null, null, null, processors) { }
 
     public ShaderGenerator(
         Compilation compilation,
@@ -31,7 +31,7 @@ public partial class ShaderGenerator
         string fragmentFunctionName = null,
         string computeFunctionName = null,
         params IShaderSetProcessor[] processors)
-    : this(compilation, new[] { language }, vertexFunctionName, fragmentFunctionName, computeFunctionName, processors) { }
+    : this(compilation, [language], vertexFunctionName, fragmentFunctionName, computeFunctionName, processors) { }
 
     public ShaderGenerator(
         Compilation compilation,
@@ -115,7 +115,7 @@ public partial class ShaderGenerator
             shaderSets.Add(new ShaderSetInfo(setName, vertex, fragment));
         }
 
-        TypeAndMethodName compute = null;
+        TypeAndMethodName? compute = null;
         if (!string.IsNullOrWhiteSpace(computeFunctionName)
             && !TypeAndMethodName.Get(computeFunctionName, out compute))
         {
@@ -133,7 +133,7 @@ public partial class ShaderGenerator
 
     public ShaderGenerationResult GenerateShaders()
     {
-        ShaderGenerationResult result = new ShaderGenerationResult();
+        ShaderGenerationResult result = new();
         foreach (ShaderSetInfo ss in _shaderSets)
         {
             GenerateShaders(ss, result);
@@ -145,7 +145,7 @@ public partial class ShaderGenerator
             // Kind of a hack, but the relevant info should be the same.
             foreach (GeneratedShaderSet gss in result.GetOutput(_languages.First()))
             {
-                ShaderSetProcessorInput input = new ShaderSetProcessorInput(
+                ShaderSetProcessorInput input = new(
                     gss.Name,
                     gss.VertexFunction,
                     gss.FragmentFunction,
@@ -163,7 +163,7 @@ public partial class ShaderGenerator
         TypeAndMethodName fragmentFunctionName = ss.FragmentShader;
         TypeAndMethodName computeFunctionName = ss.ComputeShader;
 
-        HashSet<SyntaxTree> treesToVisit = new HashSet<SyntaxTree>();
+        HashSet<SyntaxTree> treesToVisit = [];
         if (vertexFunctionName != null)
         {
             GetTrees(treesToVisit, vertexFunctionName.TypeName);
@@ -191,13 +191,13 @@ public partial class ShaderGenerator
         foreach (LanguageBackend language in _languages)
         {
             ShaderModel model = language.GetShaderModel(ss.Name);
-            ShaderFunction vsFunc = ss.VertexShader != null
+            ShaderFunction? vsFunc = ss.VertexShader != null
                 ? model.GetFunction(ss.VertexShader.FullName)
                 : null;
-            ShaderFunction fsFunc = ss.FragmentShader != null
+            ShaderFunction? fsFunc = ss.FragmentShader != null
                 ? model.GetFunction(ss.FragmentShader.FullName)
                 : null;
-            ShaderFunction csFunc = ss.ComputeShader != null
+            ShaderFunction? csFunc = ss.ComputeShader != null
                 ? model.GetFunction(ss.ComputeShader.FullName)
                 : null;
             string vsCode = null;

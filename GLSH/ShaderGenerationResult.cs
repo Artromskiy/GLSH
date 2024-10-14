@@ -5,8 +5,7 @@ namespace GLSH;
 
 public class ShaderGenerationResult
 {
-    private readonly Dictionary<LanguageBackend, List<GeneratedShaderSet>> _generatedShaders
-        = new Dictionary<LanguageBackend, List<GeneratedShaderSet>>();
+    private readonly Dictionary<LanguageBackend, List<GeneratedShaderSet>> _generatedShaders = [];
 
     public IReadOnlyList<GeneratedShaderSet> GetOutput(LanguageBackend backend)
     {
@@ -15,7 +14,7 @@ public class ShaderGenerationResult
             return Array.Empty<GeneratedShaderSet>();
         }
 
-        if (!_generatedShaders.TryGetValue(backend, out List<GeneratedShaderSet> list))
+        if (!_generatedShaders.TryGetValue(backend, out var list))
         {
             throw new InvalidOperationException($"The backend {backend} was not used to generate shaders for this object.");
         }
@@ -25,9 +24,9 @@ public class ShaderGenerationResult
 
     internal void AddShaderSet(LanguageBackend backend, GeneratedShaderSet gss)
     {
-        if (!_generatedShaders.TryGetValue(backend, out List<GeneratedShaderSet> list))
+        if (!_generatedShaders.TryGetValue(backend, out var list))
         {
-            list = new List<GeneratedShaderSet>();
+            list = [];
             _generatedShaders.Add(backend, list);
         }
 

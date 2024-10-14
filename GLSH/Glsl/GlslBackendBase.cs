@@ -52,7 +52,7 @@ public abstract class GlslBackendBase : LanguageBackend
         BackendContext context = GetContext(setName);
         StringBuilder sb = new StringBuilder();
 
-        ShaderFunctionAndMethodDeclarationSyntax entryPoint = context.Functions.SingleOrDefault(
+        ShaderFunctionAndMethodDeclarationSyntax? entryPoint = context.Functions.SingleOrDefault(
             sfabs => sfabs.Function.Name == function.Name);
         if (entryPoint == null)
         {
