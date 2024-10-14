@@ -1,4 +1,4 @@
-﻿namespace GLSH;
+namespace GLSH;
 
 public interface IShaderSetProcessor
 {

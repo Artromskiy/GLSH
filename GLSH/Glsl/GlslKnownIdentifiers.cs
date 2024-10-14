@@ -1,4 +1,4 @@
-﻿using GLSH.Primitives;
+using GLSH.Primitives;
 using System.Collections.Generic;
 using System.Numerics;
 

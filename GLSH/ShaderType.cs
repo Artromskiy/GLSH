@@ -1,4 +1,4 @@
-﻿namespace GLSH;
+namespace GLSH;
 
 public enum ShaderFunctionType
 {

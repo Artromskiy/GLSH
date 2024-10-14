@@ -1,4 +1,4 @@
-﻿namespace GLSH;
+namespace GLSH;
 
 /// <summary>
 /// Represents the concrete output of a shader generation for a specific shader set,
