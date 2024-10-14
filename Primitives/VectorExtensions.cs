@@ -1,6 +1,4 @@
-﻿using Primitives;
-using ShaderGen;
-using System.Numerics;
+﻿using System.Numerics;
 
 namespace GLSH.Primitives;
 

@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using ShaderGen;
 using System.Collections.Generic;
 
 namespace GLSH;

@@ -298,12 +298,12 @@ internal class ShaderSyntaxWalker : CSharpSyntaxWalker
     private void ValidateUniformType(TypeInfo typeInfo)
     {
         string name = typeInfo.Type.ToDisplayString();
-        if (name != nameof(ShaderGen) + "." + nameof(Texture2DResource)
-            && name != nameof(ShaderGen) + "." + nameof(Texture2DArrayResource)
-            && name != nameof(ShaderGen) + "." + nameof(TextureCubeResource)
-            && name != nameof(ShaderGen) + "." + nameof(Texture2DMSResource)
-            && name != nameof(ShaderGen) + "." + nameof(SamplerResource)
-            && name != nameof(ShaderGen) + "." + nameof(SamplerComparisonResource))
+        if (name != nameof(GLSH) + "." + nameof(Texture2DResource)
+            && name != nameof(GLSH) + "." + nameof(Texture2DArrayResource)
+            && name != nameof(GLSH) + "." + nameof(TextureCubeResource)
+            && name != nameof(GLSH) + "." + nameof(Texture2DMSResource)
+            && name != nameof(GLSH) + "." + nameof(SamplerResource)
+            && name != nameof(GLSH) + "." + nameof(SamplerComparisonResource))
         {
             if (typeInfo.Type.IsReferenceType)
             {
