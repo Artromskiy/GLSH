@@ -1,9 +1,11 @@
 using Microsoft.CodeAnalysis;
 using System;
+using GLSH.Primitives;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 
 namespace GLSH;
 
@@ -11,30 +13,30 @@ public static class TypeSizeCache
 {
     private static readonly IReadOnlyDictionary<string, int> s_knownSizes = new Dictionary<string, int>()
     {
-        { "System.Byte", 1 },
-        { "System.SByte", 1 },
-        { "System.UIn16", 2 },
-        { "System.Int16", 2 },
-        { "System.UInt32", 4 },
-        { "System.Int32", 4 },
-        { "System.UInt64", 8 },
-        { "System.Int64", 8 },
-        { "System.Single", 4 },
-        { "System.Double", 8 },
+        { typeof(Byte).FullName!, 1 },
+        { typeof(SByte).FullName!, 1 },
+        { typeof(UInt16).FullName!, 2 },
+        { typeof(Int16).FullName!, 2 },
+        { typeof(UInt32).FullName!, 4 },
+        { typeof(Int32).FullName!, 4 },
+        { typeof(UInt64).FullName!, 8 },
+        { typeof(Int64).FullName!, 8 },
+        { typeof(Single).FullName!, 4 },
+        { typeof(Double).FullName!, 8 },
     };
 
     private static readonly IReadOnlyDictionary<string, int> s_shaderAlignments = new Dictionary<string, int>()
     {
-        { "System.Numerics.Vector2", 8 },
-        { "System.Numerics.Vector3", 16 },
-        { "System.Numerics.Vector4", 16 },
-        { "System.Numerics.Matrix4x4", 16 },
-        { "ShaderGen.UInt2", 8 },
-        { "ShaderGen.UInt3", 16 },
-        { "ShaderGen.UInt4", 16 },
-        { "ShaderGen.Int2", 8 },
-        { "ShaderGen.Int3", 16 },
-        { "ShaderGen.Int4", 16 },
+        { typeof(Vector2).FullName!, 8 },
+        { typeof(Vector3).FullName!, 16 },
+        { typeof(Vector4).FullName!, 16 },
+        { typeof(Matrix4x4).FullName!, 16 },
+        { typeof(UInt2).FullName!, 8 },
+        { typeof(UInt3).FullName!, 16 },
+        { typeof(UInt4).FullName!, 16 },
+        { typeof(Int2).FullName!, 8 },
+        { typeof(Int3).FullName!, 16 },
+        { typeof(Int4).FullName!, 16 },
     };
 
     private static readonly ConcurrentDictionary<ITypeSymbol, AlignmentInfo> s_cachedSizes = new();

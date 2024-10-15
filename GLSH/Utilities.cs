@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 
 namespace GLSH;
@@ -171,10 +172,10 @@ internal static class Utilities
 
     private static readonly HashSet<string> s_basicNumericTypes =
     [
-        "System.Numerics.Vector2",
-        "System.Numerics.Vector3",
-        "System.Numerics.Vector4",
-        "System.Numerics.Matrix4x4",
+        typeof(Vector2).FullName!,
+        typeof(Vector3).FullName!,
+        typeof(Vector4).FullName!,
+        typeof(Matrix4x4).FullName!,
     ];
 
     public static bool IsBasicNumericType(string fullName)

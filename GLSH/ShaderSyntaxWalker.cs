@@ -321,51 +321,55 @@ internal class ShaderSyntaxWalker : CSharpSyntaxWalker
 
     private static ShaderResourceKind ClassifyResourceKind(string fullTypeName)
     {
-        if (fullTypeName == "ShaderGen.Texture2DResource")
+        if (fullTypeName == typeof(Texture2DResource).FullName!)
         {
             return ShaderResourceKind.Texture2D;
         }
-        if (fullTypeName == "ShaderGen.Texture2DArrayResource")
+        if (fullTypeName == typeof(Texture2DArrayResource).FullName!)
         {
             return ShaderResourceKind.Texture2DArray;
         }
-        else if (fullTypeName == "ShaderGen.TextureCubeResource")
+        else if (fullTypeName == typeof(TextureCubeResource).FullName!)
         {
             return ShaderResourceKind.TextureCube;
         }
-        else if (fullTypeName == "ShaderGen.Texture2DMSResource")
+        else if (fullTypeName == typeof(Texture2DMSResource).FullName!)
         {
             return ShaderResourceKind.Texture2DMS;
         }
-        else if (fullTypeName == "ShaderGen.SamplerResource")
+        else if (fullTypeName == typeof(SamplerResource).FullName!)
         {
             return ShaderResourceKind.Sampler;
         }
-        else if (fullTypeName == "ShaderGen.SamplerComparisonResource")
+        else if (fullTypeName == typeof(SamplerComparisonResource).FullName!)
         {
             return ShaderResourceKind.SamplerComparison;
         }
-        else if (fullTypeName.Contains("ShaderGen.RWStructuredBuffer"))
+        else if (fullTypeName.Contains(typeof(RWStructuredBuffer<>).FullName!))
         {
             return ShaderResourceKind.RWStructuredBuffer;
         }
-        else if (fullTypeName.Contains("ShaderGen.StructuredBuffer"))
+        else if (fullTypeName.Contains(typeof(StructuredBuffer<>).FullName!))
         {
             return ShaderResourceKind.StructuredBuffer;
         }
-        else if (fullTypeName.Contains("ShaderGen.RWTexture2DResource"))
+        else if (fullTypeName.Contains(typeof(RWTexture2DResource<>).FullName!))
         {
             return ShaderResourceKind.RWTexture2D;
         }
-        else if (fullTypeName.Contains("ShaderGen.DepthTexture2DResource"))
+        else if (fullTypeName.Contains(typeof(DepthTexture2DResource).FullName!))
         {
             return ShaderResourceKind.DepthTexture2D;
         }
-        else if (fullTypeName.Contains("ShaderGen.DepthTexture2DArrayResource"))
+        else if (fullTypeName.Contains(typeof(DepthTexture2DArrayResource).FullName!))
         {
             return ShaderResourceKind.DepthTexture2DArray;
         }
-        else if (fullTypeName.Contains("ShaderGen.AtomicBuffer"))
+        else if (fullTypeName.Contains(typeof(AtomicBufferInt32).FullName!))
+        {
+            return ShaderResourceKind.AtomicBuffer;
+        }
+        else if (fullTypeName.Contains(typeof(AtomicBufferUInt32).FullName!))
         {
             return ShaderResourceKind.AtomicBuffer;
         }

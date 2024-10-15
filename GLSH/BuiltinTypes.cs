@@ -1,16 +1,17 @@
 using System.Collections.Generic;
-
+using System;
+using System.Numerics;
 namespace GLSH;
 
 public static class BuiltinTypes
 {
     private static readonly HashSet<string> s_builtins =
     [
-        "System.Single",
-        "System.Numerics.Vector2",
-        "System.Numerics.Vector3",
-        "System.Numerics.Vector4",
-        "System.Numerics.Matrix4x4",
+        typeof(Single).FullName!,
+        typeof(Vector2).FullName!,
+        typeof(Vector3).FullName!,
+        typeof(Vector4).FullName!,
+        typeof(Matrix4x4).FullName!,
     ];
 
     public static bool IsBuiltinType(string fullTypeName)

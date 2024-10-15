@@ -1,35 +1,35 @@
 using System.Collections.Generic;
-
+using GLSH.Primitives;
+using System;
+using System.Numerics;
 namespace GLSH;
 
 internal static class ShaderPrimitiveTypes
 {
     private static readonly HashSet<string> s_primitiveTypes =
     [
-        "float",
-        "System.Single",
-        "int",
-        "System.Boolean",
-        "System.UInt32",
-        "System.Int32",
-        "System.Numerics.Vector2",
-        "System.Numerics.Vector3",
-        "System.Numerics.Vector4",
-        "System.Numerics.Matrix4x4",
-        "ShaderGen.UInt2",
-        "ShaderGen.UInt3",
-        "ShaderGen.UInt4",
-        "ShaderGen.Int2",
-        "ShaderGen.Int3",
-        "ShaderGen.Int4",
-        "ShaderGen.Byte2",
-        "ShaderGen.Byte4",
-        "ShaderGen.SByte2",
-        "ShaderGen.SByte4",
-        "ShaderGen.UShort2",
-        "ShaderGen.UShort4",
-        "ShaderGen.Short2",
-        "ShaderGen.Short4",
+        typeof(Single).FullName!,
+        typeof(Boolean).FullName!,
+        typeof(UInt32).FullName!,
+        typeof(Int32).FullName!,
+        typeof(Vector2).FullName!,
+        typeof(Vector3).FullName!,
+        typeof(Vector4).FullName!,
+        typeof(Matrix4x4).FullName!,
+        typeof(UInt2).FullName!,
+        typeof(UInt3).FullName!,
+        typeof(UInt4).FullName!,
+        typeof(Int2).FullName!,
+        typeof(Int3).FullName!,
+        typeof(Int4).FullName!,
+        // typeof(Byte2).FullName!,
+        // typeof(Byte4).FullName!,
+        // typeof(SByte2).FullName!,
+        // typeof(SByte4).FullName!,
+        // typeof(UShort2).FullName!,
+        // typeof(UShort4).FullName!,
+        // typeof(Short2).FullName!,
+        // typeof(Short4).FullName!,
     ];
 
     public static bool IsPrimitiveType(string name)

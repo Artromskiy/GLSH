@@ -1,4 +1,6 @@
 using System;
+using GLSH.Primitives;
+using System.Numerics;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -84,25 +86,25 @@ public class ShaderModel
 
     private static readonly Dictionary<string, int> s_knownTypeSizes = new()
     {
-        { "System.Byte", 1 },
-        { "System.SByte", 1 },
-        { "System.UIn16", 2 },
-        { "System.Int16", 2 },
-        { "System.UInt32", 4 },
-        { "System.Int32", 4 },
-        { "System.UInt64", 8 },
-        { "System.Int64", 8 },
-        { "System.Single", 4 },
-        { "System.Double", 8 },
-        { "System.Numerics.Vector2", 8 },
-        { "System.Numerics.Vector3", 12 },
-        { "System.Numerics.Vector4", 16 },
-        { "System.Numerics.Matrix4x4", 64 },
-        { "ShaderGen.UInt2", 8 },
-        { "ShaderGen.UInt3", 12 },
-        { "ShaderGen.UInt4", 16 },
-        { "ShaderGen.Int2", 8 },
-        { "ShaderGen.Int3", 12 },
-        { "ShaderGen.Int4", 16 },
+        { typeof(Byte).FullName!, 1 },
+        { typeof(SByte).FullName!, 1 },
+        { typeof(UInt16).FullName!, 2 },
+        { typeof(Int16).FullName!, 2 },
+        { typeof(UInt32).FullName!, 4 },
+        { typeof(Int32).FullName!, 4 },
+        { typeof(UInt64).FullName!, 8 },
+        { typeof(Int64).FullName!, 8 },
+        { typeof(Single).FullName!, 4 },
+        { typeof(Double).FullName!, 8 },
+        { typeof(Vector2).FullName!, 8 },
+        { typeof(Vector3).FullName!, 12 },
+        { typeof(Vector4).FullName!, 16 },
+        { typeof(Matrix4x4).FullName!, 64 },
+        { typeof(UInt2).FullName!, 8 },
+        { typeof(UInt3).FullName!, 12 },
+        { typeof(UInt4).FullName!, 16 },
+        { typeof(Int2).FullName!, 8 },
+        { typeof(Int3).FullName!, 12 },
+        { typeof(Int4).FullName!, 16 },
     };
 }

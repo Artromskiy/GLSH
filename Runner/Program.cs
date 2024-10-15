@@ -60,7 +60,7 @@ internal static class Program
         string shaderCode = "C:\\Users\\FLOW\\Documents\\GitHub\\GLSH\\Runner";
         string libCode = "C:\\Users\\FLOW\\Documents\\GitHub\\GLSH\\Primitives";
         var sourceFiles = Directory.EnumerateFiles(shaderCode, CsSearch, SearchOption.AllDirectories);
-        sourceFiles = sourceFiles.Concat(Directory.EnumerateFiles(libCode, CsSearch, SearchOption.AllDirectories).Where(f=> !f.Contains(nameof(ShaderBuiltinException))));
+        //sourceFiles = sourceFiles.Concat(Directory.EnumerateFiles(libCode, CsSearch, SearchOption.AllDirectories).Where(f=> !f.Contains(nameof(ShaderBuiltinException))));
         var trees = sourceFiles.Select(x =>
         {
             using var stream = File.OpenRead(x);

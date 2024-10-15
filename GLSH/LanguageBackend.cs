@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 
 namespace GLSH;
@@ -217,7 +218,7 @@ public abstract class LanguageBackend
 
     internal virtual bool IsIndexerAccess(SymbolInfo member)
     {
-        return member.Symbol.ContainingType.GetFullMetadataName() == "System.Numerics.Matrix4x4"
+        return member.Symbol.ContainingType.GetFullMetadataName() == typeof(Matrix4x4).FullName!
             && member.Symbol.Name[0] == 'M'
             && char.IsDigit(member.Symbol.Name[1]);
     }

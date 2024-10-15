@@ -181,7 +181,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
             throw new NotImplementedException($"{node.Expression.GetType()} expressions are not implemented.");
         }
 
-        if (_shaderFunction.ReturnType.Name == "System.Void")
+        if (_shaderFunction.ReturnType.Name == typeof(void).FullName!)
         {
             sb.AppendLine("    " + expressionResult + ";");
         }
