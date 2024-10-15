@@ -1,5 +1,3 @@
-using System.Linq;
-
 namespace GLSH;
 
 public class StructureDefinition
@@ -32,7 +30,7 @@ public class StructureDefinition
         return true;
     }
 
-    private bool CheckAlignments(FieldDefinition fd, ref int cs, ref int shader)
+    private static bool CheckAlignments(FieldDefinition fd, ref int cs, ref int shader)
     {
         if (cs % fd.Alignment.CSharpAlignment != 0 || shader % fd.Alignment.ShaderAlignment != 0)
         {

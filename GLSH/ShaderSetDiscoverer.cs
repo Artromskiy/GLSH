@@ -6,15 +6,15 @@ namespace GLSH;
 
 internal class ShaderSetDiscoverer : CSharpSyntaxWalker
 {
-    private readonly HashSet<string> _discoveredNames = new HashSet<string>();
-    private readonly List<ShaderSetInfo> _shaderSets = new List<ShaderSetInfo>();
+    private readonly HashSet<string> _discoveredNames = [];
+    private readonly List<ShaderSetInfo> _shaderSets = [];
     public override void VisitAttribute(AttributeSyntax node)
     {
         // TODO: Only look at assembly-level attributes.
         if (node.Name.ToFullString().Contains("ComputeShaderSet"))
         {
-            string name = GetStringParam(node, 0);
-            string cs = GetStringParam(node, 1);
+            string? name = GetStringParam(node, 0);
+            string? cs = GetStringParam(node, 1);
             if (!TypeAndMethodName.Get(cs, out TypeAndMethodName csName))
             {
                 throw new ShaderGenerationException("ComputeShaderSetAttribute has an incomplete or invalid compute shader name.");
@@ -24,18 +24,17 @@ internal class ShaderSetDiscoverer : CSharpSyntaxWalker
         }
         else if (node.Name.ToFullString().Contains("ShaderSet"))
         {
-            string name = GetStringParam(node, 0);
+            string? name = GetStringParam(node, 0);
+            string? vs = GetStringParam(node, 1);
+            TypeAndMethodName? vsName = null;
 
-            TypeAndMethodName vsName = null;
-            string vs = GetStringParam(node, 1);
             if (vs != null && !TypeAndMethodName.Get(vs, out vsName))
             {
                 throw new ShaderGenerationException("ShaderSetAttribute has an incomplete or invalid vertex shader name.");
             }
 
-
-            TypeAndMethodName fsName = null;
-            string fs = GetStringParam(node, 2);
+            TypeAndMethodName? fsName = null;
+            string? fs = GetStringParam(node, 2);
             if (fs != null && !TypeAndMethodName.Get(fs, out fsName))
             {
                 throw new ShaderGenerationException("ShaderSetAttribute has an incomplete or invalid fragment shader name.");
@@ -58,7 +57,7 @@ internal class ShaderSetDiscoverer : CSharpSyntaxWalker
         }
     }
 
-    private string GetStringParam(AttributeSyntax node, int index)
+    private string? GetStringParam(AttributeSyntax node, int index)
     {
         string text = node.ArgumentList.Arguments[index].ToFullString();
         if (text == "null")
@@ -71,5 +70,5 @@ internal class ShaderSetDiscoverer : CSharpSyntaxWalker
         }
     }
 
-    public ShaderSetInfo[] GetShaderSets() => _shaderSets.ToArray();
+    public ShaderSetInfo[] GetShaderSets() => [.. _shaderSets];
 }

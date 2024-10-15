@@ -11,8 +11,8 @@ namespace GLSH;
 internal class FunctionCallGraphDiscoverer
 {
     public Compilation Compilation { get; }
-    private CallGraphNode _rootNode;
-    private Dictionary<TypeAndMethodName, CallGraphNode> _nodesByName = new Dictionary<TypeAndMethodName, CallGraphNode>();
+    private readonly CallGraphNode _rootNode;
+    private readonly Dictionary<TypeAndMethodName, CallGraphNode> _nodesByName = [];
 
     public FunctionCallGraphDiscoverer(Compilation compilation, TypeAndMethodName rootMethod)
     {
@@ -25,9 +25,9 @@ internal class FunctionCallGraphDiscoverer
 
     public ShaderFunctionAndMethodDeclarationSyntax[] GetOrderedCallList()
     {
-        HashSet<ShaderFunctionAndMethodDeclarationSyntax> result = new HashSet<ShaderFunctionAndMethodDeclarationSyntax>();
+        HashSet<ShaderFunctionAndMethodDeclarationSyntax> result = [];
         TraverseNode(result, _rootNode);
-        return result.ToArray();
+        return [.. result];
     }
 
     private void TraverseNode(HashSet<ShaderFunctionAndMethodDeclarationSyntax> result, CallGraphNode node)
@@ -58,7 +58,7 @@ internal class FunctionCallGraphDiscoverer
     private void ExploreCallNode(CallGraphNode node)
     {
         Debug.Assert(node.Declaration != null);
-        MethodWalker walker = new MethodWalker(this);
+        MethodWalker walker = new(this);
         walker.Visit(node.Declaration);
         TypeAndMethodName[] childrenNames = walker.GetChildren();
         foreach (TypeAndMethodName childName in childrenNames)
@@ -80,7 +80,7 @@ internal class FunctionCallGraphDiscoverer
 
     private CallGraphNode GetNode(TypeAndMethodName name)
     {
-        if (!_nodesByName.TryGetValue(name, out CallGraphNode node))
+        if (!_nodesByName.TryGetValue(name, out CallGraphNode? node))
         {
             node = new CallGraphNode() { Name = name };
             GetDeclaration(name, out node.Declaration);
@@ -127,7 +127,7 @@ internal class FunctionCallGraphDiscoverer
     private class MethodWalker : CSharpSyntaxWalker
     {
         private readonly FunctionCallGraphDiscoverer _discoverer;
-        private readonly HashSet<TypeAndMethodName> _children = new HashSet<TypeAndMethodName>();
+        private readonly HashSet<TypeAndMethodName> _children = [];
 
         public MethodWalker(FunctionCallGraphDiscoverer discoverer) : base(SyntaxWalkerDepth.StructuredTrivia)
         {
@@ -137,7 +137,7 @@ internal class FunctionCallGraphDiscoverer
         public override void VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
         {
             SymbolInfo symbolInfo = _discoverer.Compilation.GetSemanticModel(node.SyntaxTree).GetSymbolInfo(node);
-            ISymbol symbol = symbolInfo.Symbol;
+            ISymbol? symbol = symbolInfo.Symbol;
             if (symbol == null && symbolInfo.CandidateSymbols.Length == 1)
             {
                 symbol = symbolInfo.CandidateSymbols[0];
@@ -158,7 +158,7 @@ internal class FunctionCallGraphDiscoverer
             if (node.Expression is IdentifierNameSyntax ins)
             {
                 SymbolInfo symbolInfo = _discoverer.Compilation.GetSemanticModel(node.SyntaxTree).GetSymbolInfo(ins);
-                ISymbol symbol = symbolInfo.Symbol;
+                ISymbol? symbol = symbolInfo.Symbol;
                 if (symbol == null && symbolInfo.CandidateSymbols.Length == 1)
                 {
                     symbol = symbolInfo.CandidateSymbols[0];
@@ -175,7 +175,7 @@ internal class FunctionCallGraphDiscoverer
             else if (node.Expression is MemberAccessExpressionSyntax maes)
             {
                 SymbolInfo methodSymbol = _discoverer.Compilation.GetSemanticModel(maes.SyntaxTree).GetSymbolInfo(maes);
-                ISymbol symbol = methodSymbol.Symbol;
+                ISymbol? symbol = methodSymbol.Symbol;
                 if (symbol == null && methodSymbol.CandidateSymbols.Length == 1)
                 {
                     symbol = methodSymbol.CandidateSymbols[0];
@@ -200,7 +200,7 @@ internal class FunctionCallGraphDiscoverer
             base.VisitInvocationExpression(node);
         }
 
-        public TypeAndMethodName[] GetChildren() => _children.ToArray();
+        public TypeAndMethodName[] GetChildren() => [.. _children];
     }
 }
 
@@ -214,6 +214,6 @@ internal class CallGraphNode
     /// <summary>
     /// Functions called by this function.
     /// </summary>
-    public HashSet<CallGraphNode> Children = new HashSet<CallGraphNode>();
-    public HashSet<CallGraphNode> Parents = new HashSet<CallGraphNode>();
+    public HashSet<CallGraphNode> Children = [];
+    public HashSet<CallGraphNode> Parents = [];
 }

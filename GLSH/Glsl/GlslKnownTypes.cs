@@ -4,7 +4,7 @@ namespace GLSH.Glsl;
 
 internal static class GlslKnownTypes
 {
-    private static readonly Dictionary<string, string> s_knownTypesShared = new Dictionary<string, string>()
+    private static readonly Dictionary<string, string> s_knownTypesShared = new()
     {
         { "System.UInt32", "uint" },
         { "System.Int32", "int" },
@@ -24,7 +24,7 @@ internal static class GlslKnownTypes
 
     };
 
-    private static readonly Dictionary<string, string> s_knownTypesGL = new Dictionary<string, string>()
+    private static readonly Dictionary<string, string> s_knownTypesGL = new()
     {
         { "ShaderGen.Texture2DResource", "sampler2D" },
         { "ShaderGen.Texture2DArrayResource", "sampler2DArray" },
@@ -35,7 +35,7 @@ internal static class GlslKnownTypes
         { "ShaderGen.SamplerComparisonResource", "SamplerComparisonDummy" },
     };
 
-    private static readonly Dictionary<string, string> s_knownTypesVulkan = new Dictionary<string, string>()
+    private static readonly Dictionary<string, string> s_knownTypesVulkan = new()
     {
         { "ShaderGen.Texture2DResource", "texture2D" },
         { "ShaderGen.Texture2DArrayResource", "texture2DArray" },

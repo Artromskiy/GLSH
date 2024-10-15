@@ -4,8 +4,8 @@ namespace GLSH;
 
 internal static class ShaderPrimitiveTypes
 {
-    private static readonly HashSet<string> s_primitiveTypes = new HashSet<string>()
-    {
+    private static readonly HashSet<string> s_primitiveTypes =
+    [
         "float",
         "System.Single",
         "int",
@@ -30,7 +30,7 @@ internal static class ShaderPrimitiveTypes
         "ShaderGen.UShort4",
         "ShaderGen.Short2",
         "ShaderGen.Short4",
-    };
+    ];
 
     public static bool IsPrimitiveType(string name)
     {

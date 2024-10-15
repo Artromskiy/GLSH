@@ -42,10 +42,7 @@ public partial class ShaderGenerator
         params IShaderSetProcessor[] processors)
     {
 
-        if (languages == null)
-        {
-            throw new ArgumentNullException(nameof(languages));
-        }
+        ArgumentNullException.ThrowIfNull(languages);
 
         if (languages.Length < 1)
         {
@@ -53,7 +50,7 @@ public partial class ShaderGenerator
         }
 
         _compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
-        _languages = languages.ToArray();
+        _languages = [.. languages];
         _processors = processors;
 
         // If we've not specified any names, we're auto-discovering
@@ -61,7 +58,7 @@ public partial class ShaderGenerator
             string.IsNullOrWhiteSpace(fragmentFunctionName) &&
             string.IsNullOrWhiteSpace(computeFunctionName))
         {
-            ShaderSetDiscoverer ssd = new ShaderSetDiscoverer();
+            ShaderSetDiscoverer ssd = new();
             foreach (SyntaxTree tree in _compilation.SyntaxTrees)
             {
                 ssd.Visit(tree.GetRoot());
@@ -72,9 +69,9 @@ public partial class ShaderGenerator
         }
 
         // We've explicitly specified shaders so find them directly.
-        List<ShaderSetInfo> shaderSets = new List<ShaderSetInfo>();
+        List<ShaderSetInfo> shaderSets = [];
 
-        TypeAndMethodName vertex = null;
+        TypeAndMethodName? vertex = null;
         if (!string.IsNullOrWhiteSpace(vertexFunctionName)
             && !TypeAndMethodName.Get(vertexFunctionName, out vertex))
         {
@@ -82,7 +79,7 @@ public partial class ShaderGenerator
                 $"The name passed to {nameof(vertexFunctionName)} must be a fully-qualified type and method.");
         }
 
-        TypeAndMethodName fragment = null;
+        TypeAndMethodName? fragment = null;
         if (!string.IsNullOrWhiteSpace(fragmentFunctionName)
             && !TypeAndMethodName.Get(fragmentFunctionName, out fragment))
         {
@@ -128,7 +125,7 @@ public partial class ShaderGenerator
             shaderSets.Add(new ShaderSetInfo(computeFunctionName, compute));
         }
 
-        _shaderSets = shaderSets.ToArray();
+        _shaderSets = [.. shaderSets];
     }
 
     public ShaderGenerationResult GenerateShaders()
@@ -143,7 +140,7 @@ public partial class ShaderGenerator
         foreach (IShaderSetProcessor processor in _processors)
         {
             // Kind of a hack, but the relevant info should be the same.
-            foreach (GeneratedShaderSet gss in result.GetOutput(_languages.First()))
+            foreach (GeneratedShaderSet gss in result.GetOutput(_languages[0]))
             {
                 ShaderSetProcessorInput input = new(
                     gss.Name,
@@ -182,7 +179,7 @@ public partial class ShaderGenerator
             language.InitContext(ss.Name);
         }
 
-        ShaderSyntaxWalker walker = new ShaderSyntaxWalker(_compilation, _languages.ToArray(), ss);
+        ShaderSyntaxWalker walker = new(_compilation, [.. _languages], ss);
         foreach (SyntaxTree tree in treesToVisit)
         {
             walker.Visit(tree.GetRoot());
@@ -200,9 +197,9 @@ public partial class ShaderGenerator
             ShaderFunction? csFunc = ss.ComputeShader != null
                 ? model.GetFunction(ss.ComputeShader.FullName)
                 : null;
-            string vsCode = null;
-            string fsCode = null;
-            string csCode = null;
+            string? vsCode = null;
+            string? fsCode = null;
+            string? csCode = null;
             if (vsFunc != null)
             {
                 vsCode = language.ProcessEntryFunction(ss.Name, vsFunc).FullText;

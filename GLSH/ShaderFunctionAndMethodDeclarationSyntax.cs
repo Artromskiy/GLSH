@@ -22,9 +22,9 @@ public class ShaderFunctionAndMethodDeclarationSyntax : IEquatable<ShaderFunctio
 
     public override string ToString() => Function.ToString();
 
-    public bool Equals(ShaderFunctionAndMethodDeclarationSyntax other)
+    public bool Equals(ShaderFunctionAndMethodDeclarationSyntax? other)
     {
-        return Function.DeclaringType == other.Function.DeclaringType
+        return other != null && Function.DeclaringType == other.Function.DeclaringType
             && Function.Name == other.Function.Name;
     }
 
@@ -35,4 +35,6 @@ public class ShaderFunctionAndMethodDeclarationSyntax : IEquatable<ShaderFunctio
         hashCode = hashCode * -1521134295 + Function.Name.GetHashCode();
         return hashCode;
     }
+
+    public override bool Equals(object? obj)=> Equals(obj as ShaderFunctionAndMethodDeclarationSyntax);
 }

@@ -19,14 +19,8 @@ internal static class Utilities
 
     public static string GetFullTypeName(this SemanticModel model, ExpressionSyntax type, out bool isArray)
     {
-        if (model == null)
-        {
-            throw new ArgumentNullException(nameof(model));
-        }
-        if (type == null)
-        {
-            throw new ArgumentNullException(nameof(type));
-        }
+        ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(type);
         if (type.SyntaxTree != model.SyntaxTree)
         {
             model = GetSemanticModel(model.Compilation, type.SyntaxTree);
@@ -71,7 +65,7 @@ internal static class Utilities
             return ((IArrayTypeSymbol)s).ElementType.GetFullMetadataName() + "[]";
         }
 
-        StringBuilder sb = new StringBuilder(s.MetadataName);
+        StringBuilder sb = new(s.MetadataName);
         ISymbol last = s;
 
         s = s.ContainingSymbol;
@@ -97,8 +91,7 @@ internal static class Utilities
 
     private static bool IsRootNamespace(ISymbol symbol)
     {
-        INamespaceSymbol s = null;
-        return (s = symbol as INamespaceSymbol) != null && s.IsGlobalNamespace;
+        return symbol is INamespaceSymbol s && s.IsGlobalNamespace;
     }
 
     private static SemanticModel GetSemanticModel(Compilation compilation, SyntaxTree syntaxTree)
@@ -136,7 +129,7 @@ internal static class Utilities
 
     public static string GetFullNamespace(SyntaxNode node)
     {
-        if (!SyntaxNodeHelper.TryGetParentSyntax(node, out NamespaceDeclarationSyntax namespaceDeclarationSyntax))
+        if (!SyntaxNodeHelper.TryGetParentSyntax(node, out NamespaceDeclarationSyntax? namespaceDeclarationSyntax))
         {
             return string.Empty; // or whatever you want to do in this scenario
         }
@@ -148,8 +141,8 @@ internal static class Utilities
     public static string GetFullNestedTypePrefix(SyntaxNode node, out bool nested)
     {
         string ns = GetFullNamespace(node);
-        List<string> nestedTypeParts = new List<string>();
-        while (SyntaxNodeHelper.TryGetParentSyntax(node, out TypeDeclarationSyntax tds))
+        List<string> nestedTypeParts = [];
+        while (SyntaxNodeHelper.TryGetParentSyntax(node, out TypeDeclarationSyntax? tds))
         {
             nestedTypeParts.Add(tds.Identifier.ToFullString().Trim());
             node = tds;
@@ -176,13 +169,13 @@ internal static class Utilities
         }
     }
 
-    private static readonly HashSet<string> s_basicNumericTypes = new HashSet<string>()
-    {
+    private static readonly HashSet<string> s_basicNumericTypes =
+    [
         "System.Numerics.Vector2",
         "System.Numerics.Vector3",
         "System.Numerics.Vector4",
         "System.Numerics.Matrix4x4",
-    };
+    ];
 
     public static bool IsBasicNumericType(string fullName)
     {
@@ -247,7 +240,7 @@ internal static class Utilities
             throw new ArgumentOutOfRangeException(nameof(node), "Unsupported BaseMethodDeclarationSyntax type.");
         }
 
-        UInt3 computeGroupCounts = new UInt3();
+        UInt3 computeGroupCounts = new();
         bool isFragmentShader = false, isComputeShader = false;
         bool isVertexShader = GetMethodAttributes(node, "VertexShader").Any();
         if (!isVertexShader)
@@ -278,24 +271,24 @@ internal static class Utilities
 
 
 
-        List<ParameterDefinition> parameters = new List<ParameterDefinition>();
+        List<ParameterDefinition> parameters = [];
         foreach (ParameterSyntax ps in node.ParameterList.Parameters)
         {
             parameters.Add(ParameterDefinition.GetParameterDefinition(compilation, ps));
         }
 
-        ShaderFunction sf = new ShaderFunction(
+        ShaderFunction sf = new(
             nestedTypePrefix,
             functionName,
             returnTypeReference,
-            parameters.ToArray(),
+            [.. parameters],
             type,
             computeGroupCounts);
 
         ShaderFunctionAndMethodDeclarationSyntax[] orderedFunctionList;
         if (type != ShaderFunctionType.Normal && generateOrderedFunctionList)
         {
-            FunctionCallGraphDiscoverer fcgd = new FunctionCallGraphDiscoverer(
+            FunctionCallGraphDiscoverer fcgd = new(
                 compilation,
                 new TypeAndMethodName { TypeName = sf.DeclaringType, MethodName = sf.Name });
             fcgd.GenerateFullGraph();
@@ -303,7 +296,7 @@ internal static class Utilities
         }
         else
         {
-            orderedFunctionList = new ShaderFunctionAndMethodDeclarationSyntax[0];
+            orderedFunctionList = [];
         }
 
         return new ShaderFunctionAndMethodDeclarationSyntax(sf, node, orderedFunctionList);

@@ -27,12 +27,17 @@ internal class TypeAndMethodName : IEquatable<TypeAndMethodName>
         return true;
     }
 
-    public bool Equals(TypeAndMethodName other)
+    public bool Equals(TypeAndMethodName? other)
     {
-        return TypeName == other.TypeName && MethodName == other.MethodName;
+        return other is not null && TypeName == other.TypeName && MethodName == other.MethodName;
     }
 
     public override int GetHashCode() => FullName.GetHashCode();
 
     public override string ToString() => FullName;
+
+    public override bool Equals(object? obj)
+    {
+        return Equals(obj as TypeAndMethodName);
+    }
 }

@@ -11,7 +11,7 @@ public class ShaderGenerationResult
     {
         if (_generatedShaders.Count == 0)
         {
-            return Array.Empty<GeneratedShaderSet>();
+            return [];
         }
 
         if (!_generatedShaders.TryGetValue(backend, out var list))

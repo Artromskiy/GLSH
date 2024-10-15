@@ -10,8 +10,8 @@ namespace GLSH.Glsl;
 
 public abstract class GlslBackendBase : LanguageBackend
 {
-    protected readonly HashSet<string> _uniformNames = new HashSet<string>();
-    protected readonly HashSet<string> _ssboNames = new HashSet<string>();
+    protected readonly HashSet<string> _uniformNames = [];
+    protected readonly HashSet<string> _ssboNames = [];
 
     public GlslBackendBase(Compilation compilation) : base(compilation)
     {
@@ -21,7 +21,7 @@ public abstract class GlslBackendBase : LanguageBackend
     {
         sb.AppendLine($"struct {CSharpToShaderType(sd.Name)}");
         sb.AppendLine("{");
-        StringBuilder fb = new StringBuilder();
+        StringBuilder fb = new();
         foreach (FieldDefinition field in sd.Fields)
         {
             string fieldTypeStr = GetStructureFieldType(field);
@@ -50,7 +50,7 @@ public abstract class GlslBackendBase : LanguageBackend
     protected override MethodProcessResult GenerateFullTextCore(string setName, ShaderFunction function)
     {
         BackendContext context = GetContext(setName);
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
 
         ShaderFunctionAndMethodDeclarationSyntax? entryPoint = context.Functions.SingleOrDefault(
             sfabs => sfabs.Function.Name == function.Name);
@@ -133,7 +133,7 @@ public abstract class GlslBackendBase : LanguageBackend
         WriteMainFunction(setName, sb, entryPoint.Function);
 
         // Append version last because it relies on information from parsing the shader.
-        StringBuilder versionSB = new StringBuilder();
+        StringBuilder versionSB = new();
         WriteVersionHeader(function, entryPoint.OrderedFunctionList, versionSB);
 
         sb.Insert(0, versionSB.ToString());
@@ -389,10 +389,10 @@ public abstract class GlslBackendBase : LanguageBackend
         }
     }
 
-    private static readonly HashSet<string> s_glslKeywords = new HashSet<string>()
-    {
+    private static readonly HashSet<string> s_glslKeywords =
+    [
         "input", "output",
-    };
+    ];
 
     protected abstract void WriteVersionHeader(
         ShaderFunction function,

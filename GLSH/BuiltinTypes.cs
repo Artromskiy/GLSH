@@ -4,14 +4,14 @@ namespace GLSH;
 
 public static class BuiltinTypes
 {
-    private static readonly HashSet<string> s_builtins = new HashSet<string>()
-    {
+    private static readonly HashSet<string> s_builtins =
+    [
         "System.Single",
         "System.Numerics.Vector2",
         "System.Numerics.Vector3",
         "System.Numerics.Vector4",
         "System.Numerics.Matrix4x4",
-    };
+    ];
 
     public static bool IsBuiltinType(string fullTypeName)
     {

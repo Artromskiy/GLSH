@@ -17,8 +17,8 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     protected readonly string _setName;
     protected readonly LanguageBackend _backend;
     protected readonly ShaderFunction _shaderFunction;
-    private string _containingTypeName;
-    private HashSet<ResourceDefinition> _resourcesUsed = new HashSet<ResourceDefinition>();
+    private string? _containingTypeName;
+    private HashSet<ResourceDefinition> _resourcesUsed = [];
 
     public ShaderMethodVisitor(
         Compilation compilation,
@@ -37,7 +37,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     public MethodProcessResult VisitFunction(BaseMethodDeclarationSyntax node)
     {
         _containingTypeName = Utilities.GetFullNestedTypePrefix((SyntaxNode)node.Body ?? node.ExpressionBody, out bool _);
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         string blockResult;
         // Visit block first in order to discover builtin variables.
         if (node.Body != null)
@@ -67,7 +67,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
     public override string VisitBlock(BlockSyntax node)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         sb.AppendLine("{");
 
         // Only declare discarded variables - i.e. MyFunc(out _) - for the top-level block in a function.
@@ -100,7 +100,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     /// </summary>
     private string DeclareDiscardedVariables(BlockSyntax block)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
 
         SemanticModel semanticModel = GetModel(block);
 
@@ -111,7 +111,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
             .Where(x => x.Kind == SymbolKind.Discard)
             .Cast<IDiscardSymbol>();
 
-        List<ISymbol> alreadyWrittenTypes = new List<ISymbol>();
+        List<ISymbol> alreadyWrittenTypes = [];
 
         foreach (IDiscardSymbol discardedVariable in discardedVariables)
         {
@@ -138,7 +138,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     /// </summary>
     private string DeclareInlineOutVariables(StatementSyntax statement)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
 
         IEnumerable<SyntaxNode> declarationExpressionNodes = statement
             .DescendantNodes(x => !x.IsKind(SyntaxKind.Block)) // Don't descend into child blocks
@@ -172,7 +172,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
     public override string VisitArrowExpressionClause(ArrowExpressionClauseSyntax node)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         sb.AppendLine("{");
 
         string expressionResult = Visit(node.Expression);
@@ -327,7 +327,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
             {
                 string containingType = ims.ContainingType.GetFullMetadataName();
                 string methodName = ims.MetadataName;
-                List<InvocationParameterInfo> pis = new List<InvocationParameterInfo>();
+                List<InvocationParameterInfo> pis = [];
                 if (ims.IsExtensionMethod)
                 {
                     string identifier = Visit(maes.Expression);
@@ -367,7 +367,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
                 }
 
                 pis.AddRange(GetParameterInfos(node.ArgumentList));
-                return _backend.FormatInvocation(_setName, containingType, methodName, pis.ToArray());
+                return _backend.FormatInvocation(_setName, containingType, methodName, [.. pis]);
             }
 
             throw new NotImplementedException();
@@ -487,7 +487,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         else if (symbol.Kind == SymbolKind.Field && containingTypeName == _containingTypeName)
         {
             string symbolName = symbol.Name;
-            ResourceDefinition referencedResource = _backend.GetContext(_setName).Resources.SingleOrDefault(rd => rd.Name == symbolName);
+            ResourceDefinition? referencedResource = _backend.GetContext(_setName).Resources.SingleOrDefault(rd => rd.Name == symbolName);
             if (referencedResource != null)
             {
                 _resourcesUsed.Add(referencedResource);
@@ -564,7 +564,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
     public override string VisitIfStatement(IfStatementSyntax node)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         sb.AppendLine("if (" + Visit(node.Condition) + ")");
         sb.AppendLine(Visit(node.Statement));
         sb.AppendLine(Visit(node.Else));
@@ -573,7 +573,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
     public override string VisitElseClause(ElseClauseSyntax node)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         sb.AppendLine("else");
         sb.AppendLine(Visit(node.Statement));
         return sb.ToString();
@@ -581,7 +581,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
     public override string VisitForStatement(ForStatementSyntax node)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         string declaration = Visit(node.Declaration);
         string incrementers = string.Join(", ", node.Incrementors.Select(es => Visit(es)));
         string condition = Visit(node.Condition);
@@ -592,7 +592,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
     public override string VisitSwitchStatement(SwitchStatementSyntax node)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         sb.AppendLine("switch (" + Visit(node.Expression) + ")");
         sb.AppendLine("{");
         foreach (SwitchSectionSyntax section in node.Sections)
@@ -612,14 +612,14 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     }
     public override string VisitCaseSwitchLabel(CaseSwitchLabelSyntax node)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         sb.AppendLine("case " + Visit(node.Value) + ":");
         return sb.ToString();
     }
 
     public override string VisitDefaultSwitchLabel(DefaultSwitchLabelSyntax node)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         sb.AppendLine("default:");
         return sb.ToString();
     }
@@ -646,7 +646,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
             throw new NotImplementedException();
         }
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
 
         SemanticModel semanticModel = _compilation.GetSemanticModel(node.Type.SyntaxTree);
         string varType = semanticModel.GetFullTypeName(node.Type);
@@ -716,7 +716,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
     public override string VisitDoStatement(DoStatementSyntax node)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         sb.Append(node.DoKeyword);
         sb.Append(" {");
         sb.AppendLine();
@@ -731,7 +731,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
     public override string VisitWhileStatement(WhileStatementSyntax node)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         sb.Append("while (");
         sb.Append(Visit(node.Condition));
         sb.AppendLine(")");

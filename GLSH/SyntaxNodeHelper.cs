@@ -1,11 +1,12 @@
 using Microsoft.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GLSH;
 
 // https://stackoverflow.com/questions/20458457/getting-class-fullname-including-namespace-from-roslyn-classdeclarationsyntax
 internal static class SyntaxNodeHelper
 {
-    public static bool TryGetParentSyntax<T>(SyntaxNode syntaxNode, out T result)
+    public static bool TryGetParentSyntax<T>(SyntaxNode? syntaxNode, [NotNullWhen(true)] out T? result)
         where T : SyntaxNode
     {
         // set defaults
@@ -27,7 +28,7 @@ internal static class SyntaxNodeHelper
 
             if (typeof(T).IsAssignableFrom(syntaxNode.GetType()))
             {
-                result = syntaxNode as T;
+                result = (syntaxNode as T)!;
                 return true;
             }
 

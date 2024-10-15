@@ -1,11 +1,11 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GLSH;
 
 internal class DictionaryTypeInvocationTranslator : TypeInvocationTranslator
 {
-    private readonly Dictionary<string, InvocationTranslator> _translators
-        = new Dictionary<string, InvocationTranslator>();
+    private readonly Dictionary<string, InvocationTranslator> _translators = [];
 
     public DictionaryTypeInvocationTranslator(Dictionary<string, InvocationTranslator> translators)
     {
@@ -15,7 +15,7 @@ internal class DictionaryTypeInvocationTranslator : TypeInvocationTranslator
     public override bool GetTranslator(
         string method,
         InvocationParameterInfo[] parameters,
-        out InvocationTranslator translator)
+        [NotNullWhen(true)] out InvocationTranslator? translator)
     {
         return _translators.TryGetValue(method, out translator);
     }

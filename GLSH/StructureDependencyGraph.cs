@@ -8,13 +8,13 @@ public static class StructureDependencyGraph
 {
     public static StructureDefinition[] GetOrderedStructureList(Compilation compilation, List<StructureDefinition> allDefs)
     {
-        List<StructureDefinition> results = new List<StructureDefinition>();
+        List<StructureDefinition> results = [];
         foreach (StructureDefinition sd in allDefs)
         {
             Traverse(compilation, allDefs, sd, results);
         }
 
-        return results.ToArray();
+        return [.. results];
     }
 
     private static void Traverse(
@@ -25,7 +25,7 @@ public static class StructureDependencyGraph
     {
         foreach (FieldDefinition field in current.Fields)
         {
-            StructureDefinition fieldTypeDef = allDefs.SingleOrDefault(sd => sd.Name == field.Type.Name);
+            StructureDefinition? fieldTypeDef = allDefs.SingleOrDefault(sd => sd.Name == field.Type.Name);
             if (fieldTypeDef != null)
             {
                 Traverse(compilation, allDefs, fieldTypeDef, results);

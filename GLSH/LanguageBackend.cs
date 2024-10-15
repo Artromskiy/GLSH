@@ -16,15 +16,14 @@ public abstract class LanguageBackend
 
     internal class BackendContext
     {
-        internal List<StructureDefinition> Structures { get; } = new List<StructureDefinition>();
-        internal List<ResourceDefinition> Resources { get; } = new List<ResourceDefinition>();
-        internal List<ShaderFunctionAndMethodDeclarationSyntax> Functions { get; } = new List<ShaderFunctionAndMethodDeclarationSyntax>();
+        internal List<StructureDefinition> Structures { get; } = [];
+        internal List<ResourceDefinition> Resources { get; } = [];
+        internal List<ShaderFunctionAndMethodDeclarationSyntax> Functions { get; } = [];
     }
 
-    internal Dictionary<string, BackendContext> Contexts = new Dictionary<string, BackendContext>();
+    internal Dictionary<string, BackendContext> Contexts = [];
 
-    private readonly Dictionary<ShaderFunction, MethodProcessResult> _processedFunctions
-        = new Dictionary<ShaderFunction, MethodProcessResult>();
+    private readonly Dictionary<ShaderFunction, MethodProcessResult> _processedFunctions = [];
 
     internal LanguageBackend(Compilation compilation)
     {
@@ -44,7 +43,7 @@ public abstract class LanguageBackend
 
     internal BackendContext GetContext(string setName)
     {
-        if (!Contexts.TryGetValue(setName, out BackendContext ret))
+        if (!Contexts.TryGetValue(setName, out BackendContext? ret))
         {
             throw new InvalidOperationException("There was no Shader Set generated with the name " + setName);
         }
@@ -76,7 +75,7 @@ public abstract class LanguageBackend
         ResourceDefinition[] vertexResources = null;
         ResourceDefinition[] fragmentResources = null;
         ResourceDefinition[] computeResources = null;
-        ShaderFunctionAndMethodDeclarationSyntax[] contextFunctions = context.Functions.ToArray();
+        ShaderFunctionAndMethodDeclarationSyntax[] contextFunctions = [.. context.Functions];
 
         // Discover all parameter types
         foreach (ShaderFunctionAndMethodDeclarationSyntax sf in contextFunctions)
@@ -98,23 +97,23 @@ public abstract class LanguageBackend
 
                 if (sf.Function.Type == ShaderFunctionType.VertexEntryPoint)
                 {
-                    vertexResources = processedFunction.ResourcesUsed.ToArray();
+                    vertexResources = [.. processedFunction.ResourcesUsed];
                 }
                 else if (sf.Function.Type == ShaderFunctionType.FragmentEntryPoint)
                 {
-                    fragmentResources = processedFunction.ResourcesUsed.ToArray();
+                    fragmentResources = [.. processedFunction.ResourcesUsed];
                 }
                 else
                 {
                     Debug.Assert(sf.Function.Type == ShaderFunctionType.ComputeEntryPoint);
-                    computeResources = processedFunction.ResourcesUsed.ToArray();
+                    computeResources = [.. processedFunction.ResourcesUsed];
                 }
             }
         }
 
         return new ShaderModel(
-            context.Structures.ToArray(),
-            context.Resources.ToArray(),
+            [.. context.Structures],
+            [.. context.Resources],
             context.Functions.Select(sfabs => sfabs.Function).ToArray(),
             vertexResources,
             fragmentResources,
@@ -137,7 +136,7 @@ public abstract class LanguageBackend
         }
         if (tr.TypeInfo.TypeKind == TypeKind.Enum)
         {
-            INamedTypeSymbol enumBaseType = ((INamedTypeSymbol)tr.TypeInfo).EnumUnderlyingType;
+            INamedTypeSymbol? enumBaseType = ((INamedTypeSymbol)tr.TypeInfo).EnumUnderlyingType;
             if (enumBaseType != null
                 && enumBaseType.SpecialType != SpecialType.System_Int32
                 && enumBaseType.SpecialType != SpecialType.System_UInt32)
@@ -152,7 +151,7 @@ public abstract class LanguageBackend
         {
             name = Utilities.GetFullTypeName(namedTypeSymb.TypeArguments[0], out _);
         }
-        if (!TryDiscoverStructure(setName, name, out StructureDefinition sd))
+        if (!TryDiscoverStructure(setName, name, out StructureDefinition? sd))
         {
             throw new ShaderGenerationException("" +
                 "Resource type's field could not be resolved: " + name);
@@ -165,12 +164,9 @@ public abstract class LanguageBackend
 
     public MethodProcessResult ProcessEntryFunction(string setName, ShaderFunction function)
     {
-        if (function == null)
-        {
-            throw new ArgumentNullException(nameof(function));
-        }
+        ArgumentNullException.ThrowIfNull(function);
 
-        if (!_processedFunctions.TryGetValue(function, out MethodProcessResult result))
+        if (!_processedFunctions.TryGetValue(function, out MethodProcessResult? result))
         {
             if (!function.IsEntryPoint)
             {
@@ -186,10 +182,7 @@ public abstract class LanguageBackend
 
     internal string CSharpToShaderType(TypeReference typeReference)
     {
-        if (typeReference == null)
-        {
-            throw new ArgumentNullException(nameof(typeReference));
-        }
+        ArgumentNullException.ThrowIfNull(typeReference);
 
         string typeNameString;
         if (typeReference.TypeInfo.TypeKind == TypeKind.Enum)
@@ -206,20 +199,14 @@ public abstract class LanguageBackend
 
     internal string CSharpToShaderType(string fullType)
     {
-        if (fullType == null)
-        {
-            throw new ArgumentNullException(nameof(fullType));
-        }
+        ArgumentNullException.ThrowIfNull(fullType);
 
         return CSharpToShaderTypeCore(fullType);
     }
 
     internal virtual void AddStructure(string setName, StructureDefinition sd)
     {
-        if (sd == null)
-        {
-            throw new ArgumentNullException(nameof(sd));
-        }
+        ArgumentNullException.ThrowIfNull(sd);
 
         List<StructureDefinition> structures = GetContext(setName).Structures;
         if (!structures.Any(old => old.Name == sd.Name))
@@ -237,20 +224,14 @@ public abstract class LanguageBackend
 
     internal virtual void AddResource(string setName, ResourceDefinition rd)
     {
-        if (rd == null)
-        {
-            throw new ArgumentNullException(nameof(rd));
-        }
+        ArgumentNullException.ThrowIfNull(rd);
 
         GetContext(setName).Resources.Add(rd);
     }
 
     internal virtual void AddFunction(string setName, ShaderFunctionAndMethodDeclarationSyntax sf)
     {
-        if (sf == null)
-        {
-            throw new ArgumentNullException(nameof(sf));
-        }
+        ArgumentNullException.ThrowIfNull(sf);
 
         var context = GetContext(setName);
 
@@ -275,7 +256,7 @@ public abstract class LanguageBackend
         Debug.Assert(method != null);
         Debug.Assert(parameterInfos != null);
 
-        ShaderFunctionAndMethodDeclarationSyntax function = GetContext(setName).Functions
+        ShaderFunctionAndMethodDeclarationSyntax? function = GetContext(setName).Functions
             .SingleOrDefault(
                 sfabs => sfabs.Function.DeclaringType == type && sfabs.Function.Name == method
                     && parameterInfos.Length == sfabs.Function.Parameters.Length);
@@ -333,7 +314,7 @@ public abstract class LanguageBackend
 
     protected virtual StructureDefinition GetRequiredStructureType(string setName, TypeReference type)
     {
-        StructureDefinition result = GetContext(setName).Structures.SingleOrDefault(sd => sd.Name == type.Name);
+        StructureDefinition? result = GetContext(setName).Structures.SingleOrDefault(sd => sd.Name == type.Name);
         if (result == null)
         {
             if (!TryDiscoverStructure(setName, type.Name, out result))
@@ -419,8 +400,8 @@ public abstract class LanguageBackend
 
     protected HashSet<ResourceDefinition> ProcessFunctions(string setName, ShaderFunctionAndMethodDeclarationSyntax entryPoint, out string funcs, out string entry)
     {
-        HashSet<ResourceDefinition> resourcesUsed = new HashSet<ResourceDefinition>();
-        StringBuilder sb = new StringBuilder();
+        HashSet<ResourceDefinition> resourcesUsed = [];
+        StringBuilder sb = new();
 
         foreach (ShaderFunctionAndMethodDeclarationSyntax f in entryPoint.OrderedFunctionList)
         {
@@ -463,7 +444,7 @@ public abstract class LanguageBackend
 
     private void ValidateAlignedStruct(string setName, TypeReference tr)
     {
-        StructureDefinition def = GetContext(setName).Structures.SingleOrDefault(sd => sd.Name == tr.Name);
+        StructureDefinition? def = GetContext(setName).Structures.SingleOrDefault(sd => sd.Name == tr.Name);
         if (def != null)
         {
             if (!def.CSharpMatchesShaderAlignment)

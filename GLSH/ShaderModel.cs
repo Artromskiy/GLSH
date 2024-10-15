@@ -82,7 +82,7 @@ public class ShaderModel
         }
     }
 
-    private static readonly Dictionary<string, int> s_knownTypeSizes = new Dictionary<string, int>()
+    private static readonly Dictionary<string, int> s_knownTypeSizes = new()
     {
         { "System.Byte", 1 },
         { "System.SByte", 1 },

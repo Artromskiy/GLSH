@@ -10,9 +10,9 @@ public static class GlslKnownIdentifiers
 
     private static Dictionary<string, Dictionary<string, string>> GetMappings()
     {
-        Dictionary<string, Dictionary<string, string>> ret = new Dictionary<string, Dictionary<string, string>>();
+        Dictionary<string, Dictionary<string, string>> ret = [];
 
-        Dictionary<string, string> builtinMappings = new Dictionary<string, string>()
+        Dictionary<string, string> builtinMappings = new()
         {
             { nameof(ShaderBuiltins.E), "2.71828182845905" },
             { nameof(ShaderBuiltins.PI), "3.14159265358979" },
@@ -20,14 +20,14 @@ public static class GlslKnownIdentifiers
         };
         ret.Add("ShaderGen.ShaderBuiltins", builtinMappings);
 
-        Dictionary<string, string> v2Mappings = new Dictionary<string, string>()
+        Dictionary<string, string> v2Mappings = new()
         {
             { nameof(Vector2.X), "x" },
             { nameof(Vector2.Y), "y" },
         };
         ret.Add("System.Numerics.Vector2", v2Mappings);
 
-        Dictionary<string, string> v3Mappings = new Dictionary<string, string>()
+        Dictionary<string, string> v3Mappings = new()
         {
             { nameof(Vector3.X), "x" },
             { nameof(Vector3.Y), "y" },
@@ -35,7 +35,7 @@ public static class GlslKnownIdentifiers
         };
         ret.Add("System.Numerics.Vector3", v3Mappings);
 
-        Dictionary<string, string> v4Mappings = new Dictionary<string, string>()
+        Dictionary<string, string> v4Mappings = new()
         {
             { nameof(Vector4.X), "x" },
             { nameof(Vector4.Y), "y" },
@@ -44,7 +44,7 @@ public static class GlslKnownIdentifiers
         };
         ret.Add("System.Numerics.Vector4", v4Mappings);
 
-        Dictionary<string, string> m4x4Mappings = new Dictionary<string, string>()
+        Dictionary<string, string> m4x4Mappings = new()
         {
             { nameof(Matrix4x4.M11), "[0][0]" },
             { nameof(Matrix4x4.M12), "[1][0]" },
@@ -65,14 +65,14 @@ public static class GlslKnownIdentifiers
         };
         ret.Add("System.Numerics.Matrix4x4", m4x4Mappings);
 
-        Dictionary<string, string> uint2Mappings = new Dictionary<string, string>()
+        Dictionary<string, string> uint2Mappings = new()
         {
             { nameof(UInt2.X), "x" },
             { nameof(UInt2.Y), "y" },
         };
         ret.Add("ShaderGen.UInt2", uint2Mappings);
 
-        Dictionary<string, string> uint3Mappings = new Dictionary<string, string>()
+        Dictionary<string, string> uint3Mappings = new()
         {
             { nameof(UInt3.X), "x" },
             { nameof(UInt3.Y), "y" },
@@ -80,7 +80,7 @@ public static class GlslKnownIdentifiers
         };
         ret.Add("ShaderGen.UInt3", uint3Mappings);
 
-        Dictionary<string, string> uint4Mappings = new Dictionary<string, string>()
+        Dictionary<string, string> uint4Mappings = new()
         {
             { nameof(UInt4.X), "x" },
             { nameof(UInt4.Y), "y" },
@@ -89,14 +89,14 @@ public static class GlslKnownIdentifiers
         };
         ret.Add("ShaderGen.UInt4", uint4Mappings);
 
-        Dictionary<string, string> int2Mappings = new Dictionary<string, string>()
+        Dictionary<string, string> int2Mappings = new()
         {
             { nameof(Int2.X), "x" },
             { nameof(Int2.Y), "y" },
         };
         ret.Add("ShaderGen.Int2", int2Mappings);
 
-        Dictionary<string, string> int3Mappings = new Dictionary<string, string>()
+        Dictionary<string, string> int3Mappings = new()
         {
             { nameof(Int3.X), "x" },
             { nameof(Int3.Y), "y" },
@@ -104,7 +104,7 @@ public static class GlslKnownIdentifiers
         };
         ret.Add("ShaderGen.Int3", int3Mappings);
 
-        Dictionary<string, string> int4Mappings = new Dictionary<string, string>()
+        Dictionary<string, string> int4Mappings = new()
         {
             { nameof(Int4.X), "x" },
             { nameof(Int4.Y), "y" },
@@ -113,7 +113,7 @@ public static class GlslKnownIdentifiers
         };
         ret.Add("ShaderGen.Int4", int4Mappings);
 
-        Dictionary<string, string> mathfMappings = new Dictionary<string, string>()
+        Dictionary<string, string> mathfMappings = new()
         {
             // TODO Note MathF is not included in .Net Standard
             { "E", "2.71828182845905" },

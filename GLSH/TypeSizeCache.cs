@@ -37,7 +37,7 @@ public static class TypeSizeCache
         { "ShaderGen.Int4", 16 },
     };
 
-    private static readonly ConcurrentDictionary<ITypeSymbol, AlignmentInfo> s_cachedSizes = new ConcurrentDictionary<ITypeSymbol, AlignmentInfo>();
+    private static readonly ConcurrentDictionary<ITypeSymbol, AlignmentInfo> s_cachedSizes = new();
 
     public static AlignmentInfo Get(ITypeSymbol symbol)
     {

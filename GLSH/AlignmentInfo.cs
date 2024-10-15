@@ -6,7 +6,7 @@ namespace GLSH;
 /// Holds information about a types alignment and size
 /// </summary>
 /// <seealso cref="IEquatable{AlignmentInfo}" />
-public struct AlignmentInfo : IEquatable<AlignmentInfo>
+public readonly struct AlignmentInfo : IEquatable<AlignmentInfo>
 {
     public readonly int CSharpSize;
     public readonly int ShaderSize;
@@ -35,7 +35,7 @@ public struct AlignmentInfo : IEquatable<AlignmentInfo>
     /// <returns>
     ///   <c>true</c> if the specified <see cref="object" /> is equal to this instance; otherwise, <c>false</c>.
     /// </returns>
-    public override bool Equals(object obj) => obj is AlignmentInfo info && Equals(info);
+    public override bool Equals(object? obj) => obj is AlignmentInfo info && Equals(info);
 
     /// <summary>
     /// Indicates whether the current object is equal to another object of the same type.
@@ -58,12 +58,7 @@ public struct AlignmentInfo : IEquatable<AlignmentInfo>
     /// </returns>
     public override int GetHashCode()
     {
-        int hashCode = 999318856;
-        hashCode = hashCode * -1521134295 + CSharpSize.GetHashCode();
-        hashCode = hashCode * -1521134295 + ShaderSize.GetHashCode();
-        hashCode = hashCode * -1521134295 + CSharpAlignment.GetHashCode();
-        hashCode = hashCode * -1521134295 + ShaderAlignment.GetHashCode();
-        return hashCode;
+        return HashCode.Combine(CSharpSize, ShaderSize, CSharpAlignment, ShaderAlignment);
     }
 
     /// <summary>

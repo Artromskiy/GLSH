@@ -14,9 +14,9 @@ public static class Glsl450KnownFunctions
 
     private static Dictionary<string, TypeInvocationTranslator> GetMappings()
     {
-        Dictionary<string, TypeInvocationTranslator> ret = new Dictionary<string, TypeInvocationTranslator>();
+        Dictionary<string, TypeInvocationTranslator> ret = [];
 
-        Dictionary<string, InvocationTranslator> builtinMappings = new Dictionary<string, InvocationTranslator>()
+        Dictionary<string, InvocationTranslator> builtinMappings = new()
         {
             { nameof(ShaderBuiltins.Abs), SimpleNameTranslator() },
             { nameof(ShaderBuiltins.Acos), SimpleNameTranslator() },
@@ -78,7 +78,7 @@ public static class Glsl450KnownFunctions
         };
         ret.Add("ShaderGen.ShaderBuiltins", new DictionaryTypeInvocationTranslator(builtinMappings));
 
-        Dictionary<string, InvocationTranslator> v2Mappings = new Dictionary<string, InvocationTranslator>()
+        Dictionary<string, InvocationTranslator> v2Mappings = new()
         {
             { ".ctor", VectorCtor },
             { nameof(Vector2.Abs), SimpleNameTranslator() },
@@ -109,7 +109,7 @@ public static class Glsl450KnownFunctions
         };
         ret.Add("System.Numerics.Vector2", new DictionaryTypeInvocationTranslator(v2Mappings));
 
-        Dictionary<string, InvocationTranslator> v3Mappings = new Dictionary<string, InvocationTranslator>()
+        Dictionary<string, InvocationTranslator> v3Mappings = new()
         {
             { ".ctor", VectorCtor },
             { nameof(Vector3.Abs), SimpleNameTranslator() },
@@ -142,7 +142,7 @@ public static class Glsl450KnownFunctions
         };
         ret.Add("System.Numerics.Vector3", new DictionaryTypeInvocationTranslator(v3Mappings));
 
-        Dictionary<string, InvocationTranslator> v4Mappings = new Dictionary<string, InvocationTranslator>()
+        Dictionary<string, InvocationTranslator> v4Mappings = new()
         {
             { ".ctor", VectorCtor },
             { nameof(Vector4.Abs), SimpleNameTranslator() },
@@ -175,20 +175,20 @@ public static class Glsl450KnownFunctions
         };
         ret.Add("System.Numerics.Vector4", new DictionaryTypeInvocationTranslator(v4Mappings));
 
-        Dictionary<string, InvocationTranslator> u2Mappings = new Dictionary<string, InvocationTranslator>()
+        Dictionary<string, InvocationTranslator> u2Mappings = new()
         {
             { ".ctor", VectorCtor },
         };
         ret.Add("ShaderGen.UInt2", new DictionaryTypeInvocationTranslator(u2Mappings));
         ret.Add("ShaderGen.Int2", new DictionaryTypeInvocationTranslator(u2Mappings));
 
-        Dictionary<string, InvocationTranslator> m4x4Mappings = new Dictionary<string, InvocationTranslator>()
+        Dictionary<string, InvocationTranslator> m4x4Mappings = new()
         {
             { ".ctor", MatrixCtor }
         };
         ret.Add("System.Numerics.Matrix4x4", new DictionaryTypeInvocationTranslator(m4x4Mappings));
 
-        Dictionary<string, InvocationTranslator> mathfMappings = new Dictionary<string, InvocationTranslator>()
+        Dictionary<string, InvocationTranslator> mathfMappings = new()
         {
             // TODO Note cannot use nameof as MathF isn't included in this project...
             { "Abs", SimpleNameTranslator() },
@@ -224,7 +224,7 @@ public static class Glsl450KnownFunctions
 
         ret.Add("ShaderGen.ShaderSwizzle", new SwizzleTranslator());
 
-        Dictionary<string, InvocationTranslator> vectorExtensionMappings = new Dictionary<string, InvocationTranslator>()
+        Dictionary<string, InvocationTranslator> vectorExtensionMappings = new()
         {
             { nameof(VectorExtensions.GetComponent), VectorGetComponent },
             { nameof(VectorExtensions.SetComponent), VectorSetComponent },
@@ -459,7 +459,7 @@ public static class Glsl450KnownFunctions
         }
         else
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             for (int i = 0; i < parameters.Length; i++)
             {
                 InvocationParameterInfo ipi = parameters[i];
@@ -636,7 +636,7 @@ public static class Glsl450KnownFunctions
     private static readonly string[] _vectorAccessors = { "x", "y", "z", "w" };
 
     private static readonly HashSet<string> _oneDimensionalTypes =
-        new HashSet<string>(new[]
+        new(new[]
             {
                 "System.Single",
                 "float",

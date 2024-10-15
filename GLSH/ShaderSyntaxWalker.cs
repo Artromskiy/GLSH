@@ -5,19 +5,19 @@ using System.Linq;
 using System;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
-using System.Diagnostics;
 using GLSH.Primitives;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GLSH;
 
 internal class ShaderSyntaxWalker : CSharpSyntaxWalker
 {
-    private readonly StringBuilder _sb = new StringBuilder();
+    private readonly StringBuilder _sb = new();
     private readonly Compilation _compilation;
     private readonly LanguageBackend[] _backends;
     private readonly ShaderSetInfo _shaderSet;
 
-    private readonly Dictionary<int, int> _setCounts = new Dictionary<int, int>();
+    private readonly Dictionary<int, int> _setCounts = [];
 
     public ShaderSyntaxWalker(Compilation compilation, LanguageBackend[] backends, ShaderSetInfo ss)
         : base(SyntaxWalkerDepth.Token)
@@ -63,7 +63,7 @@ internal class ShaderSyntaxWalker : CSharpSyntaxWalker
         int structShaderSize = 0;
         int structCSharpAlignment = 0;
         int structShaderAlignment = 0;
-        List<FieldDefinition> fields = new List<FieldDefinition>();
+        List<FieldDefinition> fields = [];
         foreach (MemberDeclarationSyntax member in node.Members)
         {
             if (member is FieldDeclarationSyntax fds && !fds.Modifiers.Any(x => x.IsKind(SyntaxKind.ConstKeyword)))
@@ -106,7 +106,7 @@ internal class ShaderSyntaxWalker : CSharpSyntaxWalker
                     structShaderSize += fieldSizeAndAlignment.ShaderSize;
                     structShaderAlignment = Math.Max(structShaderAlignment, fieldSizeAndAlignment.ShaderAlignment);
 
-                    TypeReference tr = new TypeReference(typeName, model.GetTypeInfo(varDecl.Type).Type);
+                    TypeReference tr = new(typeName, model.GetTypeInfo(varDecl.Type).Type);
                     SemanticType semanticType = GetSemanticType(vds);
                     fields.Add(new FieldDefinition(fieldName, tr, semanticType, arrayElementCount, fieldSizeAndAlignment));
                 }
@@ -115,7 +115,7 @@ internal class ShaderSyntaxWalker : CSharpSyntaxWalker
 
         sd = new StructureDefinition(
             structName.Trim(),
-            fields.ToArray(),
+            [.. fields],
             new AlignmentInfo(structCSharpSize, structShaderSize, structCSharpAlignment, structShaderAlignment));
         return true;
     }
@@ -237,7 +237,7 @@ internal class ShaderSyntaxWalker : CSharpSyntaxWalker
         string resourceName = vds.Identifier.Text;
         TypeInfo typeInfo = GetModel(node).GetTypeInfo(node.Type);
         string fullTypeName = GetModel(node).GetFullTypeName(node.Type);
-        TypeReference valueType = new TypeReference(fullTypeName, typeInfo.Type);
+        TypeReference valueType = new(fullTypeName, typeInfo.Type);
         ShaderResourceKind kind = ClassifyResourceKind(fullTypeName);
 
         if (kind == ShaderResourceKind.StructuredBuffer
@@ -255,7 +255,7 @@ internal class ShaderSyntaxWalker : CSharpSyntaxWalker
 
         int resourceBinding = GetAndIncrementBinding(set);
 
-        ResourceDefinition rd = new ResourceDefinition(resourceName, set, resourceBinding, valueType, kind);
+        ResourceDefinition rd = new(resourceName, set, resourceBinding, valueType, kind);
         if (kind == ShaderResourceKind.Uniform)
         {
             ValidateUniformType(typeInfo);
@@ -369,7 +369,7 @@ internal class ShaderSyntaxWalker : CSharpSyntaxWalker
     }
 
 
-    private bool GetResourceDecl(VariableDeclarationSyntax node, out AttributeSyntax attr)
+    private bool GetResourceDecl(VariableDeclarationSyntax node, [NotNullWhen(true)] out AttributeSyntax? attr)
     {
         attr = node.Parent.DescendantNodes().OfType<AttributeSyntax>().FirstOrDefault(
             attrSyntax => attrSyntax.ToString().Contains("Resource"));

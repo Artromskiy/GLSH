@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
@@ -10,7 +11,7 @@ internal class SwizzleTranslator : TypeInvocationTranslator
     public override bool GetTranslator(
         string method,
         InvocationParameterInfo[] parameters,
-        out InvocationTranslator translator)
+        [NotNullWhen(true)] out InvocationTranslator? translator)
     {
         if (parameters.Length != 1 || method.Length < 2 || method.Length > 4 ||
             method.Any(c => c != 'X' && c != 'Y' && c != 'Z' && c != 'W'))
@@ -26,12 +27,12 @@ internal class SwizzleTranslator : TypeInvocationTranslator
     private static string TranslateCore(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
         string target = parameters[0].Identifier;
-        StringBuilder swizzle = new StringBuilder();
+        StringBuilder swizzle = new();
         foreach (char c in methodName)
         {
             swizzle.Append(char.ToLowerInvariant(c));
         }
 
-        return $"{target}.{swizzle.ToString()}";
+        return $"{target}.{swizzle}";
     }
 }
