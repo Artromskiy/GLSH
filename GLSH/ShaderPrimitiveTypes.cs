@@ -8,10 +8,10 @@ internal static class ShaderPrimitiveTypes
 {
     private static readonly HashSet<string> s_primitiveTypes =
     [
-        typeof(Single).FullName!,
-        typeof(Boolean).FullName!,
-        typeof(UInt32).FullName!,
-        typeof(Int32).FullName!,
+        typeof(float).FullName!,
+        typeof(bool).FullName!,
+        typeof(uint).FullName!,
+        typeof(int).FullName!,
         typeof(Vector2).FullName!,
         typeof(Vector3).FullName!,
         typeof(Vector4).FullName!,

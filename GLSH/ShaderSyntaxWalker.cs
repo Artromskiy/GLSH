@@ -12,7 +12,6 @@ namespace GLSH;
 
 internal class ShaderSyntaxWalker : CSharpSyntaxWalker
 {
-    private readonly StringBuilder _sb = new();
     private readonly Compilation _compilation;
     private readonly LanguageBackend[] _backends;
     private readonly ShaderSetInfo _shaderSet;

@@ -9,15 +9,15 @@ internal static class GlslKnownTypes
 {
     private static readonly Dictionary<string, string> s_knownTypesShared = new()
     {
-        { typeof(UInt32).FullName!, "uint" },
-        { typeof(Int32).FullName!, "int" },
-        { typeof(Single).FullName!, "float" },
+        { typeof(uint).FullName!, "uint" },
+        { typeof(int).FullName!, "int" },
+        { typeof(float).FullName!, "float" },
         { typeof(Vector2).FullName!, "vec2" },
         { typeof(Vector3).FullName!, "vec3" },
         { typeof(Vector4).FullName!, "vec4" },
         { typeof(Matrix4x4).FullName!, "mat4" },
         { typeof(void).FullName!, "void" },
-        { typeof(Boolean).FullName!, "bool" },
+        { typeof(bool).FullName!, "bool" },
         { typeof(UInt2).FullName!, "uvec2" },
         { typeof(UInt3).FullName!, "uvec3" },
         { typeof(UInt4).FullName!, "uvec4" },

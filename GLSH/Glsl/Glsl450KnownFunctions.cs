@@ -565,7 +565,7 @@ public static class Glsl450KnownFunctions
     private static string CubeRoot(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
         string pType = parameters[0].FullTypeName;
-        if (pType == typeof(Single).FullName! || pType == "float") // TODO Why are we getting float?
+        if (pType == typeof(float).FullName! || pType == "float") // TODO Why are we getting float?
         {
             return $"pow({parameters[0].Identifier}, 0.333333333333333)";
         }
@@ -626,7 +626,7 @@ public static class Glsl450KnownFunctions
     {
         // D3D & Vulkan return Max when max < min, but OpenGL returns Min, so we need
         // to correct by returning Max when max < min.
-        bool isFloat = parameters[1].FullTypeName == typeof(Single).FullName! || parameters[1].FullTypeName == "float";
+        bool isFloat = parameters[1].FullTypeName == typeof(float).FullName! || parameters[1].FullTypeName == "float";
         string p0 = $"{parameters[0].Identifier}`";
         string p1 = $"{parameters[1].Identifier}{(isFloat ? string.Empty : "`")}";
         return AddCheck(parameters[0].FullTypeName,
@@ -638,11 +638,11 @@ public static class Glsl450KnownFunctions
     private static readonly HashSet<string> _oneDimensionalTypes =
         new(new[]
             {
-                typeof(Single).FullName!,
+                typeof(float).FullName!,
                 "float",
-                typeof(Int32).FullName!,
+                typeof(int).FullName!,
                 "int",
-                typeof(UInt32).FullName!,
+                typeof(uint).FullName!,
                 "uint"
             },
             StringComparer.InvariantCultureIgnoreCase);

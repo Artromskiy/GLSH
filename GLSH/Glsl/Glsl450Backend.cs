@@ -149,7 +149,7 @@ public class Glsl450Backend : GlslBackendBase
 
         if (rd.ValueType.Name == typeof(Vector4).FullName)
             layoutType = "rgba32f";
-        else if (rd.ValueType.Name == typeof(Single).FullName!)
+        else if (rd.ValueType.Name == typeof(float).FullName!)
             layoutType = "r32f";
         else
             throw new ShaderGenerationException($"Invalid RWTexture2D type. T must be Vector4 or float.");

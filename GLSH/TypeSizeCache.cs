@@ -13,16 +13,16 @@ public static class TypeSizeCache
 {
     private static readonly IReadOnlyDictionary<string, int> s_knownSizes = new Dictionary<string, int>()
     {
-        { typeof(Byte).FullName!, 1 },
-        { typeof(SByte).FullName!, 1 },
-        { typeof(UInt16).FullName!, 2 },
-        { typeof(Int16).FullName!, 2 },
-        { typeof(UInt32).FullName!, 4 },
-        { typeof(Int32).FullName!, 4 },
-        { typeof(UInt64).FullName!, 8 },
-        { typeof(Int64).FullName!, 8 },
-        { typeof(Single).FullName!, 4 },
-        { typeof(Double).FullName!, 8 },
+        { typeof(byte).FullName!, 1 },
+        { typeof(sbyte).FullName!, 1 },
+        { typeof(ushort).FullName!, 2 },
+        { typeof(short).FullName!, 2 },
+        { typeof(uint).FullName!, 4 },
+        { typeof(int).FullName!, 4 },
+        { typeof(ulong).FullName!, 8 },
+        { typeof(long).FullName!, 8 },
+        { typeof(float).FullName!, 4 },
+        { typeof(double).FullName!, 8 },
     };
 
     private static readonly IReadOnlyDictionary<string, int> s_shaderAlignments = new Dictionary<string, int>()

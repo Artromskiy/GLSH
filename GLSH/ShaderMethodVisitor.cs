@@ -175,7 +175,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         StringBuilder sb = new();
         sb.AppendLine("{");
 
-        string expressionResult = Visit(node.Expression);
+        string? expressionResult = Visit(node.Expression);
         if (string.IsNullOrEmpty(expressionResult))
         {
             throw new NotImplementedException($"{node.Expression.GetType()} expressions are not implemented.");

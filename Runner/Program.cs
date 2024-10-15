@@ -1,6 +1,5 @@
 ﻿using GLSH;
 using GLSH.Glsl;
-using GLSH.Primitives;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;

@@ -7,7 +7,7 @@ public static class BuiltinTypes
 {
     private static readonly HashSet<string> s_builtins =
     [
-        typeof(Single).FullName!,
+        typeof(float).FullName!,
         typeof(Vector2).FullName!,
         typeof(Vector3).FullName!,
         typeof(Vector4).FullName!,
