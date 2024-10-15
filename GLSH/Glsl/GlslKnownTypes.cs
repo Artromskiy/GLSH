@@ -1,4 +1,7 @@
+using GLSH.Primitives;
 using System.Collections.Generic;
+using System.Numerics;
+using System;
 
 namespace GLSH.Glsl;
 
@@ -6,44 +9,44 @@ internal static class GlslKnownTypes
 {
     private static readonly Dictionary<string, string> s_knownTypesShared = new()
     {
-        { "System.UInt32", "uint" },
-        { "System.Int32", "int" },
-        { "System.Single", "float" },
-        { "System.Numerics.Vector2", "vec2" },
-        { "System.Numerics.Vector3", "vec3" },
-        { "System.Numerics.Vector4", "vec4" },
-        { "System.Numerics.Matrix4x4", "mat4" },
-        { "System.Void", "void" },
-        { "System.Boolean", "bool" },
-        { "ShaderGen.UInt2", "uvec2" },
-        { "ShaderGen.UInt3", "uvec3" },
-        { "ShaderGen.UInt4", "uvec4" },
-        { "ShaderGen.Int2", "ivec2" },
-        { "ShaderGen.Int3", "ivec3" },
-        { "ShaderGen.Int4", "ivec4" },
+        { typeof(UInt32).FullName!, "uint" },
+        { typeof(Int32).FullName!, "int" },
+        { typeof(Single).FullName!, "float" },
+        { typeof(Vector2).FullName!, "vec2" },
+        { typeof(Vector3).FullName!, "vec3" },
+        { typeof(Vector4).FullName!, "vec4" },
+        { typeof(Matrix4x4).FullName!, "mat4" },
+        { typeof(void).FullName!, "void" },
+        { typeof(Boolean).FullName!, "bool" },
+        { typeof(UInt2).FullName!, "uvec2" },
+        { typeof(UInt3).FullName!, "uvec3" },
+        { typeof(UInt4).FullName!, "uvec4" },
+        { typeof(Int2).FullName!, "ivec2" },
+        { typeof(Int3).FullName!, "ivec3" },
+        { typeof(Int4).FullName!, "ivec4" },
 
     };
 
     private static readonly Dictionary<string, string> s_knownTypesGL = new()
     {
-        { "ShaderGen.Texture2DResource", "sampler2D" },
-        { "ShaderGen.Texture2DArrayResource", "sampler2DArray" },
-        { "ShaderGen.TextureCubeResource", "samplerCube" },
-        { "ShaderGen.DepthTexture2DResource", "sampler2DShadow" },
-        { "ShaderGen.DepthTexture2DArrayResource", "sampler2DArrayShadow" },
-        { "ShaderGen.SamplerResource", "SamplerDummy" },
-        { "ShaderGen.SamplerComparisonResource", "SamplerComparisonDummy" },
+        { typeof(Texture2DResource).FullName!, "sampler2D" },
+        { typeof(Texture2DArrayResource).FullName!, "sampler2DArray" },
+        { typeof(TextureCubeResource).FullName!, "samplerCube" },
+        { typeof(DepthTexture2DResource).FullName!, "sampler2DShadow" },
+        { typeof(DepthTexture2DArrayResource).FullName!, "sampler2DArrayShadow" },
+        { typeof(SamplerResource).FullName!, "SamplerDummy" },
+        { typeof(SamplerComparisonResource).FullName!, "SamplerComparisonDummy" },
     };
 
     private static readonly Dictionary<string, string> s_knownTypesVulkan = new()
     {
-        { "ShaderGen.Texture2DResource", "texture2D" },
-        { "ShaderGen.Texture2DArrayResource", "texture2DArray" },
-        { "ShaderGen.TextureCubeResource", "textureCube" },
-        { "ShaderGen.DepthTexture2DResource", "texture2D" },
-        { "ShaderGen.DepthTexture2DArrayResource", "texture2DArray" },
-        { "ShaderGen.SamplerResource", "sampler" },
-        { "ShaderGen.SamplerComparisonResource", "samplerShadow" },
+        { typeof(Texture2DResource).FullName!, "texture2D" },
+        { typeof(Texture2DArrayResource).FullName!, "texture2DArray" },
+        { typeof(TextureCubeResource).FullName!, "textureCube" },
+        { typeof(DepthTexture2DResource).FullName!, "texture2D" },
+        { typeof(DepthTexture2DArrayResource).FullName!, "texture2DArray" },
+        { typeof(SamplerResource).FullName!, "sampler" },
+        { typeof(SamplerComparisonResource).FullName!, "samplerShadow" },
     };
 
 

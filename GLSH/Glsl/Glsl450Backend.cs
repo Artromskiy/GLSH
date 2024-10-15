@@ -1,6 +1,8 @@
 using GLSH.Primitives;
+using System;
 using Microsoft.CodeAnalysis;
 using System.Diagnostics;
+using System.Numerics;
 using System.Text;
 
 namespace GLSH.Glsl;
@@ -144,16 +146,14 @@ public class Glsl450Backend : GlslBackendBase
     protected override void WriteRWTexture2D(StringBuilder sb, ResourceDefinition rd, int index)
     {
         string layoutType;
-        switch (rd.ValueType.Name)
-        {
-            case "System.Numerics.Vector4":
-                layoutType = "rgba32f";
-                break;
-            case "System.Single":
-                layoutType = "r32f";
-                break;
-            default: throw new ShaderGenerationException($"Invalid RWTexture2D type. T must be Vector4 or float.");
-        }
+
+        if (rd.ValueType.Name == typeof(Vector4).FullName)
+            layoutType = "rgba32f";
+        else if (rd.ValueType.Name == typeof(Single).FullName!)
+            layoutType = "r32f";
+        else
+            throw new ShaderGenerationException($"Invalid RWTexture2D type. T must be Vector4 or float.");
+        
         sb.Append(FormatLayoutStr(rd, layoutType));
         sb.Append(' ');
         sb.Append("uniform image2D ");

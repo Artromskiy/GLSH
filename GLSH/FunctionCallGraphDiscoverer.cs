@@ -165,7 +165,7 @@ internal class FunctionCallGraphDiscoverer
                 }
                 if (symbol == null)
                 {
-                    throw new ShaderGenerationException($"A member reference could not be identified: {node.Expression}");
+                    throw new ShaderGenerationException($"A member reference could not be identified: {node.Expression}", node);
                 }
 
                 string containingType = symbol.ContainingType.ToDisplayString();

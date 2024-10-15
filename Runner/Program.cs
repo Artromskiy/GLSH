@@ -1,5 +1,6 @@
 ﻿using GLSH;
 using GLSH.Glsl;
+using GLSH.Primitives;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -13,17 +14,9 @@ namespace Runner;
 
 internal static class Program
 {
-    private const string Underscore = "_";
     private const string CsSearch = "*.cs";
-    private const string dllExt = ".dll";
-    private const string pdbExt = ".pdb";
     private const string Scripts = "Scripts";
-    private const string ScriptsPathSuffix = Underscore + Scripts + dllExt;
 
-    private static readonly string DllsDirectory = string.Empty;
-    private static readonly string ScriptsDirectory = string.Empty;
-    private static string RandomScriptsDllName => Path.Combine(DllsDirectory, Path.GetRandomFileName() + ScriptsPathSuffix);
-    private static string RandomPdbName => Path.Combine(DllsDirectory, Path.GetRandomFileName() + pdbExt);
 
     private static readonly CSharpParseOptions _parseOptions = new(LanguageVersion.CSharp12);
     private static readonly CSharpCompilationOptions _compilationOptions = new
@@ -41,7 +34,7 @@ internal static class Program
     {
         Compilation compilation = CompileScripts();
         Glsl450Backend glsl450 = new(compilation);
-
+        
         ShaderGenerator sg = new(compilation, [glsl450]);
         ShaderGenerationResult shaderGenResult;
         try
@@ -64,8 +57,10 @@ internal static class Program
 
     public static Compilation CompileScripts()
     {
-        string absPah = "C:\\Users\\FLOW\\Documents\\GitHub\\GLSH\\Runner";
-        var sourceFiles = Directory.EnumerateFiles(absPah, CsSearch, SearchOption.AllDirectories);
+        string shaderCode = "C:\\Users\\FLOW\\Documents\\GitHub\\GLSH\\Runner";
+        string libCode = "C:\\Users\\FLOW\\Documents\\GitHub\\GLSH\\Primitives";
+        var sourceFiles = Directory.EnumerateFiles(shaderCode, CsSearch, SearchOption.AllDirectories);
+        sourceFiles = sourceFiles.Concat(Directory.EnumerateFiles(libCode, CsSearch, SearchOption.AllDirectories).Where(f=> !f.Contains(nameof(ShaderBuiltinException))));
         var trees = sourceFiles.Select(x =>
         {
             using var stream = File.OpenRead(x);

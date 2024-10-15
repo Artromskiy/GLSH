@@ -1,4 +1,5 @@
 using GLSH.Primitives;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 
@@ -18,14 +19,14 @@ public static class GlslKnownIdentifiers
             { nameof(ShaderBuiltins.PI), "3.14159265358979" },
             { nameof(ShaderBuiltins.DegreesPerRadian), "57.2957795130823" }
         };
-        ret.Add("ShaderGen.ShaderBuiltins", builtinMappings);
+        ret.Add(typeof(ShaderBuiltins).FullName!, builtinMappings);
 
         Dictionary<string, string> v2Mappings = new()
         {
             { nameof(Vector2.X), "x" },
             { nameof(Vector2.Y), "y" },
         };
-        ret.Add("System.Numerics.Vector2", v2Mappings);
+        ret.Add(typeof(Vector2).FullName!, v2Mappings);
 
         Dictionary<string, string> v3Mappings = new()
         {
@@ -33,7 +34,7 @@ public static class GlslKnownIdentifiers
             { nameof(Vector3.Y), "y" },
             { nameof(Vector3.Z), "z" },
         };
-        ret.Add("System.Numerics.Vector3", v3Mappings);
+        ret.Add(typeof(Vector3).FullName!, v3Mappings);
 
         Dictionary<string, string> v4Mappings = new()
         {
@@ -42,7 +43,7 @@ public static class GlslKnownIdentifiers
             { nameof(Vector4.Z), "z" },
             { nameof(Vector4.W), "w" },
         };
-        ret.Add("System.Numerics.Vector4", v4Mappings);
+        ret.Add(typeof(Vector4).FullName!, v4Mappings);
 
         Dictionary<string, string> m4x4Mappings = new()
         {
@@ -63,14 +64,14 @@ public static class GlslKnownIdentifiers
             { nameof(Matrix4x4.M43), "[2][3]" },
             { nameof(Matrix4x4.M44), "[3][3]" },
         };
-        ret.Add("System.Numerics.Matrix4x4", m4x4Mappings);
+        ret.Add(typeof(Matrix4x4).FullName!, m4x4Mappings);
 
         Dictionary<string, string> uint2Mappings = new()
         {
             { nameof(UInt2.X), "x" },
             { nameof(UInt2.Y), "y" },
         };
-        ret.Add("ShaderGen.UInt2", uint2Mappings);
+        ret.Add(typeof(UInt2).FullName!, uint2Mappings);
 
         Dictionary<string, string> uint3Mappings = new()
         {
@@ -78,7 +79,7 @@ public static class GlslKnownIdentifiers
             { nameof(UInt3.Y), "y" },
             { nameof(UInt3.Z), "z" },
         };
-        ret.Add("ShaderGen.UInt3", uint3Mappings);
+        ret.Add(typeof(UInt3).FullName!, uint3Mappings);
 
         Dictionary<string, string> uint4Mappings = new()
         {
@@ -87,14 +88,14 @@ public static class GlslKnownIdentifiers
             { nameof(UInt4.Z), "z" },
             { nameof(UInt4.W), "w" },
         };
-        ret.Add("ShaderGen.UInt4", uint4Mappings);
+        ret.Add(typeof(UInt4).FullName!, uint4Mappings);
 
         Dictionary<string, string> int2Mappings = new()
         {
             { nameof(Int2.X), "x" },
             { nameof(Int2.Y), "y" },
         };
-        ret.Add("ShaderGen.Int2", int2Mappings);
+        ret.Add(typeof(Int2).FullName!, int2Mappings);
 
         Dictionary<string, string> int3Mappings = new()
         {
@@ -102,7 +103,7 @@ public static class GlslKnownIdentifiers
             { nameof(Int3.Y), "y" },
             { nameof(Int3.Z), "z" },
         };
-        ret.Add("ShaderGen.Int3", int3Mappings);
+        ret.Add(typeof(Int3).FullName!, int3Mappings);
 
         Dictionary<string, string> int4Mappings = new()
         {
@@ -111,7 +112,7 @@ public static class GlslKnownIdentifiers
             { nameof(Int4.Z), "z" },
             { nameof(Int4.W), "w" }
         };
-        ret.Add("ShaderGen.Int4", int4Mappings);
+        ret.Add(typeof(Int4).FullName!, int4Mappings);
 
         Dictionary<string, string> mathfMappings = new()
         {
@@ -119,7 +120,7 @@ public static class GlslKnownIdentifiers
             { "E", "2.71828182845905" },
             { "PI", "3.14159265358979" }
         };
-        ret.Add("System.MathF", mathfMappings);
+        ret.Add(typeof(MathF).FullName!, mathfMappings);
 
         return ret;
     }

@@ -313,7 +313,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
             string type = symbolInfo.Symbol.ContainingType.ToDisplayString();
             string method = symbolInfo.Symbol.Name;
 
-            if (type == "ShaderGen.ShaderBuiltins")
+            if (type == typeof(ShaderBuiltins).FullName)
             {
                 ProcessBuiltInMethodInvocation(method, node);
             }
@@ -361,7 +361,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
                     });
                 }
 
-                if (containingType == "ShaderGen.ShaderBuiltins")
+                if (containingType == typeof(ShaderBuiltins).FullName)
                 {
                     ProcessBuiltInMethodInvocation(methodName, node);
                 }
@@ -475,7 +475,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
             return GetDiscardedVariableName(symbol);
         }
         string containingTypeName = Utilities.GetFullName(symbol.ContainingType);
-        if (containingTypeName == "ShaderGen.ShaderBuiltins")
+        if (containingTypeName == typeof(ShaderBuiltins).FullName)
         {
             TryRecognizeBuiltInVariable(symbolInfo);
         }

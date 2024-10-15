@@ -76,7 +76,7 @@ public static class Glsl450KnownFunctions
             { nameof(ShaderBuiltins.Truncate), SimpleNameTranslator("trunc") },
             { nameof(ShaderBuiltins.VertexID), VertexID }
         };
-        ret.Add("ShaderGen.ShaderBuiltins", new DictionaryTypeInvocationTranslator(builtinMappings));
+        ret.Add(typeof(ShaderBuiltins).FullName!, new DictionaryTypeInvocationTranslator(builtinMappings));
 
         Dictionary<string, InvocationTranslator> v2Mappings = new()
         {
@@ -107,7 +107,7 @@ public static class Glsl450KnownFunctions
             { nameof(Vector2.UnitY), VectorStaticAccessor },
             { nameof(Vector2.Transform), Vector2Transform }
         };
-        ret.Add("System.Numerics.Vector2", new DictionaryTypeInvocationTranslator(v2Mappings));
+        ret.Add(typeof(Vector2).FullName!, new DictionaryTypeInvocationTranslator(v2Mappings));
 
         Dictionary<string, InvocationTranslator> v3Mappings = new()
         {
@@ -140,7 +140,7 @@ public static class Glsl450KnownFunctions
             { nameof(Vector3.UnitZ), VectorStaticAccessor },
             { nameof(Vector3.Transform), Vector3Transform }
         };
-        ret.Add("System.Numerics.Vector3", new DictionaryTypeInvocationTranslator(v3Mappings));
+        ret.Add(typeof(Vector3).FullName!, new DictionaryTypeInvocationTranslator(v3Mappings));
 
         Dictionary<string, InvocationTranslator> v4Mappings = new()
         {
@@ -173,7 +173,7 @@ public static class Glsl450KnownFunctions
             { nameof(Vector4.UnitW), VectorStaticAccessor },
             { nameof(Vector4.Transform), Vector4Transform }
         };
-        ret.Add("System.Numerics.Vector4", new DictionaryTypeInvocationTranslator(v4Mappings));
+        ret.Add(typeof(Vector4).FullName!, new DictionaryTypeInvocationTranslator(v4Mappings));
 
         Dictionary<string, InvocationTranslator> u2Mappings = new()
         {
@@ -186,7 +186,7 @@ public static class Glsl450KnownFunctions
         {
             { ".ctor", MatrixCtor }
         };
-        ret.Add("System.Numerics.Matrix4x4", new DictionaryTypeInvocationTranslator(m4x4Mappings));
+        ret.Add(typeof(Matrix4x4).FullName!, new DictionaryTypeInvocationTranslator(m4x4Mappings));
 
         Dictionary<string, InvocationTranslator> mathfMappings = new()
         {
@@ -220,16 +220,16 @@ public static class Glsl450KnownFunctions
             { "Tanh", SimpleNameTranslator() },
             { "Truncate", SimpleNameTranslator() }
         };
-        ret.Add("System.MathF", new DictionaryTypeInvocationTranslator(mathfMappings));
+        ret.Add(typeof(MathF).FullName!, new DictionaryTypeInvocationTranslator(mathfMappings));
 
-        ret.Add("ShaderGen.ShaderSwizzle", new SwizzleTranslator());
+        ret.Add(typeof(ShaderSwizzle).FullName!, new SwizzleTranslator());
 
         Dictionary<string, InvocationTranslator> vectorExtensionMappings = new()
         {
             { nameof(VectorExtensions.GetComponent), VectorGetComponent },
             { nameof(VectorExtensions.SetComponent), VectorSetComponent },
         };
-        ret.Add("ShaderGen.VectorExtensions", new DictionaryTypeInvocationTranslator(vectorExtensionMappings));
+        ret.Add(typeof(VectorExtensions).FullName!, new DictionaryTypeInvocationTranslator(vectorExtensionMappings));
 
         return ret;
     }
@@ -342,11 +342,11 @@ public static class Glsl450KnownFunctions
 
     private static string SampleComparisonLevelZero(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        if (parameters[0].FullTypeName == "ShaderGen.DepthTexture2DResource")
+        if (parameters[0].FullTypeName == typeof(DepthTexture2DResource).FullName!)
         {
             return $"textureLod(sampler2DShadow({parameters[0].Identifier}, {parameters[1].Identifier}), vec3({parameters[2].Identifier}, {parameters[3].Identifier}), 0.0)";
         }
-        else if (parameters[0].FullTypeName == "ShaderGen.DepthTexture2DArrayResource")
+        else if (parameters[0].FullTypeName == typeof(DepthTexture2DArrayResource).FullName!)
         {
             // See https://github.com/KhronosGroup/SPIRV-Cross/issues/207 for why we need to use textureGrad here instead of textureLod.
             return $"textureGrad(sampler2DArrayShadow({parameters[0].Identifier}, {parameters[1].Identifier}), vec4({parameters[2].Identifier}, {parameters[3].Identifier}, {parameters[4].Identifier}), vec2(0.0), vec2(0.0))";
@@ -370,7 +370,7 @@ public static class Glsl450KnownFunctions
                 return $"imageLoad({parameters[0].Identifier}, ivec2({parameters[1].Identifier}))";
             }
         }
-        else if (parameters[0].FullTypeName == "ShaderGen.Texture2DResource")
+        else if (parameters[0].FullTypeName == typeof(Texture2DResource).FullName!)
         {
             return $"texelFetch(sampler2D({parameters[0].Identifier}, {parameters[1].Identifier}), ivec2({parameters[2].Identifier}), {parameters[3].Identifier})";
         }
@@ -536,11 +536,11 @@ public static class Glsl450KnownFunctions
     private static string Vector4Transform(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
         string vecParam;
-        if (parameters[0].FullTypeName == "System.Numerics.Vector2")
+        if (parameters[0].FullTypeName == typeof(Vector2).FullName!)
         {
             vecParam = $"vec4({parameters[0].Identifier}, 0, 1)";
         }
-        else if (parameters[0].FullTypeName == "System.Numerics.Vector3")
+        else if (parameters[0].FullTypeName == typeof(Vector3).FullName!)
         {
             vecParam = $"vec4({parameters[0].Identifier}, 1)";
         }
@@ -554,18 +554,18 @@ public static class Glsl450KnownFunctions
 
     private static void GetVectorTypeInfo(string name, out string shaderType, out int elementCount)
     {
-        if (name == "System.Numerics.Vector2") { shaderType = "vec2"; elementCount = 2; }
-        else if (name == "System.Numerics.Vector3") { shaderType = "vec3"; elementCount = 3; }
-        else if (name == "System.Numerics.Vector4") { shaderType = "vec4"; elementCount = 4; }
-        else if (name == "ShaderGen.Int2") { shaderType = "ivec2"; elementCount = 2; }
-        else if (name == "ShaderGen.UInt2") { shaderType = "uvec2"; elementCount = 2; }
+        if (name == typeof(Vector2).FullName!) { shaderType = "vec2"; elementCount = 2; }
+        else if (name == typeof(Vector3).FullName!) { shaderType = "vec3"; elementCount = 3; }
+        else if (name == typeof(Vector4).FullName!) { shaderType = "vec4"; elementCount = 4; }
+        else if (name == typeof(Int2).FullName!) { shaderType = "ivec2"; elementCount = 2; }
+        else if (name == typeof(UInt2).FullName!) { shaderType = "uvec2"; elementCount = 2; }
         else { throw new ShaderGenerationException("VectorCtor translator was called on an invalid type: " + name); }
     }
 
     private static string CubeRoot(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
         string pType = parameters[0].FullTypeName;
-        if (pType == "System.Single" || pType == "float") // TODO Why are we getting float?
+        if (pType == typeof(Single).FullName! || pType == "float") // TODO Why are we getting float?
         {
             return $"pow({parameters[0].Identifier}, 0.333333333333333)";
         }
@@ -626,7 +626,7 @@ public static class Glsl450KnownFunctions
     {
         // D3D & Vulkan return Max when max < min, but OpenGL returns Min, so we need
         // to correct by returning Max when max < min.
-        bool isFloat = parameters[1].FullTypeName == "System.Single" || parameters[1].FullTypeName == "float";
+        bool isFloat = parameters[1].FullTypeName == typeof(Single).FullName! || parameters[1].FullTypeName == "float";
         string p0 = $"{parameters[0].Identifier}`";
         string p1 = $"{parameters[1].Identifier}{(isFloat ? string.Empty : "`")}";
         return AddCheck(parameters[0].FullTypeName,
@@ -638,11 +638,11 @@ public static class Glsl450KnownFunctions
     private static readonly HashSet<string> _oneDimensionalTypes =
         new(new[]
             {
-                "System.Single",
+                typeof(Single).FullName!,
                 "float",
-                "System.Int32",
+                typeof(Int32).FullName!,
                 "int",
-                "System.UInt32",
+                typeof(UInt32).FullName!,
                 "uint"
             },
             StringComparer.InvariantCultureIgnoreCase);

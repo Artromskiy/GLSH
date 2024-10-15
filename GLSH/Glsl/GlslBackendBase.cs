@@ -1,10 +1,10 @@
-using System;
+using GLSH.Primitives;
+using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Text;
-using GLSH.Primitives;
-using Microsoft.CodeAnalysis;
 
 namespace GLSH.Glsl;
 
@@ -143,15 +143,15 @@ public abstract class GlslBackendBase : LanguageBackend
 
     private void WriteMainFunction(string setName, StringBuilder sb, ShaderFunction entryFunction)
     {
-        ParameterDefinition input = entryFunction.Parameters.Length > 0
+        ParameterDefinition? input = entryFunction.Parameters.Length > 0
             ? entryFunction.Parameters[0]
             : null;
-        StructureDefinition inputType = input != null
+        StructureDefinition? inputType = input != null
             ? GetRequiredStructureType(setName, input.Type)
             : null;
-        StructureDefinition outputType =
-            entryFunction.ReturnType.Name != "System.Numerics.Vector4"
-            && entryFunction.ReturnType.Name != "System.Void"
+        StructureDefinition? outputType =
+            entryFunction.ReturnType.Name != typeof(Vector4).FullName!
+            && entryFunction.ReturnType.Name != typeof(void).FullName!
                 ? GetRequiredStructureType(setName, entryFunction.ReturnType)
                 : null;
 
@@ -225,7 +225,7 @@ public abstract class GlslBackendBase : LanguageBackend
                 foreach (FieldDefinition field in outputType.Fields)
                 {
                     Debug.Assert(field.SemanticType == SemanticType.ColorTarget);
-                    Debug.Assert(field.Type.Name == "System.Numerics.Vector4");
+                    Debug.Assert(field.Type.Name == typeof(Vector4).FullName!);
                     int index = colorTargetIndex++;
                     sb.AppendLine($"    layout(location = {index}) out vec4 _outputColor_{index};");
                 }
