@@ -1,3 +1,5 @@
+using GLSH.Primitives;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Generic;
@@ -8,24 +10,32 @@ internal class ShaderSetDiscoverer : CSharpSyntaxWalker
 {
     private readonly HashSet<string> _discoveredNames = [];
     private readonly List<ShaderSetInfo> _shaderSets = [];
+    public Compilation? compilation;
+
+    private const int AttributeLength = 9;
+    private static readonly string ShaderSetName = nameof(ShaderSetAttribute)[..^AttributeLength];
+    private static readonly string ComputeShaderSet = nameof(ComputeShaderSetAttribute)[..^AttributeLength];
+
     public override void VisitAttribute(AttributeSyntax node)
     {
+        var nodeName = node.Name.ToFullString();
         // TODO: Only look at assembly-level attributes.
-        if (node.Name.ToFullString().Contains("ComputeShaderSet"))
+        if (nodeName == ComputeShaderSet)
         {
-            string? name = GetStringParam(node, 0);
-            string? cs = GetStringParam(node, 1);
+            var data = AttributeFactory.CreateFromNode<ComputeShaderSetAttribute>(node, compilation);
+            string? name = data.setName;
+            string? cs = data.entryPointName;
             if (!TypeAndMethodName.Get(cs, out TypeAndMethodName csName))
             {
                 throw new ShaderGenerationException("ComputeShaderSetAttribute has an incomplete or invalid compute shader name.");
             }
-
             _shaderSets.Add(new ShaderSetInfo(name, csName));
         }
-        else if (node.Name.ToFullString().Contains("ShaderSet"))
+        else if (nodeName == ShaderSetName)
         {
-            string? name = GetStringParam(node, 0);
-            string? vs = GetStringParam(node, 1);
+            var data = AttributeFactory.CreateFromNode<ShaderSetAttribute>(node, compilation);
+            string? name = data.Name;
+            string? vs = data.VertexShader;
             TypeAndMethodName? vsName = null;
 
             if (vs != null && !TypeAndMethodName.Get(vs, out vsName))
@@ -34,7 +44,7 @@ internal class ShaderSetDiscoverer : CSharpSyntaxWalker
             }
 
             TypeAndMethodName? fsName = null;
-            string? fs = GetStringParam(node, 2);
+            string? fs = data.FragmentShader;
             if (fs != null && !TypeAndMethodName.Get(fs, out fsName))
             {
                 throw new ShaderGenerationException("ShaderSetAttribute has an incomplete or invalid fragment shader name.");
@@ -59,7 +69,8 @@ internal class ShaderSetDiscoverer : CSharpSyntaxWalker
 
     private string? GetStringParam(AttributeSyntax node, int index)
     {
-        string text = node.ArgumentList.Arguments[index].ToFullString();
+        var args = node.ArgumentList.Arguments[index];
+        string text = args.ToFullString();
         if (text == "null")
         {
             return null;

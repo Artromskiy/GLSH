@@ -11,7 +11,7 @@ internal class TypeAndMethodName : IEquatable<TypeAndMethodName>
 
     public static bool Get(string fullName, out TypeAndMethodName typeAndMethodName)
     {
-        string[] parts = fullName.Split(new[] { '.' });
+        string[] parts = fullName.Split('.');
         if (parts.Length < 2)
         {
             typeAndMethodName = default;

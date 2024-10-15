@@ -1,3 +1,4 @@
+using GLSH.Primitives;
 using Microsoft.CodeAnalysis;
 using System.Diagnostics;
 using System.Text;
@@ -40,9 +41,9 @@ public class Glsl450Backend : GlslBackendBase
     protected override void WriteStructuredBuffer(StringBuilder sb, ResourceDefinition rd, bool isReadOnly, int index)
     {
         string valueType = rd.ValueType.Name;
-        string type = valueType == "ShaderGen.AtomicBufferUInt32"
+        string type = valueType == typeof(AtomicBufferUInt32).FullName
             ? "uint"
-            : valueType == "ShaderGen.AtomicBufferInt32"
+            : valueType == typeof(AtomicBufferInt32).FullName
                 ? "int"
                 : CSharpToShaderType(rd.ValueType.Name);
         string layout = FormatLayoutStr(rd, "std430");

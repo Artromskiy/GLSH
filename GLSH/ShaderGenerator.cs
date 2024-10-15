@@ -59,6 +59,7 @@ public partial class ShaderGenerator
             string.IsNullOrWhiteSpace(computeFunctionName))
         {
             ShaderSetDiscoverer ssd = new();
+            ssd.compilation = compilation;
             foreach (SyntaxTree tree in _compilation.SyntaxTrees)
             {
                 ssd.Visit(tree.GetRoot());

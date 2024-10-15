@@ -1,12 +1,12 @@
+using GLSH.Primitives;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Text;
-using System.Linq;
 using System;
 using System.Collections.Generic;
-using Microsoft.CodeAnalysis;
-using GLSH.Primitives;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Text;
 
 namespace GLSH;
 
@@ -295,15 +295,22 @@ internal class ShaderSyntaxWalker : CSharpSyntaxWalker
         return ret;
     }
 
-    private void ValidateUniformType(TypeInfo typeInfo)
+    private static readonly string Texture2DPath = typeof(Texture2DResource).FullName!;
+    private static readonly string Texture2DArrayPath = typeof(Texture2DArrayResource).FullName!;
+    private static readonly string TextureCubePath = typeof(TextureCubeResource).FullName!;
+    private static readonly string Texture2DMSPath = typeof(Texture2DMSResource).FullName!;
+    private static readonly string SamplerPath = typeof(SamplerResource).FullName!;
+    private static readonly string SamplerComparisonPath = typeof(SamplerComparisonResource).FullName!;
+
+    private static void ValidateUniformType(TypeInfo typeInfo)
     {
         string name = typeInfo.Type.ToDisplayString();
-        if (name != nameof(GLSH) + "." + nameof(Texture2DResource)
-            && name != nameof(GLSH) + "." + nameof(Texture2DArrayResource)
-            && name != nameof(GLSH) + "." + nameof(TextureCubeResource)
-            && name != nameof(GLSH) + "." + nameof(Texture2DMSResource)
-            && name != nameof(GLSH) + "." + nameof(SamplerResource)
-            && name != nameof(GLSH) + "." + nameof(SamplerComparisonResource))
+        if (name != Texture2DPath &&
+            name != Texture2DArrayPath &&
+            name != TextureCubePath &&
+            name != Texture2DMSPath &&
+            name != SamplerPath &&
+            name != SamplerComparisonPath)
         {
             if (typeInfo.Type.IsReferenceType)
             {
@@ -312,7 +319,7 @@ internal class ShaderSyntaxWalker : CSharpSyntaxWalker
         }
     }
 
-    private ShaderResourceKind ClassifyResourceKind(string fullTypeName)
+    private static ShaderResourceKind ClassifyResourceKind(string fullTypeName)
     {
         if (fullTypeName == "ShaderGen.Texture2DResource")
         {
@@ -368,8 +375,7 @@ internal class ShaderSyntaxWalker : CSharpSyntaxWalker
         }
     }
 
-
-    private bool GetResourceDecl(VariableDeclarationSyntax node, [NotNullWhen(true)] out AttributeSyntax? attr)
+    private static bool GetResourceDecl(VariableDeclarationSyntax node, [NotNullWhen(true)] out AttributeSyntax? attr)
     {
         attr = node.Parent.DescendantNodes().OfType<AttributeSyntax>().FirstOrDefault(
             attrSyntax => attrSyntax.ToString().Contains("Resource"));

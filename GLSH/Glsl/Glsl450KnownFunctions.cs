@@ -179,8 +179,8 @@ public static class Glsl450KnownFunctions
         {
             { ".ctor", VectorCtor },
         };
-        ret.Add("ShaderGen.UInt2", new DictionaryTypeInvocationTranslator(u2Mappings));
-        ret.Add("ShaderGen.Int2", new DictionaryTypeInvocationTranslator(u2Mappings));
+        ret.Add(typeof(UInt2).FullName!, new DictionaryTypeInvocationTranslator(u2Mappings));
+        ret.Add(typeof(Int2).FullName!, new DictionaryTypeInvocationTranslator(u2Mappings));
 
         Dictionary<string, InvocationTranslator> m4x4Mappings = new()
         {
@@ -306,15 +306,15 @@ public static class Glsl450KnownFunctions
 
     private static string Sample(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        if (parameters[0].FullTypeName == "ShaderGen.Texture2DResource")
+        if (parameters[0].FullTypeName == typeof(Texture2DResource).FullName)
         {
             return $"texture(sampler2D({parameters[0].Identifier}, {parameters[1].Identifier}), {parameters[2].Identifier})";
         }
-        else if (parameters[0].FullTypeName == "ShaderGen.Texture2DArrayResource")
+        else if (parameters[0].FullTypeName == typeof(Texture2DArrayResource).FullName)
         {
             return $"texture(sampler2DArray({parameters[0].Identifier}, {parameters[1].Identifier}), vec3({parameters[2].Identifier}, {parameters[3].Identifier}))";
         }
-        else if (parameters[0].FullTypeName == "ShaderGen.TextureCubeResource")
+        else if (parameters[0].FullTypeName == typeof(TextureCubeResource).FullName)
         {
             return $"texture(samplerCube({parameters[0].Identifier}, {parameters[1].Identifier}), {parameters[2].Identifier})";
         }
@@ -326,11 +326,11 @@ public static class Glsl450KnownFunctions
 
     private static string SampleGrad(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        if (parameters[0].FullTypeName == "ShaderGen.Texture2DResource")
+        if (parameters[0].FullTypeName == typeof(Texture2DResource).FullName)
         {
             return $"textureGrad(sampler2D({parameters[0].Identifier}, {parameters[1].Identifier}), {parameters[2].Identifier}, {parameters[3].Identifier}, {parameters[4].Identifier})";
         }
-        else if (parameters[0].FullTypeName == "ShaderGen.Texture2DArrayResource")
+        else if (parameters[0].FullTypeName == typeof(Texture2DArrayResource).FullName)
         {
             return $"textureGrad(sampler2DArray({parameters[0].Identifier}, {parameters[1].Identifier}), vec3({parameters[2].Identifier}, {parameters[3].Identifier}), {parameters[4].Identifier}, {parameters[5].Identifier})";
         }

@@ -345,7 +345,8 @@ public abstract class LanguageBackend
     protected bool TryDiscoverStructure(string setName, string name,[NotNullWhen(true)] out StructureDefinition? sd)
     {
         INamedTypeSymbol? type = Compilation.GetTypeByMetadataName(name);
-        if (type == null || type.OriginalDefinition.DeclaringSyntaxReferences.Length == 0)
+        var originalDeclaration = type.OriginalDefinition;
+        if (type == null || originalDeclaration.DeclaringSyntaxReferences.Length == 0)
         {
             sd = null;
             return false;
