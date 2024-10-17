@@ -44,6 +44,7 @@ public abstract class LanguageBackend
     }
 
 
+    [Obsolete("Rewrite this hell")]
     internal ShaderModel GetShaderModel(string setName)
     {
         BackendContext context = GetContext(setName);
@@ -121,6 +122,7 @@ public abstract class LanguageBackend
         return rightExpr;
     }
 
+    [Obsolete("Rewrite this hell")]
     private void ForceTypeDiscovery(string setName, TypeReference tr)
     {
         if (ShaderPrimitiveTypes.IsPrimitiveType(tr.name))
@@ -152,6 +154,7 @@ public abstract class LanguageBackend
         }
     }
 
+    [Obsolete("Rewrite this hell")]
     public MethodProcessResult ProcessEntryFunction(string setName, ShaderFunction function)
     {
         ArgumentNullException.ThrowIfNull(function);
@@ -168,6 +171,7 @@ public abstract class LanguageBackend
         return result;
     }
 
+    [Obsolete("Rewrite this hell")]
     internal string CSharpToShaderType(TypeReference typeReference)
     {
         ArgumentNullException.ThrowIfNull(typeReference);
@@ -238,6 +242,7 @@ public abstract class LanguageBackend
         return CorrectIdentifier(CSharpToIdentifierNameCore(typeName, identifier));
     }
 
+    [Obsolete("Rewrite this hell")]
     internal string FormatInvocation(string setName, string type, string method, InvocationParameterInfo[] parameterInfos)
     {
         Debug.Assert(setName != null);
@@ -271,6 +276,7 @@ public abstract class LanguageBackend
         return CSharpToIdentifierNameCore(ipi.fullTypeName, ipi.identifier);
     }
 
+    [Obsolete("Rewrite this hell")]
     protected void ValidateRequiredSemantics(string setName, ShaderFunction function, ShaderFunctionType type)
     {
         if (type == ShaderFunctionType.Normal)
@@ -325,6 +331,7 @@ public abstract class LanguageBackend
         return CorrectIdentifier(mapped);
     }
 
+    [Obsolete("Rewrite this hell")]
     protected bool TryDiscoverStructure(string setName, string name, [NotNullWhen(true)] out StructureDefinition? sd)
     {
         INamedTypeSymbol? type = _compilation.GetTypeByMetadataName(name);
@@ -376,6 +383,7 @@ public abstract class LanguageBackend
         return new ShaderMethodVisitor(_compilation, setName, func, this);
     }
 
+    [Obsolete("Rewrite this hell")]
     protected HashSet<ResourceDefinition> ProcessFunctions(string setName, ShaderFunctionAndMethodDeclarationSyntax entryPoint, out string funcs, out string entry)
     {
         HashSet<ResourceDefinition> resourcesUsed = [];
@@ -404,6 +412,7 @@ public abstract class LanguageBackend
         return resourcesUsed;
     }
 
+    [Obsolete("Rewrite this hell")]
     protected void ValidateResourcesUsed(string setName, IEnumerable<ResourceDefinition> resources)
     {
         foreach (ResourceDefinition resource in resources)
@@ -421,6 +430,7 @@ public abstract class LanguageBackend
         }
     }
 
+    [Obsolete("Rewrite this hell")]
     private void ValidateAlignedStruct(string setName, TypeReference tr)
     {
         StructureDefinition? def = GetContext(setName).Structures.SingleOrDefault(sd => sd.name == tr.name);

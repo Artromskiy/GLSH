@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis;
+using System;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace GLSH;
@@ -18,6 +19,7 @@ public class ParameterDefinition
         this.symbol = symbol;
     }
 
+    [Obsolete("Rewrite this hell")]
     public static ParameterDefinition GetParameterDefinition(Compilation compilation, ParameterSyntax ps)
     {
         SemanticModel semanticModel = compilation.GetSemanticModel(ps.SyntaxTree);

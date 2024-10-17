@@ -34,6 +34,8 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
     private SemanticModel GetModel(SyntaxNode node) => _compilation.GetSemanticModel(node.SyntaxTree);
 
+
+    [Obsolete("Rewrite this hell")]
     public MethodProcessResult VisitFunction(BaseMethodDeclarationSyntax node)
     {
         StringBuilder sb = new();
@@ -56,6 +58,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return new MethodProcessResult(sb.ToString(), _resourcesUsed);
     }
 
+    [Obsolete("Rewrite this hell")]
     public override string VisitBlock(BlockSyntax node)
     {
         StringBuilder sb = new();
@@ -83,6 +86,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     /// <summary>
     /// Declares any "discard"ed variables - i.e. MyFunc(out _) - for this block and all nested blocks.
     /// </summary>
+    [Obsolete("Rewrite this hell")]
     private string DeclareDiscardedVariables(BlockSyntax block)
     {
         StringBuilder sb = new();
@@ -121,6 +125,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     /// Check for any inline "out" variable declarations in this statement - i.e. MyFunc(out var result) - 
     /// and declare those variables now.
     /// </summary>
+    [Obsolete("Rewrite this hell")]
     private string DeclareInlineOutVariables(StatementSyntax statement)
     {
         StringBuilder sb = new();
@@ -155,6 +160,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return sb.ToString();
     }
 
+    [Obsolete("Rewrite this hell")]
     public override string VisitArrowExpressionClause(ArrowExpressionClauseSyntax node)
     {
         StringBuilder sb = new();
@@ -178,6 +184,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return sb.ToString();
     }
 
+    [Obsolete("Rewrite this hell")]
     protected virtual string GetFunctionDeclStr()
     {
         string returnType = _backend.CSharpToShaderType(_shaderFunction.returnType.name);
@@ -203,6 +210,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return node.EqualsToken.ToFullString() + Visit(node.Value);
     }
 
+    [Obsolete("Rewrite this hell")]
     public override string VisitAssignmentExpression(AssignmentExpressionSyntax node)
     {
         string token = node.OperatorToken.ToFullString().Trim();
@@ -221,6 +229,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return $"{leftExpr} {token} {assignedValue}";
     }
 
+    [Obsolete("Rewrite this hell")]
     public override string VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
     {
         SymbolInfo exprSymbol = GetModel(node).GetSymbolInfo(node.Expression);
@@ -276,6 +285,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return $"return {Visit(node.Expression)};";
     }
 
+    [Obsolete("Rewrite this hell")]
     public override string VisitInvocationExpression(InvocationExpressionSyntax node)
     {
         if (node.Expression is IdentifierNameSyntax ins)
@@ -359,6 +369,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         }
     }
 
+    [Obsolete("Rewrite this hell")]
     public override string VisitBinaryExpression(BinaryExpressionSyntax node)
     {
         string token = node.OperatorToken.ToFullString().Trim();
@@ -417,6 +428,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return _backend.CorrectIdentifier($"_shadergen_discard_{mappedType}");
     }
 
+    [Obsolete("Rewrite this hell")]
     public override string VisitIdentifierName(IdentifierNameSyntax node)
     {
         SymbolInfo symbolInfo = GetModel(node).GetSymbolInfo(node);
@@ -463,6 +475,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return _backend.CorrectIdentifier(mapped);
     }
 
+    [Obsolete("Rewrite this hell")]
     private void TryRecognizeBuiltInVariable(SymbolInfo symbolInfo)
     {
         string name = symbolInfo.Symbol.Name;
@@ -523,6 +536,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return sb.ToString();
     }
 
+    [Obsolete("Rewrite this hell")]
     public override string VisitForStatement(ForStatementSyntax node)
     {
         StringBuilder sb = new();
@@ -534,6 +548,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return sb.ToString();
     }
 
+    [Obsolete("Rewrite this hell")]
     public override string VisitSwitchStatement(SwitchStatementSyntax node)
     {
         StringBuilder sb = new();
@@ -550,6 +565,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         sb.AppendLine("}");
         return sb.ToString();
     }
+    [Obsolete("Rewrite this hell")]
     public override string VisitCaseSwitchLabel(CaseSwitchLabelSyntax node)
     {
         StringBuilder sb = new();
@@ -582,6 +598,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return Visit(node.Expression) + Visit(node.ArgumentList);
     }
 
+    [Obsolete("Rewrite this hell")]
     public override string VisitVariableDeclaration(VariableDeclarationSyntax node)
     {
         if (node.Variables.Count != 1)
@@ -652,6 +669,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
             + Visit(node.WhenFalse);
     }
 
+    [Obsolete("Rewrite this hell")]
     public override string VisitDoStatement(DoStatementSyntax node)
     {
         StringBuilder sb = new();
@@ -667,6 +685,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
     }
 
+    [Obsolete("Rewrite this hell")]
     public override string VisitWhileStatement(WhileStatementSyntax node)
     {
         StringBuilder sb = new();

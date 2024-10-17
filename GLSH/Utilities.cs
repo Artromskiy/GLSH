@@ -17,6 +17,7 @@ internal static class Utilities
         return model.GetFullTypeName(type, out _);
     }
 
+    [Obsolete("Rewrite this hell")]
     public static string GetFullTypeName(this SemanticModel model, ExpressionSyntax type, out bool isArray)
     {
         ArgumentNullException.ThrowIfNull(model);
@@ -94,6 +95,7 @@ internal static class Utilities
         return symbolInfo.Symbol.GetFullMetadataName();
     }
 
+    [Obsolete("Rewrite this hell")]
     internal static ShaderFunctionAndMethodDeclarationSyntax GetShaderFunction(
         BaseMethodDeclarationSyntax node,
         Compilation compilation,

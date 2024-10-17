@@ -9,6 +9,7 @@ using System.Numerics;
 
 namespace GLSH;
 
+[Obsolete("Rewrite this hell")]
 public static class TypeSizeCache
 {
     private static readonly IReadOnlyDictionary<string, int> s_knownSizes = new Dictionary<string, int>()

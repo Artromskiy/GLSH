@@ -1,4 +1,5 @@
 using GLSH.Primitives;
+using System;
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,6 +18,7 @@ public abstract class GlslBackendBase : LanguageBackend
     {
     }
 
+    [Obsolete("Check this")]
     protected void WriteStructure(StringBuilder sb, StructureDefinition sd)
     {
         sb.AppendLine($"struct {CSharpToShaderType(sd.name)}");
@@ -47,6 +49,7 @@ public abstract class GlslBackendBase : LanguageBackend
         return CSharpToShaderType(field.type);
     }
 
+    [Obsolete("Rewrite this hell")]
     protected override MethodProcessResult GenerateFullTextCore(string setName, ShaderFunction function)
     {
         BackendContext context = GetContext(setName);
@@ -141,6 +144,7 @@ public abstract class GlslBackendBase : LanguageBackend
         return new MethodProcessResult(sb.ToString(), resourcesUsed);
     }
 
+    [Obsolete("Rewrite this hell")]
     private void WriteMainFunction(string setName, StringBuilder sb, ShaderFunction entryFunction)
     {
         ParameterDefinition? input = entryFunction.parameters.Length > 0

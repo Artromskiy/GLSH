@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,7 @@ internal class SwizzleTranslator : TypeInvocationTranslator
 {
     private readonly InvocationTranslator _translator = TranslateCore;
 
+    [Obsolete("Rewrite this hell")]
     public override bool GetTranslator(
         string method,
         InvocationParameterInfo[] parameters,
@@ -24,6 +26,7 @@ internal class SwizzleTranslator : TypeInvocationTranslator
         return true;
     }
 
+    [Obsolete("Rewrite this hell")]
     private static string TranslateCore(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
         string target = parameters[0].identifier;

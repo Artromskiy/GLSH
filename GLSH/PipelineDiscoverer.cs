@@ -31,6 +31,7 @@ internal class PipelineDiscoverer : CSharpSyntaxWalker
     public override void VisitClassDeclaration(ClassDeclarationSyntax node) => VisitTypeDeclaratin(node);
     public override void VisitStructDeclaration(StructDeclarationSyntax node) => VisitTypeDeclaratin(node);
 
+    [Obsolete("Rewrite this hell")]
     private void VisitTypeDeclaratin(TypeDeclarationSyntax node)
     {
         var model = GetOrCreateSemanticModel(node.SyntaxTree);
@@ -58,6 +59,7 @@ internal class PipelineDiscoverer : CSharpSyntaxWalker
     }
 
 
+    [Obsolete("Rewrite this hell")]
     private void ValidateGraphicsPipeline(TypeDeclarationSyntax classDeclarationSyntax, GraphicsPipelineAttribute data)
     {
         string? pipelineName = data.name;

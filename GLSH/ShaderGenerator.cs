@@ -32,6 +32,7 @@ public partial class ShaderGenerator
         params IShaderSetProcessor[] processors)
     : this(compilation, [language], vertexFunctionName, fragmentFunctionName, computeFunctionName, processors) { }
 
+    [Obsolete("Rewrite this hell")]
     public ShaderGenerator(
         Compilation compilation,
         LanguageBackend[] languages,
@@ -62,6 +63,7 @@ public partial class ShaderGenerator
         }
     }
 
+    [Obsolete("Rewrite this hell")]
     public ShaderGenerationResult GenerateShaders()
     {
         ShaderGenerationResult result = new();
@@ -81,6 +83,7 @@ public partial class ShaderGenerator
         return result;
     }
 
+    [Obsolete("Rewrite this hell")]
     private void GenerateShaders(ShaderSetInfo shaderSetInfo, ShaderGenerationResult output)
     {
         TypeAndMethodName vertexFunctionName = shaderSetInfo.vertexShader;

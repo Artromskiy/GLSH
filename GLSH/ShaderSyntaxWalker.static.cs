@@ -11,6 +11,7 @@ namespace GLSH;
 
 internal partial class ShaderSyntaxWalker
 {
+    [Obsolete("Rewrite this hell")]
     public static bool TryGetStructDefinition(SemanticModel model, StructDeclarationSyntax node, out StructureDefinition sd)
     {
         string structName = model.GetDeclaredSymbol(node).GetFullMetadataName();
@@ -110,6 +111,7 @@ internal partial class ShaderSyntaxWalker
         }
     }
 
+    [Obsolete("Rewrite this hell")]
     private static ShaderResourceKind ClassifyResourceKind(string fullTypeName)
     {
         if (fullTypeName == typeof(Texture2DResource).FullName!)

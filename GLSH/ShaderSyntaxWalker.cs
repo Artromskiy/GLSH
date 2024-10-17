@@ -2,6 +2,7 @@ using GLSH.Primitives.Attributes;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -25,6 +26,7 @@ internal partial class ShaderSyntaxWalker : CSharpSyntaxWalker
 
     private SemanticModel GetModel(SyntaxNode node) => _compilation.GetSemanticModel(node.SyntaxTree);
 
+    [Obsolete("Rewrite this hell")]
     public override void VisitMethodDeclaration(MethodDeclarationSyntax node)
     {
         ShaderFunctionAndMethodDeclarationSyntax sfab = Utilities.GetShaderFunction(node, _compilation, true);
@@ -99,6 +101,7 @@ internal partial class ShaderSyntaxWalker : CSharpSyntaxWalker
         return new TypeReference(fullName, GetModel(vds).GetTypeInfo(type).Type);
     }
 
+    [Obsolete("Rewrite this hell")]
     private int GetAndIncrementBinding(int set)
     {
         if (!_setCounts.TryGetValue(set, out int ret))

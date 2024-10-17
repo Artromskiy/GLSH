@@ -8,6 +8,7 @@ using System.Text;
 
 namespace GLSH.Glsl;
 
+[Obsolete("Rewrite this hell")]
 public static class Glsl450KnownFunctions
 {
     private static readonly Dictionary<string, TypeInvocationTranslator> s_mappings = GetMappings();

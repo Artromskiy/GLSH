@@ -31,6 +31,7 @@ internal class FunctionCallGraphDiscoverer
         return [.. result];
     }
 
+    [Obsolete("Rewrite this hell")]
     private void TraverseNode(HashSet<ShaderFunctionAndMethodDeclarationSyntax> result, CallGraphNode node)
     {
         foreach (ShaderFunctionAndMethodDeclarationSyntax existing in result)
@@ -56,6 +57,7 @@ internal class FunctionCallGraphDiscoverer
         ExploreCallNode(_rootNode);
     }
 
+    [Obsolete("Rewrite this hell")]
     private void ExploreCallNode(CallGraphNode node)
     {
         Debug.Assert(node.declaration != null);
@@ -91,6 +93,7 @@ internal class FunctionCallGraphDiscoverer
         return node;
     }
 
+    [Obsolete("Rewrite this hell")]
     private bool GetDeclaration(TypeAndMethodName name, [NotNullWhen(true)] out BaseMethodDeclarationSyntax? decl)
     {
         bool isConstructor = name.methodName == ".ctor";
@@ -135,6 +138,7 @@ internal class FunctionCallGraphDiscoverer
             _discoverer = discoverer;
         }
 
+        [Obsolete("Rewrite this hell")]
         public override void VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
         {
             SymbolInfo symbolInfo = _discoverer.Compilation.GetSemanticModel(node.SyntaxTree).GetSymbolInfo(node);
@@ -154,6 +158,7 @@ internal class FunctionCallGraphDiscoverer
             base.VisitObjectCreationExpression(node);
         }
 
+        [Obsolete("Rewrite this hell")]
         public override void VisitInvocationExpression(InvocationExpressionSyntax node)
         {
             if (node.Expression is IdentifierNameSyntax ins)

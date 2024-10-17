@@ -15,20 +15,11 @@ public class GeneratedShaderSet
     public readonly ShaderFunction computeFunction;
     public readonly ShaderModel model;
 
-    public GeneratedShaderSet(
-        string name,
-        string vsCode,
-        string fsCode,
-        string csCode,
-        ShaderFunction vertexfunction,
-        ShaderFunction fragmentFunction,
-        ShaderFunction computeFunction,
-        ShaderModel model)
+    public GeneratedShaderSet(string name, string vsCode, string fsCode, string csCode,
+        ShaderFunction vertexfunction, ShaderFunction fragmentFunction, ShaderFunction computeFunction, ShaderModel model)
     {
         if (string.IsNullOrEmpty(vsCode) && string.IsNullOrEmpty(fsCode) && string.IsNullOrEmpty(csCode))
-        {
             throw new ShaderGenerationException("At least one of vsCode, fsCode, or csCode must be non-empty");
-        }
 
         this.name = name;
         vertexShaderCode = vsCode;

@@ -13,26 +13,20 @@ internal static class SyntaxNodeHelper
         result = null;
 
         if (syntaxNode == null)
-        {
             return false;
-        }
 
         try
         {
             syntaxNode = syntaxNode.Parent;
 
             if (syntaxNode == null)
-            {
                 return false;
-            }
 
-            if (typeof(T).IsAssignableFrom(syntaxNode.GetType()))
-            {
-                result = (syntaxNode as T)!;
-                return true;
-            }
+            if (!typeof(T).IsAssignableFrom(syntaxNode.GetType()))
+                return TryGetParentSyntax(syntaxNode, out result);
 
-            return TryGetParentSyntax(syntaxNode, out result);
+            result = (syntaxNode as T)!;
+            return true;
         }
         catch
         {
