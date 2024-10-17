@@ -1,40 +1,46 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GLSH;
 
 internal class TypeAndMethodName : IEquatable<TypeAndMethodName>
 {
-    public string TypeName;
-    public string MethodName;
+    public readonly string typeName;
+    public readonly string methodName;
+    public readonly string fullName;
 
-    public string FullName => TypeName + "." + MethodName;
+    public TypeAndMethodName(string typeName, string methodName) :
+        this(typeName, methodName, $"{typeName}.{methodName}") { }
 
-    public static bool Get(string fullName, out TypeAndMethodName typeAndMethodName)
+    private TypeAndMethodName(string typeName, string methodName, string fullName)
     {
-        string[] parts = fullName.Split('.');
-        if (parts.Length < 2)
-        {
-            typeAndMethodName = default;
-            return false;
-        }
-        string typeName = parts[0];
-        for (int i = 1; i < parts.Length - 1; i++)
-        {
-            typeName += "." + parts[i];
-        }
+        this.typeName = typeName;
+        this.methodName = methodName;
+        this.fullName = fullName;
+    }
 
-        typeAndMethodName = new TypeAndMethodName { TypeName = typeName, MethodName = parts[parts.Length - 1] };
+    public static bool Get(string fullName, [NotNullWhen(true)] out TypeAndMethodName? typeAndMethodName)
+    {
+        typeAndMethodName = null;
+        // with modulo result will be 0 if it's last symbol in the string
+        int index = fullName.LastIndexOf('.') % (fullName.Length - 1);
+        if (index <= 0)
+            return false;
+
+        string typeName = fullName[..index];
+        string methodName = fullName[(index + 1)..];
+        typeAndMethodName = new(typeName, methodName, fullName);
         return true;
     }
 
     public bool Equals(TypeAndMethodName? other)
     {
-        return other is not null && TypeName == other.TypeName && MethodName == other.MethodName;
+        return other is not null && typeName == other.typeName && methodName == other.methodName;
     }
 
-    public override int GetHashCode() => FullName.GetHashCode();
+    public override int GetHashCode() => fullName.GetHashCode();
 
-    public override string ToString() => FullName;
+    public override string ToString() => fullName;
 
     public override bool Equals(object? obj)
     {

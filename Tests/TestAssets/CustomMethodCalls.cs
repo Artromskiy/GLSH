@@ -1,14 +1,14 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 using static Tests.TestAssets.AnotherClass;
 
 namespace Tests.TestAssets
 {
     public class CustomMethodCalls
     {
-        [VertexShader]
-        SystemPosition4 VS(Position4 input)
+        [VertexEntryPoint]
+        private SystemPosition4 VS(Position4 input)
         {
             Position4 reversed = Reverse(input);
             Position4 shuffled = ShufflePosition4(reversed);

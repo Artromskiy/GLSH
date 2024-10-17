@@ -1,13 +1,9 @@
-﻿using System;
+﻿using GlmSharpGenerator.Types;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GlmSharpGenerator.Types;
 
 namespace GlmSharpGenerator.Members
 {
-    class Field : Member
+    internal class Field : Member
     {
         /// <summary>
         /// Member type

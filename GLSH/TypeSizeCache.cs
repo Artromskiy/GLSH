@@ -1,6 +1,6 @@
+using GLSH.Primitives;
 using Microsoft.CodeAnalysis;
 using System;
-using GLSH.Primitives;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -39,7 +39,8 @@ public static class TypeSizeCache
         { typeof(Int4).FullName!, 16 },
     };
 
-    private static readonly ConcurrentDictionary<ITypeSymbol, AlignmentInfo> s_cachedSizes = new();
+    private static readonly ConcurrentDictionary<ITypeSymbol, AlignmentInfo> s_cachedSizes
+        = new(SymbolEqualityComparer.Default);
 
     public static AlignmentInfo Get(ITypeSymbol symbol)
     {
@@ -53,9 +54,7 @@ public static class TypeSizeCache
     {
         // Check if we already know this type
         if (s_cachedSizes.TryGetValue(typeSymbol, out AlignmentInfo alignmentInfo))
-        {
             return alignmentInfo;
-        }
 
         string symbolFullName = typeSymbol.GetFullMetadataName();
 

@@ -1,13 +1,13 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
     public class StructureSizeTests
     {
-        [VertexShader]
-        SystemPosition4 VS(Position4 input)
+        [VertexEntryPoint]
+        private SystemPosition4 VS(Position4 input)
         {
             SystemPosition4 output;
             output.Position = new Vector4();

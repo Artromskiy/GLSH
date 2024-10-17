@@ -2,43 +2,38 @@ namespace GLSH;
 
 public class StructureDefinition
 {
-    public string Name { get; }
-    public FieldDefinition[] Fields { get; }
-    public AlignmentInfo Alignment { get; }
-    public bool CSharpMatchesShaderAlignment { get; }
+    public readonly string name;
+    public readonly FieldDefinition[] fields;
+    public readonly AlignmentInfo alignment;
+    public readonly bool cSharpMatchesShaderAlignment;
 
     public StructureDefinition(string name, FieldDefinition[] fields, AlignmentInfo size)
     {
-        Name = name;
-        Fields = fields;
-        Alignment = size;
-        CSharpMatchesShaderAlignment = GetCSharpMatchesShaderAlignment();
+        this.name = name;
+        this.fields = fields;
+        alignment = size;
+        cSharpMatchesShaderAlignment = GetCSharpMatchesShaderAlignment();
     }
 
     private bool GetCSharpMatchesShaderAlignment()
     {
         int csharpOffset = 0;
         int shaderOffset = 0;
-        for (int i = 0; i < Fields.Length; i++)
-        {
-            if (!CheckAlignments(Fields[i], ref csharpOffset, ref shaderOffset))
-            {
+
+        for (int i = 0; i < fields.Length; i++)
+            if (!CheckAlignments(fields[i], ref csharpOffset, ref shaderOffset))
                 return false;
-            }
-        }
 
         return true;
     }
 
     private static bool CheckAlignments(FieldDefinition fd, ref int cs, ref int shader)
     {
-        if (cs % fd.Alignment.CSharpAlignment != 0 || shader % fd.Alignment.ShaderAlignment != 0)
-        {
+        if (cs % fd.alignment.CSharpAlignment != 0 || shader % fd.alignment.ShaderAlignment != 0)
             return false;
-        }
 
-        cs += fd.Alignment.CSharpSize;
-        shader += fd.Alignment.CSharpSize;
+        cs += fd.alignment.CSharpSize;
+        shader += fd.alignment.CSharpSize;
         return cs == shader;
     }
 }

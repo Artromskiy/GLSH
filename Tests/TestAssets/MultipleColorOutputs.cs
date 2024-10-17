@@ -1,12 +1,12 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
     public class MultipleColorOutputs
     {
-        [VertexShader]
+        [VertexEntryPoint]
         public SystemPosition4 VS(Position4 input)
         {
             SystemPosition4 output;
@@ -14,7 +14,7 @@ namespace Tests.TestAssets
             return output;
         }
 
-        [FragmentShader]
+        [FragmentEntryPoint]
         public DualOutput FS(SystemPosition4 input)
         {
             DualOutput output;
@@ -25,9 +25,9 @@ namespace Tests.TestAssets
 
         public struct DualOutput
         {
-            [ColorTargetSemantic]
+            [VertexSemantic(SemanticType.ColorTarget)]
             public Vector4 FirstOutput;
-            [ColorTargetSemantic]
+            [VertexSemantic(SemanticType.ColorTarget)]
             public Vector4 SecondOutput;
         }
     }

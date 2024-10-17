@@ -1,13 +1,11 @@
-﻿using System;
+﻿using GlmSharpGenerator.Tests;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GlmSharpGenerator.Tests;
 
 namespace GlmSharpGenerator.Types
 {
-    partial class SwizzleType
+    internal partial class SwizzleType
     {
         private IEnumerable<string> InlineSwizzle(int nr = 0)
         {

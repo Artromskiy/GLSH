@@ -2,10 +2,10 @@ namespace GLSH;
 
 public class ShaderSetProcessorInput
 {
-    public string SetName { get; }
-    public ShaderFunction VertexFunction { get; }
-    public ShaderFunction FragmentFunction { get; }
-    public ShaderModel Model { get; }
+    public readonly string setName;
+    public readonly ShaderFunction vertexFunction;
+    public readonly ShaderFunction fragmentFunction;
+    public readonly ShaderModel model;
 
     public ShaderSetProcessorInput(
         string name,
@@ -13,9 +13,9 @@ public class ShaderSetProcessorInput
         ShaderFunction fragmentFunction,
         ShaderModel model)
     {
-        SetName = name;
-        VertexFunction = vertexFunction;
-        FragmentFunction = fragmentFunction;
-        Model = model;
+        setName = name;
+        this.vertexFunction = vertexFunction;
+        this.fragmentFunction = fragmentFunction;
+        this.model = model;
     }
 }

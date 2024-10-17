@@ -5,36 +5,28 @@ namespace GLSH;
 
 public class ShaderFunctionAndMethodDeclarationSyntax : IEquatable<ShaderFunctionAndMethodDeclarationSyntax>
 {
-    public ShaderFunction Function { get; }
-    public BaseMethodDeclarationSyntax MethodDeclaration { get; }
-
+    public readonly ShaderFunction function;
+    public readonly BaseMethodDeclarationSyntax methodDeclaration;
     /// <summary>
     /// Only present for entry-point functions.
     /// </summary>
-    public ShaderFunctionAndMethodDeclarationSyntax[] OrderedFunctionList { get; }
+    public readonly ShaderFunctionAndMethodDeclarationSyntax[] orderedFunctionList;
 
     public ShaderFunctionAndMethodDeclarationSyntax(ShaderFunction function, BaseMethodDeclarationSyntax methodDeclaration, ShaderFunctionAndMethodDeclarationSyntax[] orderedFunctionList)
     {
-        Function = function;
-        MethodDeclaration = methodDeclaration;
-        OrderedFunctionList = orderedFunctionList;
+        this.function = function;
+        this.methodDeclaration = methodDeclaration;
+        this.orderedFunctionList = orderedFunctionList;
     }
-
-    public override string ToString() => Function.ToString();
 
     public bool Equals(ShaderFunctionAndMethodDeclarationSyntax? other)
     {
-        return other != null && Function.DeclaringType == other.Function.DeclaringType
-            && Function.Name == other.Function.Name;
+        return other is not null &&
+            function.declaringType == other.function.declaringType &&
+            function.name == other.function.name;
     }
 
-    public override int GetHashCode()
-    {
-        var hashCode = 1204124163;
-        hashCode = hashCode * -1521134295 + Function.DeclaringType.GetHashCode();
-        hashCode = hashCode * -1521134295 + Function.Name.GetHashCode();
-        return hashCode;
-    }
-
-    public override bool Equals(object? obj)=> Equals(obj as ShaderFunctionAndMethodDeclarationSyntax);
+    public override bool Equals(object? obj) => Equals(obj as ShaderFunctionAndMethodDeclarationSyntax);
+    public override int GetHashCode()=> HashCode.Combine(function.declaringType, function.name);
+    public override string ToString() => function.ToString();
 }

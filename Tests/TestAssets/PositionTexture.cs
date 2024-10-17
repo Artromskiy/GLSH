@@ -1,26 +1,26 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
     public struct PositionTexture
     {
-        [PositionSemantic]
+        [VertexSemantic(SemanticType.Position)]
         public Vector3 Position;
-        [TextureCoordinateSemantic]
+        [VertexSemantic(SemanticType.TextureCoordinate)]
         public Vector2 TextureCoord;
     }
 
     public struct Position4Texture2
     {
-        [PositionSemantic] public Vector4 Position;
-        [TextureCoordinateSemantic] public Vector2 TextureCoord;
+        [VertexSemantic(SemanticType.Position)] public Vector4 Position;
+        [VertexSemantic(SemanticType.TextureCoordinate)] public Vector2 TextureCoord;
     }
 
     public struct SystemPosition4Texture2
     {
-        [SystemPositionSemantic] public Vector4 Position;
-        [TextureCoordinateSemantic] public Vector2 TextureCoord;
+        [VertexSemantic(SemanticType.SystemPosition)] public Vector4 Position;
+        [VertexSemantic(SemanticType.TextureCoordinate)] public Vector2 TextureCoord;
     }
 }

@@ -19,16 +19,16 @@ public abstract class GlslBackendBase : LanguageBackend
 
     protected void WriteStructure(StringBuilder sb, StructureDefinition sd)
     {
-        sb.AppendLine($"struct {CSharpToShaderType(sd.Name)}");
+        sb.AppendLine($"struct {CSharpToShaderType(sd.name)}");
         sb.AppendLine("{");
         StringBuilder fb = new();
-        foreach (FieldDefinition field in sd.Fields)
+        foreach (FieldDefinition field in sd.fields)
         {
             string fieldTypeStr = GetStructureFieldType(field);
             fb.Append(fieldTypeStr);
             fb.Append(' ');
-            fb.Append(CorrectIdentifier(field.Name.Trim()));
-            int arrayCount = field.ArrayElementCount;
+            fb.Append(CorrectIdentifier(field.name.Trim()));
+            int arrayCount = field.arrayElementCount;
             if (arrayCount > 0)
             {
                 fb.Append('['); fb.Append(arrayCount); fb.Append(']');
@@ -44,7 +44,7 @@ public abstract class GlslBackendBase : LanguageBackend
 
     protected virtual string GetStructureFieldType(FieldDefinition field)
     {
-        return CSharpToShaderType(field.Type);
+        return CSharpToShaderType(field.type);
     }
 
     protected override MethodProcessResult GenerateFullTextCore(string setName, ShaderFunction function)
@@ -53,16 +53,16 @@ public abstract class GlslBackendBase : LanguageBackend
         StringBuilder sb = new();
 
         ShaderFunctionAndMethodDeclarationSyntax? entryPoint = context.Functions.SingleOrDefault(
-            sfabs => sfabs.Function.Name == function.Name);
+            sfabs => sfabs.function.name == function.name);
         if (entryPoint == null)
         {
-            throw new ShaderGenerationException("Couldn't find given function: " + function.Name);
+            throw new ShaderGenerationException("Couldn't find given function: " + function.name);
         }
 
-        ValidateRequiredSemantics(setName, entryPoint.Function, function.Type);
+        ValidateRequiredSemantics(setName, entryPoint.function, function.type);
 
         StructureDefinition[] orderedStructures
-            = StructureDependencyGraph.GetOrderedStructureList(Compilation, context.Structures);
+            = StructureDependencyGraph.GetOrderedStructureList(_compilation, context.Structures);
 
         foreach (StructureDefinition sd in orderedStructures)
         {
@@ -83,7 +83,7 @@ public abstract class GlslBackendBase : LanguageBackend
                 continue;
             }
 
-            switch (rd.ResourceKind)
+            switch (rd.resourceKind)
             {
                 case ShaderResourceKind.Uniform:
                     WriteUniform(sb, rd);
@@ -110,7 +110,7 @@ public abstract class GlslBackendBase : LanguageBackend
                 case ShaderResourceKind.StructuredBuffer:
                 case ShaderResourceKind.RWStructuredBuffer:
                 case ShaderResourceKind.AtomicBuffer:
-                    WriteStructuredBuffer(sb, rd, rd.ResourceKind == ShaderResourceKind.StructuredBuffer, structuredBufferIndex);
+                    WriteStructuredBuffer(sb, rd, rd.resourceKind == ShaderResourceKind.StructuredBuffer, structuredBufferIndex);
                     structuredBufferIndex++;
                     break;
                 case ShaderResourceKind.RWTexture2D:
@@ -123,18 +123,18 @@ public abstract class GlslBackendBase : LanguageBackend
                 case ShaderResourceKind.DepthTexture2DArray:
                     WriteDepthTexture2DArray(sb, rd);
                     break;
-                default: throw new ShaderGenerationException("Illegal resource kind: " + rd.ResourceKind);
+                default: throw new ShaderGenerationException("Illegal resource kind: " + rd.resourceKind);
             }
         }
 
         sb.AppendLine(funcStr);
         sb.AppendLine(entryStr);
 
-        WriteMainFunction(setName, sb, entryPoint.Function);
+        WriteMainFunction(setName, sb, entryPoint.function);
 
         // Append version last because it relies on information from parsing the shader.
         StringBuilder versionSB = new();
-        WriteVersionHeader(function, entryPoint.OrderedFunctionList, versionSB);
+        WriteVersionHeader(function, entryPoint.orderedFunctionList, versionSB);
 
         sb.Insert(0, versionSB.ToString());
 
@@ -143,16 +143,16 @@ public abstract class GlslBackendBase : LanguageBackend
 
     private void WriteMainFunction(string setName, StringBuilder sb, ShaderFunction entryFunction)
     {
-        ParameterDefinition? input = entryFunction.Parameters.Length > 0
-            ? entryFunction.Parameters[0]
+        ParameterDefinition? input = entryFunction.parameters.Length > 0
+            ? entryFunction.parameters[0]
             : null;
         StructureDefinition? inputType = input != null
-            ? GetRequiredStructureType(setName, input.Type)
+            ? GetRequiredStructureType(setName, input.type)
             : null;
         StructureDefinition? outputType =
-            entryFunction.ReturnType.Name != typeof(Vector4).FullName!
-            && entryFunction.ReturnType.Name != typeof(void).FullName!
-                ? GetRequiredStructureType(setName, entryFunction.ReturnType)
+            entryFunction.returnType.name != typeof(Vector4).FullName!
+            && entryFunction.returnType.name != typeof(void).FullName!
+                ? GetRequiredStructureType(setName, entryFunction.returnType)
                 : null;
 
         string fragCoordName = null;
@@ -162,37 +162,37 @@ public abstract class GlslBackendBase : LanguageBackend
             // Declare "in" variables
             int inVarIndex = 0;
             fragCoordName = null;
-            foreach (FieldDefinition field in inputType.Fields)
+            foreach (FieldDefinition field in inputType.fields)
             {
-                if (entryFunction.Type == ShaderFunctionType.FragmentEntryPoint
+                if (entryFunction.type == ShaderFunctionType.FragmentEntryPoint
                     && fragCoordName == null
-                    && field.SemanticType == SemanticType.SystemPosition)
+                    && field.semanticType == SemanticType.SystemPosition)
                 {
-                    fragCoordName = field.Name;
+                    fragCoordName = field.name;
                 }
                 else
                 {
                     WriteInOutVariable(
                         sb,
                         true,
-                        entryFunction.Type == ShaderFunctionType.VertexEntryPoint,
-                        CSharpToShaderType(field.Type.Name),
-                        CorrectIdentifier(field.Name),
+                        entryFunction.type == ShaderFunctionType.VertexEntryPoint,
+                        CSharpToShaderType(field.type.name),
+                        CorrectIdentifier(field.name),
                         inVarIndex);
                     inVarIndex += 1;
                 }
             }
         }
 
-        string mappedReturnType = CSharpToShaderType(entryFunction.ReturnType.Name);
+        string mappedReturnType = CSharpToShaderType(entryFunction.returnType.name);
 
         // Declare "out" variables
-        if (entryFunction.Type == ShaderFunctionType.VertexEntryPoint)
+        if (entryFunction.type == ShaderFunctionType.VertexEntryPoint)
         {
             int outVarIndex = 0;
-            foreach (FieldDefinition field in outputType.Fields)
+            foreach (FieldDefinition field in outputType.fields)
             {
-                if (field.SemanticType == SemanticType.SystemPosition)
+                if (field.semanticType == SemanticType.SystemPosition)
                 {
                     continue;
                 }
@@ -202,8 +202,8 @@ public abstract class GlslBackendBase : LanguageBackend
                         sb,
                         false,
                         true,
-                        CSharpToShaderType(field.Type.Name),
-                        "out_" + CorrectIdentifier(field.Name),
+                        CSharpToShaderType(field.type.name),
+                        "out_" + CorrectIdentifier(field.name),
                         outVarIndex);
                     outVarIndex += 1;
                 }
@@ -211,8 +211,8 @@ public abstract class GlslBackendBase : LanguageBackend
         }
         else
         {
-            Debug.Assert(entryFunction.Type == ShaderFunctionType.FragmentEntryPoint
-                || entryFunction.Type == ShaderFunctionType.ComputeEntryPoint);
+            Debug.Assert(entryFunction.type == ShaderFunctionType.FragmentEntryPoint
+                || entryFunction.type == ShaderFunctionType.ComputeEntryPoint);
 
             if (mappedReturnType == "vec4")
             {
@@ -222,10 +222,10 @@ public abstract class GlslBackendBase : LanguageBackend
             {
                 // Composite struct -- declare an out variable for each.
                 int colorTargetIndex = 0;
-                foreach (FieldDefinition field in outputType.Fields)
+                foreach (FieldDefinition field in outputType.fields)
                 {
-                    Debug.Assert(field.SemanticType == SemanticType.ColorTarget);
-                    Debug.Assert(field.Type.Name == typeof(Vector4).FullName!);
+                    Debug.Assert(field.semanticType == SemanticType.ColorTarget);
+                    Debug.Assert(field.type.name == typeof(Vector4).FullName!);
                     int index = colorTargetIndex++;
                     sb.AppendLine($"    layout(location = {index}) out vec4 _outputColor_{index};");
                 }
@@ -238,29 +238,29 @@ public abstract class GlslBackendBase : LanguageBackend
         sb.AppendLine("{");
         if (inputType != null)
         {
-            string inTypeName = CSharpToShaderType(inputType.Name);
+            string inTypeName = CSharpToShaderType(inputType.name);
             sb.AppendLine($"    {inTypeName} {CorrectIdentifier("input")};");
 
             // Assign synthetic "in" variables (with real field name) to structure passed to actual function.
             int inoutIndex = 0;
             bool foundSystemPosition = false;
-            foreach (FieldDefinition field in inputType.Fields)
+            foreach (FieldDefinition field in inputType.fields)
             {
-                if (entryFunction.Type == ShaderFunctionType.VertexEntryPoint)
+                if (entryFunction.type == ShaderFunctionType.VertexEntryPoint)
                 {
-                    sb.AppendLine($"    {CorrectIdentifier("input")}.{CorrectIdentifier(field.Name)} = {CorrectIdentifier(field.Name)};");
+                    sb.AppendLine($"    {CorrectIdentifier("input")}.{CorrectIdentifier(field.name)} = {CorrectIdentifier(field.name)};");
                 }
                 else
                 {
-                    if (field.SemanticType == SemanticType.SystemPosition && !foundSystemPosition)
+                    if (field.semanticType == SemanticType.SystemPosition && !foundSystemPosition)
                     {
-                        Debug.Assert(field.Name == fragCoordName);
+                        Debug.Assert(field.name == fragCoordName);
                         foundSystemPosition = true;
-                        sb.AppendLine($"    {CorrectIdentifier("input")}.{CorrectIdentifier(field.Name)} = gl_FragCoord;");
+                        sb.AppendLine($"    {CorrectIdentifier("input")}.{CorrectIdentifier(field.name)} = gl_FragCoord;");
                     }
                     else
                     {
-                        sb.AppendLine($"    {CorrectIdentifier("input")}.{CorrectIdentifier(field.Name)} = fsin_{inoutIndex++};");
+                        sb.AppendLine($"    {CorrectIdentifier("input")}.{CorrectIdentifier(field.name)} = fsin_{inoutIndex++};");
                     }
                 }
             }
@@ -268,8 +268,8 @@ public abstract class GlslBackendBase : LanguageBackend
 
         // Call actual function.
         string invocationStr = inputType != null
-            ? $"{entryFunction.Name}({CorrectIdentifier("input")})"
-            : $"{entryFunction.Name}()";
+            ? $"{entryFunction.name}({CorrectIdentifier("input")})"
+            : $"{entryFunction.name}()";
         if (mappedReturnType != "void")
         {
             sb.AppendLine($"    {mappedReturnType} {CorrectIdentifier("output")} = {invocationStr};");
@@ -280,19 +280,19 @@ public abstract class GlslBackendBase : LanguageBackend
         }
 
         // Assign output fields to synthetic "out" variables with normalized "fsin_#" names.
-        if (entryFunction.Type == ShaderFunctionType.VertexEntryPoint)
+        if (entryFunction.type == ShaderFunctionType.VertexEntryPoint)
         {
             int inoutIndex = 0;
             FieldDefinition systemPositionField = null;
-            foreach (FieldDefinition field in outputType.Fields)
+            foreach (FieldDefinition field in outputType.fields)
             {
-                if (systemPositionField == null && field.SemanticType == SemanticType.SystemPosition)
+                if (systemPositionField == null && field.semanticType == SemanticType.SystemPosition)
                 {
                     systemPositionField = field;
                 }
                 else
                 {
-                    sb.AppendLine($"    fsin_{inoutIndex++} = {CorrectIdentifier("output")}.{CorrectIdentifier(field.Name)};");
+                    sb.AppendLine($"    fsin_{inoutIndex++} = {CorrectIdentifier("output")}.{CorrectIdentifier(field.name)};");
                 }
             }
 
@@ -302,10 +302,10 @@ public abstract class GlslBackendBase : LanguageBackend
                 throw new ShaderGenerationException("Vertex functions must output a SystemPosition semantic.");
             }
 
-            sb.AppendLine($"    gl_Position = {CorrectIdentifier("output")}.{CorrectIdentifier(systemPositionField.Name)};");
+            sb.AppendLine($"    gl_Position = {CorrectIdentifier("output")}.{CorrectIdentifier(systemPositionField.name)};");
             EmitGlPositionCorrection(sb);
         }
-        else if (entryFunction.Type == ShaderFunctionType.FragmentEntryPoint)
+        else if (entryFunction.type == ShaderFunctionType.FragmentEntryPoint)
         {
             if (mappedReturnType == "vec4")
             {
@@ -315,10 +315,10 @@ public abstract class GlslBackendBase : LanguageBackend
             {
                 // Composite struct -- assign each field to output
                 int colorTargetIndex = 0;
-                foreach (FieldDefinition field in outputType.Fields)
+                foreach (FieldDefinition field in outputType.fields)
                 {
-                    Debug.Assert(field.SemanticType == SemanticType.ColorTarget);
-                    sb.AppendLine($"    _outputColor_{colorTargetIndex++} = {CorrectIdentifier("output")}.{CorrectIdentifier(field.Name)};");
+                    Debug.Assert(field.semanticType == SemanticType.ColorTarget);
+                    sb.AppendLine($"    _outputColor_{colorTargetIndex++} = {CorrectIdentifier("output")}.{CorrectIdentifier(field.name)};");
                 }
             }
         }
@@ -342,16 +342,16 @@ public abstract class GlslBackendBase : LanguageBackend
 
     internal override void AddResource(string setName, ResourceDefinition rd)
     {
-        if (rd.ResourceKind == ShaderResourceKind.Uniform)
-        {
-            _uniformNames.Add(rd.Name);
-        }
-        if (rd.ResourceKind == ShaderResourceKind.StructuredBuffer
-            || rd.ResourceKind == ShaderResourceKind.RWStructuredBuffer
-            || rd.ResourceKind == ShaderResourceKind.AtomicBuffer)
-        {
-            _ssboNames.Add(rd.Name);
-        }
+        if (rd.resourceKind == ShaderResourceKind.Uniform)
+            _uniformNames.Add(rd.name);
+
+        bool ssbo =
+            rd.resourceKind == ShaderResourceKind.StructuredBuffer||
+            rd.resourceKind == ShaderResourceKind.RWStructuredBuffer||
+            rd.resourceKind == ShaderResourceKind.AtomicBuffer;
+
+        if (ssbo)
+            _ssboNames.Add(rd.name);
 
         base.AddResource(setName, rd);
     }
@@ -378,15 +378,12 @@ public abstract class GlslBackendBase : LanguageBackend
 
     internal override string ParameterDirection(ParameterDirection direction)
     {
-        switch (direction)
+        return direction switch
         {
-            case GLSH.ParameterDirection.Out:
-                return "out";
-            case GLSH.ParameterDirection.InOut:
-                return "inout";
-            default:
-                return string.Empty;
-        }
+            GLSH.ParameterDirection.Out => "out",
+            GLSH.ParameterDirection.InOut => "inout",
+            _ => string.Empty,
+        };
     }
 
     private static readonly HashSet<string> s_glslKeywords =

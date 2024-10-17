@@ -1,21 +1,21 @@
-using System;
 using GLSH.Primitives;
-using System.Numerics;
+using Microsoft.CodeAnalysis;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.CodeAnalysis;
+using System.Numerics;
 
 namespace GLSH;
 
 public class ShaderModel
 {
-    public StructureDefinition[] Structures { get; }
-    public ResourceDefinition[] AllResources { get; }
-    public ShaderFunction[] Functions { get; }
+    public readonly StructureDefinition[] structures;
+    public readonly ResourceDefinition[] allResources;
+    public readonly ShaderFunction[] functions;
 
-    public ResourceDefinition[] VertexResources { get; }
-    public ResourceDefinition[] FragmentResources { get; }
-    public ResourceDefinition[] ComputeResources { get; }
+    public readonly ResourceDefinition[] vertexResources;
+    public readonly ResourceDefinition[] fragmentResources;
+    public readonly ResourceDefinition[] computeResources;
 
     public ShaderModel(
         StructureDefinition[] structures,
@@ -25,63 +25,48 @@ public class ShaderModel
         ResourceDefinition[] fragmentResources,
         ResourceDefinition[] computeResources)
     {
-        Structures = structures;
-        AllResources = resources;
-        Functions = functions;
-        VertexResources = vertexResources;
-        FragmentResources = fragmentResources;
-        ComputeResources = computeResources;
+        this.structures = structures;
+        allResources = resources;
+        this.functions = functions;
+        this.vertexResources = vertexResources;
+        this.fragmentResources = fragmentResources;
+        this.computeResources = computeResources;
     }
 
-    public StructureDefinition GetStructureDefinition(TypeReference typeRef) => GetStructureDefinition(typeRef.Name);
+    public StructureDefinition GetStructureDefinition(TypeReference typeRef) => GetStructureDefinition(typeRef.name);
     public StructureDefinition GetStructureDefinition(string name)
     {
-        return Structures.FirstOrDefault(sd => sd.Name == name);
+        return structures.FirstOrDefault(sd => sd.name == name);
     }
 
     public ShaderFunction GetFunction(string name)
     {
-        if (name.EndsWith("."))
-        {
+        if (name.EndsWith('.'))
             throw new ArgumentException($"{nameof(name)} must be a valid function name.");
-        }
 
-        if (name.Contains("."))
-        {
-            name = name.Split(new[] { '.' }).Last();
-        }
+        if (name.Contains('.'))
+            name = name.Split('.').Last();
 
-        return Functions.FirstOrDefault(sf => sf.Name == name);
+        return functions.FirstOrDefault(sf => sf.name == name);
     }
 
     public int GetTypeSize(TypeReference tr)
     {
-        if (s_knownTypeSizes.TryGetValue(tr.Name, out int ret))
-        {
+        if (s_knownTypeSizes.TryGetValue(tr.name, out int ret))
             return ret;
-        }
-        else if (tr.TypeInfo.TypeKind == TypeKind.Enum)
-        {
-            string enumBaseType = ((INamedTypeSymbol)tr.TypeInfo).EnumUnderlyingType.GetFullMetadataName();
-            if (s_knownTypeSizes.TryGetValue(enumBaseType, out int enumRet))
-            {
-                return enumRet;
-            }
-            else
-            {
-                throw new InvalidOperationException($"Unknown enum base type: {enumBaseType}");
-            }
-        }
-        else
-        {
-            StructureDefinition sd = GetStructureDefinition(tr);
-            if (sd == null)
-            {
-                throw new InvalidOperationException("Unable to determine the size for type: " + tr.Name);
-            }
 
-            return sd.Alignment.CSharpSize;
+        if (tr.typeInfo.TypeKind == TypeKind.Enum)
+        {
+            string enumBaseType = ((INamedTypeSymbol)tr.typeInfo).EnumUnderlyingType.GetFullMetadataName();
+            if (s_knownTypeSizes.TryGetValue(enumBaseType, out int enumRet))
+                return enumRet;
+            else
+                throw new InvalidOperationException($"Unknown enum base type: {enumBaseType}");
         }
+        StructureDefinition sd = GetStructureDefinition(tr);
+        return sd == null
+            ? throw new InvalidOperationException("Unable to determine the size for type: " + tr.name)
+            : sd.alignment.CSharpSize;
     }
 
     private static readonly Dictionary<string, int> s_knownTypeSizes = new()

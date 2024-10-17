@@ -1,7 +1,7 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets.VeldridShaders
 {
@@ -9,17 +9,17 @@ namespace Tests.TestAssets.VeldridShaders
     {
         public struct Vertex
         {
-            [PositionSemantic]
+            [VertexSemantic(SemanticType.Position)]
             public Vector2 Position;
-            [ColorSemantic]
+            [VertexSemantic(SemanticType.Color)]
             public UInt4 Color_Int;
         }
 
         public struct FragmentInput
         {
-            [SystemPositionSemantic]
+            [VertexSemantic(SemanticType.SystemPosition)]
             public Vector4 Position;
-            [ColorSemantic]
+            [VertexSemantic(SemanticType.Color)]
             public Vector4 Color;
         }
 
@@ -27,14 +27,14 @@ namespace Tests.TestAssets.VeldridShaders
         public struct Info
         {
             public uint ColorNormalizationFactor;
-            private float _padding0;
-            private float _padding1;
-            private float _padding2;
+            private readonly float _padding0;
+            private readonly float _padding1;
+            private readonly float _padding2;
         }
 
         public Info InfoBuffer;
 
-        [VertexShader]
+        [VertexEntryPoint]
         public FragmentInput VS(Vertex input)
         {
             FragmentInput output;
@@ -43,7 +43,7 @@ namespace Tests.TestAssets.VeldridShaders
             return output;
         }
 
-        [FragmentShader]
+        [FragmentEntryPoint]
         public Vector4 FS(FragmentInput input)
         {
             return input.Color;

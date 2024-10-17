@@ -9,7 +9,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 
-namespace Runner;
+namespace Runner.Some.StupidNamespace;
 
 internal static class Program
 {
@@ -29,11 +29,11 @@ internal static class Program
 
 
     public static int Main(string[] args)
-    
+
     {
         Compilation compilation = CompileScripts();
         Glsl450Backend glsl450 = new(compilation);
-        
+
         ShaderGenerator sg = new(compilation, [glsl450]);
         ShaderGenerationResult shaderGenResult;
         try

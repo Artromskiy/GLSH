@@ -4,12 +4,12 @@ namespace GLSH;
 
 public class MethodProcessResult
 {
-    public string FullText { get; }
-    public HashSet<ResourceDefinition> ResourcesUsed { get; set; }
+    public readonly string fullText;
+    public readonly HashSet<ResourceDefinition> resourcesUsed;
 
     public MethodProcessResult(string fullText, HashSet<ResourceDefinition> resourcesUsed)
     {
-        FullText = fullText;
-        ResourcesUsed = resourcesUsed;
+        this.fullText = fullText;
+        this.resourcesUsed = resourcesUsed;
     }
 }

@@ -1,14 +1,11 @@
-﻿using System;
+﻿using GlmSharpGenerator.Types;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GlmSharpGenerator.Types;
 
 namespace GlmSharpGenerator.Tests
 {
-    class InvariantTestFunc : TestFunc
+    internal class InvariantTestFunc : TestFunc
     {
         public InvariantTestFunc(AbstractType type, string name, params string[] invariants) : base(type, name)
         {
@@ -80,7 +77,7 @@ namespace GlmSharpGenerator.Tests
                         Debug.Assert(parts.Length == 2);
                         code.Add($"    Assert.That(glm.ApproxEqual({parts[0].Trim()}, {parts[1].Trim()}));");
                     }
-                    else 
+                    else
                         code.Add($"    Assert.That({inv});");
                     code.Add("}");
                 }

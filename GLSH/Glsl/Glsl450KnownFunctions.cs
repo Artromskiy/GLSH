@@ -1,16 +1,16 @@
+using GLSH.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
-using GLSH.Primitives;
 
 namespace GLSH.Glsl;
 
 public static class Glsl450KnownFunctions
 {
-    private static Dictionary<string, TypeInvocationTranslator> s_mappings = GetMappings();
+    private static readonly Dictionary<string, TypeInvocationTranslator> s_mappings = GetMappings();
 
     private static Dictionary<string, TypeInvocationTranslator> GetMappings()
     {
@@ -237,22 +237,22 @@ public static class Glsl450KnownFunctions
     private static string MatrixCtor(string typeName, string methodName, InvocationParameterInfo[] p)
     {
         string paramList = string.Join(", ",
-            p[0].Identifier, p[4].Identifier, p[8].Identifier, p[12].Identifier,
-            p[1].Identifier, p[5].Identifier, p[9].Identifier, p[13].Identifier,
-            p[2].Identifier, p[6].Identifier, p[10].Identifier, p[14].Identifier,
-            p[3].Identifier, p[7].Identifier, p[11].Identifier, p[15].Identifier);
+            p[0].identifier, p[4].identifier, p[8].identifier, p[12].identifier,
+            p[1].identifier, p[5].identifier, p[9].identifier, p[13].identifier,
+            p[2].identifier, p[6].identifier, p[10].identifier, p[14].identifier,
+            p[3].identifier, p[7].identifier, p[11].identifier, p[15].identifier);
 
         return $"mat4({paramList})";
     }
 
     private static string VectorGetComponent(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        return $"{parameters[0].Identifier}[{parameters[1].Identifier}]";
+        return $"{parameters[0].identifier}[{parameters[1].identifier}]";
     }
 
     private static string VectorSetComponent(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        return $"{parameters[0].Identifier}[{parameters[1].Identifier}] = {parameters[2].Identifier}";
+        return $"{parameters[0].identifier}[{parameters[1].identifier}] = {parameters[2].identifier}";
     }
 
     public static string TranslateInvocation(string type, string method, InvocationParameterInfo[] parameters)
@@ -278,45 +278,45 @@ public static class Glsl450KnownFunctions
 
     private static string LengthSquared(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        return $"dot({parameters[0].Identifier}, {parameters[0].Identifier})";
+        return $"dot({parameters[0].identifier}, {parameters[0].identifier})";
     }
 
     private static string Negate(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        return $"-{parameters[0].Identifier}";
+        return $"-{parameters[0].identifier}";
     }
 
     private static string DistanceSquared(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        return $"dot({parameters[0].Identifier} - {parameters[1].Identifier}, {parameters[0].Identifier} - {parameters[1].Identifier})";
+        return $"dot({parameters[0].identifier} - {parameters[1].identifier}, {parameters[0].identifier} - {parameters[1].identifier})";
     }
 
     private static InvocationTranslator BinaryOpTranslator(string op)
     {
         return (type, method, parameters) =>
         {
-            return $"{parameters[0].Identifier} {op} {parameters[1].Identifier}";
+            return $"{parameters[0].identifier} {op} {parameters[1].identifier}";
         };
     }
 
     private static string MatrixMul(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        return $"{parameters[0].Identifier} * {parameters[1].Identifier}";
+        return $"{parameters[0].identifier} * {parameters[1].identifier}";
     }
 
     private static string Sample(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        if (parameters[0].FullTypeName == typeof(Texture2DResource).FullName)
+        if (parameters[0].fullTypeName == typeof(Texture2DResource).FullName)
         {
-            return $"texture(sampler2D({parameters[0].Identifier}, {parameters[1].Identifier}), {parameters[2].Identifier})";
+            return $"texture(sampler2D({parameters[0].identifier}, {parameters[1].identifier}), {parameters[2].identifier})";
         }
-        else if (parameters[0].FullTypeName == typeof(Texture2DArrayResource).FullName)
+        else if (parameters[0].fullTypeName == typeof(Texture2DArrayResource).FullName)
         {
-            return $"texture(sampler2DArray({parameters[0].Identifier}, {parameters[1].Identifier}), vec3({parameters[2].Identifier}, {parameters[3].Identifier}))";
+            return $"texture(sampler2DArray({parameters[0].identifier}, {parameters[1].identifier}), vec3({parameters[2].identifier}, {parameters[3].identifier}))";
         }
-        else if (parameters[0].FullTypeName == typeof(TextureCubeResource).FullName)
+        else if (parameters[0].fullTypeName == typeof(TextureCubeResource).FullName)
         {
-            return $"texture(samplerCube({parameters[0].Identifier}, {parameters[1].Identifier}), {parameters[2].Identifier})";
+            return $"texture(samplerCube({parameters[0].identifier}, {parameters[1].identifier}), {parameters[2].identifier})";
         }
         else
         {
@@ -326,13 +326,13 @@ public static class Glsl450KnownFunctions
 
     private static string SampleGrad(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        if (parameters[0].FullTypeName == typeof(Texture2DResource).FullName)
+        if (parameters[0].fullTypeName == typeof(Texture2DResource).FullName)
         {
-            return $"textureGrad(sampler2D({parameters[0].Identifier}, {parameters[1].Identifier}), {parameters[2].Identifier}, {parameters[3].Identifier}, {parameters[4].Identifier})";
+            return $"textureGrad(sampler2D({parameters[0].identifier}, {parameters[1].identifier}), {parameters[2].identifier}, {parameters[3].identifier}, {parameters[4].identifier})";
         }
-        else if (parameters[0].FullTypeName == typeof(Texture2DArrayResource).FullName)
+        else if (parameters[0].fullTypeName == typeof(Texture2DArrayResource).FullName)
         {
-            return $"textureGrad(sampler2DArray({parameters[0].Identifier}, {parameters[1].Identifier}), vec3({parameters[2].Identifier}, {parameters[3].Identifier}), {parameters[4].Identifier}, {parameters[5].Identifier})";
+            return $"textureGrad(sampler2DArray({parameters[0].identifier}, {parameters[1].identifier}), vec3({parameters[2].identifier}, {parameters[3].identifier}), {parameters[4].identifier}, {parameters[5].identifier})";
         }
         else
         {
@@ -342,14 +342,14 @@ public static class Glsl450KnownFunctions
 
     private static string SampleComparisonLevelZero(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        if (parameters[0].FullTypeName == typeof(DepthTexture2DResource).FullName!)
+        if (parameters[0].fullTypeName == typeof(DepthTexture2DResource).FullName!)
         {
-            return $"textureLod(sampler2DShadow({parameters[0].Identifier}, {parameters[1].Identifier}), vec3({parameters[2].Identifier}, {parameters[3].Identifier}), 0.0)";
+            return $"textureLod(sampler2DShadow({parameters[0].identifier}, {parameters[1].identifier}), vec3({parameters[2].identifier}, {parameters[3].identifier}), 0.0)";
         }
-        else if (parameters[0].FullTypeName == typeof(DepthTexture2DArrayResource).FullName!)
+        else if (parameters[0].fullTypeName == typeof(DepthTexture2DArrayResource).FullName!)
         {
             // See https://github.com/KhronosGroup/SPIRV-Cross/issues/207 for why we need to use textureGrad here instead of textureLod.
-            return $"textureGrad(sampler2DArrayShadow({parameters[0].Identifier}, {parameters[1].Identifier}), vec4({parameters[2].Identifier}, {parameters[3].Identifier}, {parameters[4].Identifier}), vec2(0.0), vec2(0.0))";
+            return $"textureGrad(sampler2DArrayShadow({parameters[0].identifier}, {parameters[1].identifier}), vec4({parameters[2].identifier}, {parameters[3].identifier}, {parameters[4].identifier}), vec2(0.0), vec2(0.0))";
         }
         else
         {
@@ -359,36 +359,36 @@ public static class Glsl450KnownFunctions
 
     private static string Load(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        if (parameters[0].FullTypeName.Contains("RWTexture2D"))
+        if (parameters[0].fullTypeName.Contains("RWTexture2D"))
         {
-            if (parameters[0].FullTypeName.Contains("<float>"))
+            if (parameters[0].fullTypeName.Contains("<float>"))
             {
-                return $"imageLoad({parameters[0].Identifier}, ivec2({parameters[1].Identifier})).r";
+                return $"imageLoad({parameters[0].identifier}, ivec2({parameters[1].identifier})).r";
             }
             else
             {
-                return $"imageLoad({parameters[0].Identifier}, ivec2({parameters[1].Identifier}))";
+                return $"imageLoad({parameters[0].identifier}, ivec2({parameters[1].identifier}))";
             }
         }
-        else if (parameters[0].FullTypeName == typeof(Texture2DResource).FullName!)
+        else if (parameters[0].fullTypeName == typeof(Texture2DResource).FullName!)
         {
-            return $"texelFetch(sampler2D({parameters[0].Identifier}, {parameters[1].Identifier}), ivec2({parameters[2].Identifier}), {parameters[3].Identifier})";
+            return $"texelFetch(sampler2D({parameters[0].identifier}, {parameters[1].identifier}), ivec2({parameters[2].identifier}), {parameters[3].identifier})";
         }
         else
         {
-            return $"texelFetch(sampler2DMS({parameters[0].Identifier}, {parameters[1].Identifier}), ivec2({parameters[2].Identifier}), {parameters[3].Identifier})";
+            return $"texelFetch(sampler2DMS({parameters[0].identifier}, {parameters[1].identifier}), ivec2({parameters[2].identifier}), {parameters[3].identifier})";
         }
     }
 
     private static string Store(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        if (parameters[0].FullTypeName.Contains("<float>"))
+        if (parameters[0].fullTypeName.Contains("<float>"))
         {
-            return $"imageStore({parameters[0].Identifier}, ivec2({parameters[1].Identifier}), vec4({parameters[2].Identifier}))";
+            return $"imageStore({parameters[0].identifier}, ivec2({parameters[1].identifier}), vec4({parameters[2].identifier}))";
         }
         else
         {
-            return $"imageStore({parameters[0].Identifier}, ivec2({parameters[1].Identifier}), {parameters[2].Identifier})";
+            return $"imageStore({parameters[0].identifier}, ivec2({parameters[1].identifier}), {parameters[2].identifier})";
         }
     }
 
@@ -401,7 +401,7 @@ public static class Glsl450KnownFunctions
     {
         if (parameters.Length == 1)
         {
-            return $"clamp({parameters[0].Identifier}, 0, 1)";
+            return $"clamp({parameters[0].identifier}, 0, 1)";
         }
         else
         {
@@ -411,7 +411,7 @@ public static class Glsl450KnownFunctions
 
     private static string ClipToTextureCoordinates(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        string target = parameters[0].Identifier;
+        string target = parameters[0].identifier;
         return $"vec2(({target}.x / {target}.w) / 2 + 0.5, ({target}.y / {target}.w) / -2 + 0.5)";
     }
 
@@ -442,7 +442,7 @@ public static class Glsl450KnownFunctions
 
     private static string InterlockedAdd(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        return $"atomicAdd({parameters[0].Identifier}[{parameters[1].Identifier}], {parameters[2].Identifier})";
+        return $"atomicAdd({parameters[0].identifier}[{parameters[1].identifier}], {parameters[2].identifier})";
     }
 
     private static string VectorCtor(string typeName, string methodName, InvocationParameterInfo[] parameters)
@@ -455,7 +455,7 @@ public static class Glsl450KnownFunctions
         }
         else if (parameters.Length == 1)
         {
-            paramList = string.Join(", ", Enumerable.Repeat(parameters[0].Identifier, elementCount));
+            paramList = string.Join(", ", Enumerable.Repeat(parameters[0].identifier, elementCount));
         }
         else
         {
@@ -463,7 +463,7 @@ public static class Glsl450KnownFunctions
             for (int i = 0; i < parameters.Length; i++)
             {
                 InvocationParameterInfo ipi = parameters[i];
-                sb.Append(ipi.Identifier);
+                sb.Append(ipi.identifier);
 
                 if (i != parameters.Length - 1)
                 {
@@ -525,31 +525,31 @@ public static class Glsl450KnownFunctions
 
     private static string Vector2Transform(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        return $"({parameters[1].Identifier} * vec4({parameters[0].Identifier}, 0, 1)).xy";
+        return $"({parameters[1].identifier} * vec4({parameters[0].identifier}, 0, 1)).xy";
     }
 
     private static string Vector3Transform(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        return $"({parameters[1].Identifier} * vec4({parameters[0].Identifier}, 1)).xyz";
+        return $"({parameters[1].identifier} * vec4({parameters[0].identifier}, 1)).xyz";
     }
 
     private static string Vector4Transform(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
         string vecParam;
-        if (parameters[0].FullTypeName == typeof(Vector2).FullName!)
+        if (parameters[0].fullTypeName == typeof(Vector2).FullName!)
         {
-            vecParam = $"vec4({parameters[0].Identifier}, 0, 1)";
+            vecParam = $"vec4({parameters[0].identifier}, 0, 1)";
         }
-        else if (parameters[0].FullTypeName == typeof(Vector3).FullName!)
+        else if (parameters[0].fullTypeName == typeof(Vector3).FullName!)
         {
-            vecParam = $"vec4({parameters[0].Identifier}, 1)";
+            vecParam = $"vec4({parameters[0].identifier}, 1)";
         }
         else
         {
-            vecParam = parameters[0].Identifier;
+            vecParam = parameters[0].identifier;
         }
 
-        return $"{parameters[1].Identifier} * {vecParam}";
+        return $"{parameters[1].identifier} * {vecParam}";
     }
 
     private static void GetVectorTypeInfo(string name, out string shaderType, out int elementCount)
@@ -564,47 +564,47 @@ public static class Glsl450KnownFunctions
 
     private static string CubeRoot(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        string pType = parameters[0].FullTypeName;
+        string pType = parameters[0].fullTypeName;
         if (pType == typeof(float).FullName! || pType == "float") // TODO Why are we getting float?
         {
-            return $"pow({parameters[0].Identifier}, 0.333333333333333)";
+            return $"pow({parameters[0].identifier}, 0.333333333333333)";
         }
 
         GetVectorTypeInfo(pType, out string shaderType, out int elementCount);
         // TODO All backends but Vulkan return NaN for Cbrt of a -ve number...
         return
-            $"pow({parameters[0].Identifier}, {shaderType}({string.Join(",", Enumerable.Range(0, elementCount).Select(i => "0.333333333333333"))}))";
+            $"pow({parameters[0].identifier}, {shaderType}({string.Join(",", Enumerable.Range(0, elementCount).Select(i => "0.333333333333333"))}))";
     }
 
     private static string Log(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
         if (parameters.Length < 2)
         {
-            return $"log({parameters[0].Identifier})";
+            return $"log({parameters[0].identifier})";
         }
 
         // TODO Get computed constant value for parameter 2 rather than simple string
-        string param2 = parameters[1].Identifier;
+        string param2 = parameters[1].identifier;
         if (float.TryParse(param2, out float @base))
         {
             if (Math.Abs(@base - 2f) < float.Epsilon)
             {
-                return $"log2({parameters[0].Identifier})";
+                return $"log2({parameters[0].identifier})";
             }
 
             if (Math.Abs(@base - Math.E) < float.Epsilon)
             {
-                return $"log({parameters[0].Identifier})";
+                return $"log({parameters[0].identifier})";
             }
         }
 
-        return $"(log({parameters[0].Identifier})/log({parameters[1].Identifier}))";
+        return $"(log({parameters[0].identifier})/log({parameters[1].identifier}))";
     }
 
     private static string Log10(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
         // Divide by Log(10) = 2.30258509299405 as OpenGL doesn't suppport log10 natively
-        return $"(log({parameters[0].Identifier})/2.30258509299405)";
+        return $"(log({parameters[0].identifier})/2.30258509299405)";
     }
 
     private static string Round(string typeName, string methodName, InvocationParameterInfo[] parameters)
@@ -612,7 +612,7 @@ public static class Glsl450KnownFunctions
         // TODO Should we use RoundEven here for safety??
         if (parameters.Length < 2)
         {
-            return $"round({parameters[0].Identifier})";
+            return $"round({parameters[0].identifier})";
         }
 
         // TODO Need to Implement to support MathF fully
@@ -626,10 +626,10 @@ public static class Glsl450KnownFunctions
     {
         // D3D & Vulkan return Max when max < min, but OpenGL returns Min, so we need
         // to correct by returning Max when max < min.
-        bool isFloat = parameters[1].FullTypeName == typeof(float).FullName! || parameters[1].FullTypeName == "float";
-        string p0 = $"{parameters[0].Identifier}`";
-        string p1 = $"{parameters[1].Identifier}{(isFloat ? string.Empty : "`")}";
-        return AddCheck(parameters[0].FullTypeName,
+        bool isFloat = parameters[1].fullTypeName == typeof(float).FullName! || parameters[1].fullTypeName == "float";
+        string p0 = $"{parameters[0].identifier}`";
+        string p1 = $"{parameters[1].identifier}{(isFloat ? string.Empty : "`")}";
+        return AddCheck(parameters[0].fullTypeName,
             $"({p0}-{p1}*trunc({p0}/{p1}))");
     }
 

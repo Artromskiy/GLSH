@@ -1,7 +1,8 @@
 using System;
 
-namespace GLSH.Primitives;
+namespace GLSH.Primitives.Attributes;
 
+[AttributeUsage(AttributeTargets.All, AllowMultiple = false)]
 public class ArraySizeAttribute : Attribute
 {
     public int ElementCount { get; }

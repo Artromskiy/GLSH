@@ -1,7 +1,6 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using GLSH;
-using static GLSH.Primitives.ShaderBuiltins;
 using System.Runtime.InteropServices;
 
 namespace Tests.TestAssets
@@ -11,8 +10,8 @@ namespace Tests.TestAssets
         public PointLightsInfo PointLights;
         public const int MyOtherConst = 20;
 
-        [VertexShader]
-        SystemPosition4 VS(Position4 input)
+        [VertexEntryPoint]
+        private SystemPosition4 VS(Position4 input)
         {
             const int MyConst = 10;
 

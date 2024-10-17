@@ -1,13 +1,13 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
     public class VectorIndexers
     {
-        [VertexShader]
-        SystemPosition4 VS(Position4 input)
+        [VertexEntryPoint]
+        private SystemPosition4 VS(Position4 input)
         {
             Vector2 v2 = new Vector2();
             float f = v2.GetComponent(0);

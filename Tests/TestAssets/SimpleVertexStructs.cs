@@ -1,16 +1,16 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
     public struct Position4
     {
-        [PositionSemantic] public Vector4 Position;
+        [VertexSemantic(SemanticType.Position)] public Vector4 Position;
     }
 
     public struct SystemPosition4
     {
-        [SystemPositionSemantic] public Vector4 Position;
+        [VertexSemantic(SemanticType.SystemPosition)] public Vector4 Position;
     }
 }

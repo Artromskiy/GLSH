@@ -1,9 +1,9 @@
 ﻿
 using GLSH.Primitives;
-using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets.VeldridShaders
 {
@@ -80,7 +80,7 @@ namespace Tests.TestAssets.VeldridShaders
             [VertexSemantic(SemanticType.TextureCoordinate)] public Vector2 TexCoord;
         }
 
-        [VertexShader]
+        [VertexEntryPoint]
         public PixelInput VS(VertexInput input)
         {
             PixelInput output;
@@ -104,7 +104,7 @@ namespace Tests.TestAssets.VeldridShaders
             return output;
         }
 
-        [FragmentShader]
+        [FragmentEntryPoint]
         public Vector4 FS(PixelInput input)
         {
             float alphaMapSample = Sample(AlphaMap, AlphaMapSampler, input.TexCoord).X;
@@ -202,7 +202,7 @@ namespace Tests.TestAssets.VeldridShaders
                 + diffuseFactor * surfaceColor + pointDiffuse + pointSpec, surfaceColor.X);
         }
 
-        Vector4 WithAlpha(Vector4 baseColor, float alpha)
+        private Vector4 WithAlpha(Vector4 baseColor, float alpha)
         {
             return new Vector4(baseColor.XYZ(), alpha);
         }

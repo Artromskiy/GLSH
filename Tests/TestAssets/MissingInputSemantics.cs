@@ -1,4 +1,5 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
 using static GLSH.Primitives.ShaderBuiltins;
 
@@ -13,7 +14,7 @@ namespace Tests.TestAssets
         // Not a real uniform.
         public Matrix4x4 NotARealUniformField;
 
-        [VertexShader]
+        [VertexEntryPoint]
         public VertexOutput VS(VertexNoSemantics input)
         {
             VertexOutput output;

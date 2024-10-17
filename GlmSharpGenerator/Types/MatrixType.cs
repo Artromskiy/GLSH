@@ -1,12 +1,11 @@
-﻿using System;
-using System.CodeDom;
+﻿using GlmSharpGenerator.Members;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using GlmSharpGenerator.Members;
 
 namespace GlmSharpGenerator.Types
 {
-    class MatrixType : AbstractType
+    internal class MatrixType : AbstractType
     {
         public MatrixType(BuiltinType type, int cols, int rows)
         {
@@ -109,7 +108,7 @@ namespace GlmSharpGenerator.Types
                 yield return "m" + x + row;
         }
 
-        public string FieldFor(int f) => $"m{f/Rows}{f%Rows}";
+        public string FieldFor(int f) => $"m{f / Rows}{f % Rows}";
 
         public string ArgOf(int c) => "xyzw"[c].ToString();
 
@@ -219,7 +218,7 @@ namespace GlmSharpGenerator.Types
                 yield return new Property("Column" + col, colVecType)
                 {
                     GetterLine = $"return {Construct(colVecType, Column(col))};",
-                    Setter = Column(col).Select((f,i) => $"{f} = value.{ArgOf(i)};"),
+                    Setter = Column(col).Select((f, i) => $"{f} = value.{ArgOf(i)};"),
                     Comment = $"Gets or sets the column nr {col}"
                 };
             // Rows
@@ -227,7 +226,7 @@ namespace GlmSharpGenerator.Types
                 yield return new Property("Row" + row, rowVecType)
                 {
                     GetterLine = $"return {Construct(rowVecType, Row(row))};",
-                    Setter = Row(row).Select((f,i) => $"{f} = value.{ArgOf(i)};"),
+                    Setter = Row(row).Select((f, i) => $"{f} = value.{ArgOf(i)};"),
                     Comment = $"Gets or sets the row nr {row}"
                 };
 

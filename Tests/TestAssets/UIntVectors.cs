@@ -1,7 +1,6 @@
 ﻿using GLSH.Primitives;
-using System.Numerics;
+using GLSH.Primitives.Attributes;
 using System.Runtime.InteropServices;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
@@ -10,22 +9,22 @@ namespace Tests.TestAssets
         [StructLayout(LayoutKind.Sequential)]
         public struct VertexInput
         {
-            [PositionSemantic]
+            [VertexSemantic(SemanticType.Position)]
             public UInt2 U32x2;
-            [TextureCoordinateSemantic]
+            [VertexSemantic(SemanticType.TextureCoordinate)]
             public UInt3 U32x3;
-            [ColorSemantic]
+            [VertexSemantic(SemanticType.Color)]
             public UInt4 U32x4;
 
-            [PositionSemantic]
+            [VertexSemantic(SemanticType.Position)]
             public Int2 I32x2;
-            [PositionSemantic]
+            [VertexSemantic(SemanticType.Position)]
             public Int3 I32x3;
-            [PositionSemantic]
+            [VertexSemantic(SemanticType.Position)]
             public Int4 I32x4;
         }
 
-        [VertexShader]
+        [VertexEntryPoint]
         public SystemPosition4 VS(VertexInput input)
         {
             SystemPosition4 output;

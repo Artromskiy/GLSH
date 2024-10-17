@@ -1,11 +1,8 @@
-﻿using Microsoft.CodeAnalysis;
-using System.Linq;
-using GLSH;
-using GLSH.Primitives;
-using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
-using Xunit;
+﻿using GLSH;
 using GLSH.Glsl;
+using Microsoft.CodeAnalysis;
+using System.Linq;
+using Xunit;
 
 namespace Tests
 {
@@ -33,7 +30,7 @@ namespace Tests
 
             public void ProcessShaderSet(ShaderSetProcessorInput input)
             {
-                Result = string.Join(" ", input.Model.AllResources.Select(rd => rd.Name));
+                Result = string.Join(" ", input.model.allResources.Select(rd => rd.name));
             }
         }
     }

@@ -1,12 +1,11 @@
 ﻿using GLSH.Primitives;
-using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
+using GLSH.Primitives.Attributes;
 
 namespace Tests.TestAssets
 {
     public class PercentOperator
     {
-        [VertexShader]
+        [VertexEntryPoint]
         public SystemPosition4 PercentEqualsVS(Position4 input)
         {
             float x = 5;

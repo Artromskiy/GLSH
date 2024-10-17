@@ -4,14 +4,14 @@ namespace GLSH;
 
 public class ShaderFunction
 {
-    public string DeclaringType { get; }
-    public string Name { get; }
-    public TypeReference ReturnType { get; }
-    public int ColorOutputCount { get; } // TODO: This always returns 0.
-    public ParameterDefinition[] Parameters { get; }
-    public bool IsEntryPoint => Type != ShaderFunctionType.Normal;
-    public ShaderFunctionType Type { get; }
-    public UInt3 ComputeGroupCounts { get; }
+    public readonly string declaringType;
+    public readonly string name;
+    public readonly TypeReference returnType;
+    public readonly int colorOutputCount; // TODO: This always returns 0.
+    public readonly ParameterDefinition[] parameters;
+    public readonly ShaderFunctionType type;
+    public readonly UInt3 computeGroupCounts;
+    public bool IsEntryPoint => type != ShaderFunctionType.Normal;
     public bool UsesVertexID { get; internal set; }
     public bool UsesInstanceID { get; internal set; }
     public bool UsesDispatchThreadID { get; internal set; }
@@ -30,13 +30,13 @@ public class ShaderFunction
         ShaderFunctionType type,
         UInt3 computeGroupCounts)
     {
-        DeclaringType = declaringType;
-        Name = name;
-        ReturnType = returnType;
-        Parameters = parameters;
-        Type = type;
-        ComputeGroupCounts = computeGroupCounts;
+        this.declaringType = declaringType;
+        this.name = name;
+        this.returnType = returnType;
+        this.parameters = parameters;
+        this.type = type;
+        this.computeGroupCounts = computeGroupCounts;
     }
 
-    public override string ToString() => $"{DeclaringType}.{Name} [{Type}]";
+    public override string ToString() => $"{declaringType}.{name} [{type}]";
 }

@@ -1,12 +1,12 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
     public class TestFragmentShader
     {
-        [FragmentShader]
+        [FragmentEntryPoint]
         public Vector4 FS(VertexOutput input)
         {
             return input.Color;

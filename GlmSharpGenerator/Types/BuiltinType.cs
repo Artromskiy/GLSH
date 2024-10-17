@@ -1,12 +1,12 @@
-﻿using System;
+﻿using GlmSharpGenerator.Members;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using GlmSharpGenerator.Members;
 
 namespace GlmSharpGenerator.Types
 {
-    class BuiltinType : AbstractType
+    internal class BuiltinType : AbstractType
     {
         public static IEnumerable<BuiltinType> BaseTypes
         {

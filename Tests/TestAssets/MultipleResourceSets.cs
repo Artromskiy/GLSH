@@ -1,4 +1,5 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
 using static GLSH.Primitives.ShaderBuiltins;
 
@@ -24,7 +25,7 @@ namespace Tests.TestAssets
         [ResourceSet(1)] public Texture2DResource Texture2D1;   // 12
 #pragma warning restore 0649
 
-        [VertexShader]
+        [VertexEntryPoint]
         public SystemPosition4 VS(Position4 input)
         {
             Vector4 outputPos;
@@ -36,7 +37,7 @@ namespace Tests.TestAssets
             return output;
         }
 
-        [FragmentShader]
+        [FragmentEntryPoint]
         public Vector4 FS(SystemPosition4 input)
         {
             return input.Position;

@@ -1,12 +1,12 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
     public class VertexAndFragment
     {
-        [VertexShader]
+        [VertexEntryPoint]
         public FragmentInput VS(VertexInput input)
         {
             FragmentInput output;
@@ -14,7 +14,7 @@ namespace Tests.TestAssets
             return output;
         }
 
-        [FragmentShader]
+        [FragmentEntryPoint]
         public Vector4 FS(FragmentInput input)
         {
             return new Vector4(input.Position.X, input.Position.Y, input.Position.Z, 1);

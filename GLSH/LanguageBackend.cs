@@ -13,38 +13,30 @@ namespace GLSH;
 
 public abstract class LanguageBackend
 {
-    protected readonly Compilation Compilation;
-
-    internal class BackendContext
-    {
-        internal List<StructureDefinition> Structures { get; } = [];
-        internal List<ResourceDefinition> Resources { get; } = [];
-        internal List<ShaderFunctionAndMethodDeclarationSyntax> Functions { get; } = [];
-    }
-
-    internal Dictionary<string, BackendContext> Contexts = [];
-
+    protected readonly Compilation _compilation;
+    private readonly Dictionary<string, BackendContext> _contexts = [];
     private readonly Dictionary<ShaderFunction, MethodProcessResult> _processedFunctions = [];
+
 
     internal LanguageBackend(Compilation compilation)
     {
-        Compilation = compilation;
+        _compilation = compilation;
     }
 
     // Must be called before attempting to retrieve the context.
     internal void InitContext(string setName)
     {
-        if (Contexts.ContainsKey(setName))
+        if (_contexts.ContainsKey(setName))
         {
             throw new InvalidOperationException("A set was initialized twice: " + setName);
         }
 
-        Contexts.Add(setName, new BackendContext());
+        _contexts.Add(setName, new BackendContext());
     }
 
     internal BackendContext GetContext(string setName)
     {
-        if (!Contexts.TryGetValue(setName, out BackendContext? ret))
+        if (!_contexts.TryGetValue(setName, out BackendContext? ret))
         {
             throw new InvalidOperationException("There was no Shader Set generated with the name " + setName);
         }
@@ -58,18 +50,18 @@ public abstract class LanguageBackend
 
         foreach (ResourceDefinition rd in context.Resources
             .Where(rd =>
-                rd.ResourceKind == ShaderResourceKind.Uniform
-                || rd.ResourceKind == ShaderResourceKind.RWStructuredBuffer
-                || rd.ResourceKind == ShaderResourceKind.StructuredBuffer))
+                rd.resourceKind == ShaderResourceKind.Uniform
+                || rd.resourceKind == ShaderResourceKind.RWStructuredBuffer
+                || rd.resourceKind == ShaderResourceKind.StructuredBuffer))
         {
-            ForceTypeDiscovery(setName, rd.ValueType);
+            ForceTypeDiscovery(setName, rd.valueType);
         }
         // HACK: Discover all field structure types.
         foreach (StructureDefinition sd in context.Structures.ToArray())
         {
-            foreach (FieldDefinition fd in sd.Fields)
+            foreach (FieldDefinition fd in sd.fields)
             {
-                ForceTypeDiscovery(setName, fd.Type);
+                ForceTypeDiscovery(setName, fd.type);
             }
         }
 
@@ -81,33 +73,33 @@ public abstract class LanguageBackend
         // Discover all parameter types
         foreach (ShaderFunctionAndMethodDeclarationSyntax sf in contextFunctions)
         {
-            foreach (ParameterDefinition funcParam in sf.Function.Parameters)
+            foreach (ParameterDefinition funcParam in sf.function.parameters)
             {
-                if (funcParam.Symbol.Type.TypeKind == TypeKind.Struct)
+                if (funcParam.symbol.Type.TypeKind == TypeKind.Struct)
                 {
-                    ForceTypeDiscovery(setName, funcParam.Type);
+                    ForceTypeDiscovery(setName, funcParam.type);
                 }
             }
         }
 
         foreach (ShaderFunctionAndMethodDeclarationSyntax sf in contextFunctions)
         {
-            if (sf.Function.IsEntryPoint)
+            if (sf.function.IsEntryPoint)
             {
-                MethodProcessResult processedFunction = ProcessEntryFunction(setName, sf.Function);
+                MethodProcessResult processedFunction = ProcessEntryFunction(setName, sf.function);
 
-                if (sf.Function.Type == ShaderFunctionType.VertexEntryPoint)
+                if (sf.function.type == ShaderFunctionType.VertexEntryPoint)
                 {
-                    vertexResources = [.. processedFunction.ResourcesUsed];
+                    vertexResources = [.. processedFunction.resourcesUsed];
                 }
-                else if (sf.Function.Type == ShaderFunctionType.FragmentEntryPoint)
+                else if (sf.function.type == ShaderFunctionType.FragmentEntryPoint)
                 {
-                    fragmentResources = [.. processedFunction.ResourcesUsed];
+                    fragmentResources = [.. processedFunction.resourcesUsed];
                 }
                 else
                 {
-                    Debug.Assert(sf.Function.Type == ShaderFunctionType.ComputeEntryPoint);
-                    computeResources = [.. processedFunction.ResourcesUsed];
+                    Debug.Assert(sf.function.type == ShaderFunctionType.ComputeEntryPoint);
+                    computeResources = [.. processedFunction.resourcesUsed];
                 }
             }
         }
@@ -115,7 +107,7 @@ public abstract class LanguageBackend
         return new ShaderModel(
             [.. context.Structures],
             [.. context.Resources],
-            context.Functions.Select(sfabs => sfabs.Function).ToArray(),
+            context.Functions.Select(sfabs => sfabs.function).ToArray(),
             vertexResources,
             fragmentResources,
             computeResources);
@@ -131,13 +123,12 @@ public abstract class LanguageBackend
 
     private void ForceTypeDiscovery(string setName, TypeReference tr)
     {
-        if (ShaderPrimitiveTypes.IsPrimitiveType(tr.Name))
-        {
+        if (ShaderPrimitiveTypes.IsPrimitiveType(tr.name))
             return;
-        }
-        if (tr.TypeInfo.TypeKind == TypeKind.Enum)
+
+        if (tr.typeInfo.TypeKind == TypeKind.Enum)
         {
-            INamedTypeSymbol? enumBaseType = ((INamedTypeSymbol)tr.TypeInfo).EnumUnderlyingType;
+            INamedTypeSymbol? enumBaseType = ((INamedTypeSymbol)tr.typeInfo).EnumUnderlyingType;
             if (enumBaseType != null
                 && enumBaseType.SpecialType != SpecialType.System_Int32
                 && enumBaseType.SpecialType != SpecialType.System_UInt32)
@@ -146,20 +137,18 @@ public abstract class LanguageBackend
             }
             return;
         }
-        ITypeSymbol type = tr.TypeInfo;
-        string name = tr.Name;
+
+        ITypeSymbol type = tr.typeInfo;
+        string name = tr.name;
         if (type is INamedTypeSymbol namedTypeSymb && namedTypeSymb.TypeArguments.Length == 1)
-        {
             name = Utilities.GetFullTypeName(namedTypeSymb.TypeArguments[0], out _);
-        }
+
         if (!TryDiscoverStructure(setName, name, out StructureDefinition? sd))
+            throw new ShaderGenerationException("Resource type's field could not be resolved: " + name);
+
+        foreach (FieldDefinition field in sd.fields)
         {
-            throw new ShaderGenerationException("" +
-                "Resource type's field could not be resolved: " + name);
-        }
-        foreach (FieldDefinition field in sd.Fields)
-        {
-            ForceTypeDiscovery(setName, field.Type);
+            ForceTypeDiscovery(setName, field.type);
         }
     }
 
@@ -170,9 +159,7 @@ public abstract class LanguageBackend
         if (!_processedFunctions.TryGetValue(function, out MethodProcessResult? result))
         {
             if (!function.IsEntryPoint)
-            {
                 throw new ShaderGenerationException("Functions listed in a ShaderSet attribute must have either VertexFunction or FragmentFunction attributes.");
-            }
 
             result = GenerateFullTextCore(setName, function);
             _processedFunctions.Add(function, result);
@@ -186,13 +173,14 @@ public abstract class LanguageBackend
         ArgumentNullException.ThrowIfNull(typeReference);
 
         string typeNameString;
-        if (typeReference.TypeInfo.TypeKind == TypeKind.Enum)
+        if (typeReference.typeInfo.TypeKind == TypeKind.Enum)
         {
-            typeNameString = Utilities.GetFullName(((INamedTypeSymbol)typeReference.TypeInfo).EnumUnderlyingType);
+            var e = ((INamedTypeSymbol)typeReference.typeInfo).EnumUnderlyingType;
+            typeNameString = e.GetFullMetadataName();
         }
         else
         {
-            typeNameString = typeReference.Name.Trim();
+            typeNameString = typeReference.name.Trim();
         }
 
         return CSharpToShaderTypeCore(typeNameString);
@@ -210,7 +198,7 @@ public abstract class LanguageBackend
         ArgumentNullException.ThrowIfNull(sd);
 
         List<StructureDefinition> structures = GetContext(setName).Structures;
-        if (!structures.Any(old => old.Name == sd.Name))
+        if (!structures.Any(old => old.name == sd.name))
         {
             structures.Add(sd);
         }
@@ -259,11 +247,11 @@ public abstract class LanguageBackend
 
         ShaderFunctionAndMethodDeclarationSyntax? function = GetContext(setName).Functions
             .SingleOrDefault(
-                sfabs => sfabs.Function.DeclaringType == type && sfabs.Function.Name == method
-                    && parameterInfos.Length == sfabs.Function.Parameters.Length);
+                sfabs => sfabs.function.declaringType == type && sfabs.function.name == method
+                    && parameterInfos.Length == sfabs.function.parameters.Length);
         if (function != null)
         {
-            ParameterDefinition[] funcParameters = function.Function.Parameters;
+            ParameterDefinition[] funcParameters = function.function.parameters;
             string[] formattedParams = new string[funcParameters.Length];
             for (int i = 0; i < formattedParams.Length; i++)
             {
@@ -271,7 +259,7 @@ public abstract class LanguageBackend
             }
 
             string invocationList = string.Join(", ", formattedParams);
-            string fullMethodName = CSharpToShaderType(function.Function.DeclaringType) + "_" + function.Function.Name.Replace(".", "0_");
+            string fullMethodName = CSharpToShaderType(function.function.declaringType) + "_" + function.function.name.Replace(".", "0_");
             return $"{fullMethodName}({invocationList})";
         }
 
@@ -280,49 +268,43 @@ public abstract class LanguageBackend
 
     protected virtual string FormatInvocationParameter(ParameterDefinition def, InvocationParameterInfo ipi)
     {
-        return CSharpToIdentifierNameCore(ipi.FullTypeName, ipi.Identifier);
+        return CSharpToIdentifierNameCore(ipi.fullTypeName, ipi.identifier);
     }
 
     protected void ValidateRequiredSemantics(string setName, ShaderFunction function, ShaderFunctionType type)
     {
+        if (type == ShaderFunctionType.Normal)
+            return;
+
         if (type == ShaderFunctionType.VertexEntryPoint)
         {
-            StructureDefinition outputType = GetRequiredStructureType(setName, function.ReturnType);
-            foreach (FieldDefinition field in outputType.Fields)
+            foreach (FieldDefinition field in GetRequiredStructureType(setName, function.returnType).fields)
             {
-                if (field.SemanticType == SemanticType.None)
-                {
-                    throw new ShaderGenerationException("Function return type is missing semantics on field: " + field.Name);
-                }
+                if (field.semanticType != SemanticType.None)
+                    continue;
+                throw new ShaderGenerationException("Function return type is missing semantics on field: " + field.name);
             }
         }
-        if (type != ShaderFunctionType.Normal)
+
+        foreach (ParameterDefinition pd in function.parameters)
         {
-            foreach (ParameterDefinition pd in function.Parameters)
+            foreach (FieldDefinition field in GetRequiredStructureType(setName, pd.type).fields)
             {
-                StructureDefinition pType = GetRequiredStructureType(setName, pd.Type);
-                foreach (FieldDefinition field in pType.Fields)
-                {
-                    if (field.SemanticType == SemanticType.None)
-                    {
-                        throw new ShaderGenerationException(
-                            $"Function parameter {pd.Name}'s type is missing semantics on field: {field.Name}");
-                    }
-                }
+                if (field.semanticType != SemanticType.None)
+                    continue;
+
+                throw new ShaderGenerationException(
+                    $"Function parameter {pd.name}'s type is missing semantics on field: {field.name}");
             }
         }
     }
 
     protected virtual StructureDefinition GetRequiredStructureType(string setName, TypeReference type)
     {
-        StructureDefinition? result = GetContext(setName).Structures.SingleOrDefault(sd => sd.Name == type.Name);
-        if (result == null)
-        {
-            if (!TryDiscoverStructure(setName, type.Name, out result))
-            {
-                throw new ShaderGenerationException("Type referred by was not discovered: " + type.Name);
-            }
-        }
+        StructureDefinition? result = GetContext(setName).Structures.SingleOrDefault(sd => sd.name == type.name);
+
+        if (result == null && !TryDiscoverStructure(setName, type.name, out result))
+            throw new ShaderGenerationException("Type referred by was not discovered: " + type.name);
 
         return result;
     }
@@ -343,24 +325,21 @@ public abstract class LanguageBackend
         return CorrectIdentifier(mapped);
     }
 
-    protected bool TryDiscoverStructure(string setName, string name,[NotNullWhen(true)] out StructureDefinition? sd)
+    protected bool TryDiscoverStructure(string setName, string name, [NotNullWhen(true)] out StructureDefinition? sd)
     {
-        INamedTypeSymbol? type = Compilation.GetTypeByMetadataName(name);
+        INamedTypeSymbol? type = _compilation.GetTypeByMetadataName(name);
         var originalDeclaration = type.OriginalDefinition;
         if (type == null || originalDeclaration.DeclaringSyntaxReferences.Length == 0)
         {
             sd = null;
             return false;
-            // throw new ShaderGenerationException("Unable to obtain compilation type metadata for " + name);
         }
         SyntaxNode declaringSyntax = type.OriginalDefinition.DeclaringSyntaxReferences[0].GetSyntax();
-        if (declaringSyntax is StructDeclarationSyntax sds)
+        if (declaringSyntax is StructDeclarationSyntax sds &&
+            ShaderSyntaxWalker.TryGetStructDefinition(_compilation.GetSemanticModel(sds.SyntaxTree), sds, out sd))
         {
-            if (ShaderSyntaxWalker.TryGetStructDefinition(Compilation.GetSemanticModel(sds.SyntaxTree), sds, out sd))
-            {
-                AddStructure(setName, sd);
-                return true;
-            }
+            AddStructure(setName, sd);
+            return true;
         }
 
         sd = null;
@@ -374,16 +353,13 @@ public abstract class LanguageBackend
     protected abstract string FormatInvocationCore(string setName, string type, string method, InvocationParameterInfo[] parameterInfos);
     internal abstract string GetComputeGroupCountsDeclaration(UInt3 groupCounts);
 
-    internal string CorrectLiteral(string literal)
+    internal static string CorrectLiteral(string literal)
     {
-        if (!literal.StartsWith("0x", StringComparison.OrdinalIgnoreCase) && literal.EndsWith("f", StringComparison.OrdinalIgnoreCase))
-        {
-            if (!literal.Contains("."))
-            {
-                // This isn't a hack at all
-                return literal.Insert(literal.Length - 1, ".");
-            }
-        }
+        if (!literal.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
+            literal.EndsWith("f", StringComparison.OrdinalIgnoreCase) &&
+            !literal.Contains('.'))
+            // This isn't a hack at all
+            return literal.Insert(literal.Length - 1, ".");
 
         return literal;
     }
@@ -397,7 +373,7 @@ public abstract class LanguageBackend
 
     protected virtual ShaderMethodVisitor VisitShaderMethod(string setName, ShaderFunction func)
     {
-        return new ShaderMethodVisitor(Compilation, setName, func, this);
+        return new ShaderMethodVisitor(_compilation, setName, func, this);
     }
 
     protected HashSet<ResourceDefinition> ProcessFunctions(string setName, ShaderFunctionAndMethodDeclarationSyntax entryPoint, out string funcs, out string entry)
@@ -405,27 +381,25 @@ public abstract class LanguageBackend
         HashSet<ResourceDefinition> resourcesUsed = [];
         StringBuilder sb = new();
 
-        foreach (ShaderFunctionAndMethodDeclarationSyntax f in entryPoint.OrderedFunctionList)
+        foreach (ShaderFunctionAndMethodDeclarationSyntax f in entryPoint.orderedFunctionList)
         {
-            if (!f.Function.IsEntryPoint)
+            if (!f.function.IsEntryPoint)
             {
-                MethodProcessResult processResult = VisitShaderMethod(setName, f.Function).VisitFunction(f.MethodDeclaration);
-                foreach (ResourceDefinition rd in processResult.ResourcesUsed)
-                {
+                MethodProcessResult processResult = VisitShaderMethod(setName, f.function).VisitFunction(f.methodDeclaration);
+                foreach (ResourceDefinition rd in processResult.resourcesUsed)
                     resourcesUsed.Add(rd);
-                }
-                sb.AppendLine(processResult.FullText);
+
+                sb.AppendLine(processResult.fullText);
             }
         }
         funcs = sb.ToString();
 
-        MethodProcessResult result = VisitShaderMethod(setName, entryPoint.Function).VisitFunction(entryPoint.MethodDeclaration);
-        foreach (ResourceDefinition rd in result.ResourcesUsed)
-        {
-            resourcesUsed.Add(rd);
-        }
+        MethodProcessResult result = VisitShaderMethod(setName, entryPoint.function).VisitFunction(entryPoint.methodDeclaration);
 
-        entry = result.FullText;
+        foreach (ResourceDefinition rd in result.resourcesUsed)
+            resourcesUsed.Add(rd);
+
+        entry = result.fullText;
 
         return resourcesUsed;
     }
@@ -434,30 +408,31 @@ public abstract class LanguageBackend
     {
         foreach (ResourceDefinition resource in resources)
         {
-            if (resource.ResourceKind == ShaderResourceKind.Uniform
-                || resource.ResourceKind == ShaderResourceKind.StructuredBuffer
-                || resource.ResourceKind == ShaderResourceKind.RWStructuredBuffer)
-            {
-                TypeReference type = resource.ValueType;
-                ValidateAlignedStruct(setName, type);
-            }
+            bool alignmentCheckNeeded =
+            resource.resourceKind == ShaderResourceKind.Uniform ||
+            resource.resourceKind == ShaderResourceKind.StructuredBuffer ||
+            resource.resourceKind == ShaderResourceKind.RWStructuredBuffer;
+
+            if (!alignmentCheckNeeded)
+                continue;
+
+            TypeReference type = resource.valueType;
+            ValidateAlignedStruct(setName, type);
         }
     }
 
     private void ValidateAlignedStruct(string setName, TypeReference tr)
     {
-        StructureDefinition? def = GetContext(setName).Structures.SingleOrDefault(sd => sd.Name == tr.Name);
-        if (def != null)
-        {
-            if (!def.CSharpMatchesShaderAlignment)
-            {
-                throw new ShaderGenerationException(
-                    $"Structure type {tr.Name} cannot be used as a resource because its alignment is not consistent between C# and shader languages.");
-            }
-            foreach (FieldDefinition fd in def.Fields)
-            {
-                ValidateAlignedStruct(setName, fd.Type);
-            }
-        }
+        StructureDefinition? def = GetContext(setName).Structures.SingleOrDefault(sd => sd.name == tr.name);
+
+        if (def == null)
+            return;
+
+        if (!def.cSharpMatchesShaderAlignment)
+            throw new ShaderGenerationException(
+                $"Structure type {tr.name} cannot be used as a resource because its alignment is not consistent between C# and shader languages.");
+
+        foreach (FieldDefinition fd in def.fields)
+            ValidateAlignedStruct(setName, fd.type);
     }
 }

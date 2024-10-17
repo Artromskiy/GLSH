@@ -1,6 +1,6 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
@@ -12,7 +12,7 @@ namespace Tests.TestAssets
             zw = position.ZW();
         }
 
-        [VertexShader]
+        [VertexEntryPoint]
         public SystemPosition4 VS(Position4 input)
         {
             Vector2 xy = Vector2.Zero;

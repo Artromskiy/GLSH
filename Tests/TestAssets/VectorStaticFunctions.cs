@@ -1,7 +1,7 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
@@ -12,17 +12,17 @@ namespace Tests.TestAssets
         {
             public Vector4 V4;
             public Vector3 V3;
-            private float _padding0;
+            private readonly float _padding0;
             public Vector2 V2;
-            private float _padding1;
-            private float _padding2;
+            private readonly float _padding1;
+            private readonly float _padding2;
             public Matrix4x4 M4x4;
         }
 
         public VectorHolder VH;
 
-        [VertexShader]
-        SystemPosition4 VS(Position4 input)
+        [VertexEntryPoint]
+        private SystemPosition4 VS(Position4 input)
         {
             Vector2 r2 = Vector2.Abs(VH.V2);
             r2 = Vector2.Add(VH.V2, VH.V2);

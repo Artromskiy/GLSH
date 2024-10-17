@@ -1,4 +1,5 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
 using static GLSH.Primitives.ShaderBuiltins;
 
@@ -6,8 +7,8 @@ namespace Tests.TestAssets
 {
     public class BuiltInVariables
     {
-        [VertexShader]
-        SystemPosition4 VS()
+        [VertexEntryPoint]
+        private SystemPosition4 VS()
         {
             uint vertexID = ShaderBuiltins.VertexID;
             uint instanceID = InstanceID;

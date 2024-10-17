@@ -1,13 +1,11 @@
-﻿using System;
+﻿using GlmSharpGenerator.Types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GlmSharpGenerator.Types;
 
 namespace GlmSharpGenerator.Members
 {
-    class Indexer : Member
+    internal class Indexer : Member
     {
         /// <summary>
         /// Property type
@@ -61,7 +59,7 @@ namespace GlmSharpGenerator.Members
             {
                 foreach (var line in base.Lines)
                     yield return line;
-                
+
                 var getter = Getter?.ToArray();
                 var setter = Setter?.ToArray();
 

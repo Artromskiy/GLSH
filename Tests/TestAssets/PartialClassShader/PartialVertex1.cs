@@ -1,12 +1,12 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 
-namespace TestShaders
+namespace Tests.TestAssets.PartialClassShader
 {
     public partial class PartialVertex
     {
-        struct FragmentInput
+        private struct FragmentInput
         {
             [VertexSemantic(SemanticType.SystemPosition)] public Vector4 Position;
             [VertexSemantic(SemanticType.Color)] public Vector4 Color;
@@ -14,8 +14,8 @@ namespace TestShaders
 
         public SamplerResource Sampler;
 
-        [VertexShader]
-        FragmentInput VertexShaderFunc(VertexInput input)
+        [VertexEntryPoint]
+        private FragmentInput VertexShaderFunc(VertexInput input)
         {
             FragmentInput output;
             output.Position = new Vector4(input.Position, 1);

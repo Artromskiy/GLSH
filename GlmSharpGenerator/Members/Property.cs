@@ -1,13 +1,11 @@
-﻿using System;
+﻿using GlmSharpGenerator.Types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GlmSharpGenerator.Types;
 
 namespace GlmSharpGenerator.Members
 {
-    class Property : Member
+    internal class Property : Member
     {
         /// <summary>
         /// Property type
@@ -58,7 +56,7 @@ namespace GlmSharpGenerator.Members
                 yield break; // nothing for swizzling
             if (Setter != null)
                 yield break; // nothing for stuff with setters
-            
+
             var varname = OriginalType is VectorType ? "v" : OriginalType is QuaternionType ? "q" : "m";
             yield return new Function(Type, Name + OriginalType.GenericSuffix)
             {

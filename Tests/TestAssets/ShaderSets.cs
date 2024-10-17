@@ -1,14 +1,15 @@
 ﻿using GLSH.Primitives;
-using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
+using GLSH.Primitives.Attributes;
 
 // Multi-line declaration
-[assembly: ShaderSet(
+/*
+[assembly: GraphicsPipeline(
     "VertexAndFragment",
     "TestShaders.VertexAndFragment.VS",
     "TestShaders.VertexAndFragment.FS")]
 
-[assembly: ShaderSet("VertexOnly", "TestShaders.TestVertexShader.VS", null)]
-[assembly: ShaderSet("FragmentOnly", null, "TestShaders.VertexAndFragment.FS")]
+[assembly: GraphicsPipeline("VertexOnly", "TestShaders.TestVertexShader.VS", null)]
+[assembly: GraphicsPipeline("FragmentOnly", null, "TestShaders.VertexAndFragment.FS")]
 
-[assembly: ComputeShaderSet("SimpleCompute", "TestShaders.SimpleCompute.CS")]
+[assembly: ComputePipeline("SimpleCompute", "TestShaders.SimpleCompute.CS")]
+*/

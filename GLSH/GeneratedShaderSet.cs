@@ -6,14 +6,14 @@ namespace GLSH;
 /// </summary>
 public class GeneratedShaderSet
 {
-    public string Name { get; }
-    public string VertexShaderCode { get; }
-    public string FragmentShaderCode { get; }
-    public string ComputeShaderCode { get; }
-    public ShaderFunction VertexFunction { get; }
-    public ShaderFunction FragmentFunction { get; }
-    public ShaderFunction ComputeFunction { get; }
-    public ShaderModel Model { get; }
+    public readonly string name;
+    public readonly string vertexShaderCode;
+    public readonly string fragmentShaderCode;
+    public readonly string computeShaderCode;
+    public readonly ShaderFunction vertexFunction;
+    public readonly ShaderFunction fragmentFunction;
+    public readonly ShaderFunction computeFunction;
+    public readonly ShaderModel model;
 
     public GeneratedShaderSet(
         string name,
@@ -30,13 +30,13 @@ public class GeneratedShaderSet
             throw new ShaderGenerationException("At least one of vsCode, fsCode, or csCode must be non-empty");
         }
 
-        Name = name;
-        VertexShaderCode = vsCode;
-        FragmentShaderCode = fsCode;
-        ComputeShaderCode = csCode;
-        VertexFunction = vertexfunction;
-        FragmentFunction = fragmentFunction;
-        ComputeFunction = computeFunction;
-        Model = model;
+        this.name = name;
+        vertexShaderCode = vsCode;
+        fragmentShaderCode = fsCode;
+        computeShaderCode = csCode;
+        vertexFunction = vertexfunction;
+        this.fragmentFunction = fragmentFunction;
+        this.computeFunction = computeFunction;
+        this.model = model;
     }
 }

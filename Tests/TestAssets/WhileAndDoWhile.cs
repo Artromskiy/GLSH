@@ -1,6 +1,6 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
@@ -8,7 +8,7 @@ namespace Tests.TestAssets
     {
         public Vector4 UniformInput;
 
-        [VertexShader]
+        [VertexEntryPoint]
         public SystemPosition4 VS()
         {
             SystemPosition4 output;

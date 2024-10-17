@@ -18,14 +18,14 @@ public class ShaderGenerationException : Exception
     {
     }
 
-    public ShaderGenerationException(string message, SyntaxNode node):base(FormatNodeData(message, node))
+    public ShaderGenerationException(string message, SyntaxNode node) : base(FormatNodeData(message, node))
     {
     }
 
     private static string FormatNodeData(string message, SyntaxNode node)
     {
         StringBuilder sb = new();
-        var file= node.SyntaxTree.GetRoot().ToString();
+        var file = node.SyntaxTree.GetRoot().ToString();
         sb.Append(message);
         sb.AppendLine();
         sb.AppendLine($"File path: {node.SyntaxTree.FilePath}");

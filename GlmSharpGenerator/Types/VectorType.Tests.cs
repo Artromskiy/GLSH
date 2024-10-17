@@ -1,14 +1,12 @@
-﻿using System;
+﻿using GlmSharpGenerator.Tests;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GlmSharpGenerator.Tests;
 
 namespace GlmSharpGenerator.Types
 {
-    partial class VectorType
+    internal partial class VectorType
     {
         private IEnumerable<string> TestConstructor
         {

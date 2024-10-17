@@ -1,7 +1,7 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
 using Tests.TestAssets.CustomStructResource;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
@@ -20,15 +20,15 @@ namespace Tests.TestAssets
         public Matrix4x4 Order;
 #pragma warning restore 0649
 
-        [VertexShader]
-        SystemPosition4 VS(Position4 input)
+        [VertexEntryPoint]
+        private SystemPosition4 VS(Position4 input)
         {
             SystemPosition4 output;
             output.Position = input.Position;
             return output;
         }
 
-        [FragmentShader]
-        Vector4 FS(SystemPosition4 input) { return input.Position; }
+        [FragmentEntryPoint]
+        private Vector4 FS(SystemPosition4 input) { return input.Position; }
     }
 }

@@ -4,16 +4,16 @@ namespace GLSH;
 
 public class FieldDefinition
 {
-    public string Name { get; }
-    public TypeReference Type { get; }
-    public SemanticType SemanticType { get; }
+    public readonly string name;
+    public readonly TypeReference type;
+    public readonly SemanticType semanticType;
     /// <summary>
     /// The number of elements in an array, if this is an array field.
     /// Returns 0 if the field is not an array.
     /// </summary>
-    public int ArrayElementCount { get; }
-    public bool IsArray => ArrayElementCount > 0;
-    public AlignmentInfo Alignment { get; }
+    public readonly int arrayElementCount;
+    public readonly AlignmentInfo alignment;
+    public bool IsArray => arrayElementCount > 0;
 
     public FieldDefinition(
         string name,
@@ -22,10 +22,10 @@ public class FieldDefinition
         int arrayElementCount,
         AlignmentInfo size)
     {
-        Name = name;
-        Type = type;
-        SemanticType = semanticType;
-        ArrayElementCount = arrayElementCount;
-        Alignment = size;
+        this.name = name;
+        this.type = type;
+        this.semanticType = semanticType;
+        this.arrayElementCount = arrayElementCount;
+        alignment = size;
     }
 }

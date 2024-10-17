@@ -1,4 +1,5 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
 using static GLSH.Primitives.ShaderBuiltins;
 
@@ -11,16 +12,16 @@ namespace Tests.TestAssets
 
         public struct PositionTexture
         {
-            [PositionSemantic] public Vector4 Position;
-            [TextureCoordinateSemantic] public Vector2 TexCoords;
+            [VertexSemantic(SemanticType.Position)] public Vector4 Position;
+            [VertexSemantic(SemanticType.TextureCoordinate)] public Vector2 TexCoords;
         }
 
         public struct FragmentInput
         {
-            [SystemPositionSemantic] public Vector4 Position;
+            [VertexSemantic(SemanticType.SystemPosition)] public Vector4 Position;
         }
 
-        [VertexShader]
+        [VertexEntryPoint]
         public FragmentInput VS(PositionTexture input)
         {
             FragmentInput output;

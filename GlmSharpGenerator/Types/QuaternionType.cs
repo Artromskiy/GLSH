@@ -1,13 +1,10 @@
-﻿using System;
+﻿using GlmSharpGenerator.Members;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GlmSharpGenerator.Members;
 
 namespace GlmSharpGenerator.Types
 {
-    class QuaternionType : AbstractType
+    internal class QuaternionType : AbstractType
     {
         public int Components { get; set; } = 4;
 

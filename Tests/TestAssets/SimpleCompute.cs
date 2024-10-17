@@ -15,7 +15,7 @@ namespace Tests.TestAssets
         public AtomicBufferUInt32 AtomicU32;
         public AtomicBufferInt32 AtomicI32;
 
-        [ComputeShader(1, 1, 1)]
+        [ComputeEntryPoint(1, 1, 1)]
         public void CS()
         {
             Matrix4x4 m = StructuredInput[DispatchThreadID.Y];

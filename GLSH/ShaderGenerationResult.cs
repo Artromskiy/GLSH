@@ -10,14 +10,10 @@ public class ShaderGenerationResult
     public IReadOnlyList<GeneratedShaderSet> GetOutput(LanguageBackend backend)
     {
         if (_generatedShaders.Count == 0)
-        {
             return [];
-        }
 
         if (!_generatedShaders.TryGetValue(backend, out var list))
-        {
             throw new InvalidOperationException($"The backend {backend} was not used to generate shaders for this object.");
-        }
 
         return list;
     }

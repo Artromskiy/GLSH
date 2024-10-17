@@ -1,14 +1,13 @@
-﻿using System;
+﻿using GlmSharpGenerator.Members;
+using GlmSharpGenerator.Tests;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using GlmSharpGenerator.Members;
-using GlmSharpGenerator.Tests;
 
 namespace GlmSharpGenerator.Types
 {
-    abstract class AbstractType
+    internal abstract class AbstractType
     {
         /// <summary>
         /// true iff test generation is active

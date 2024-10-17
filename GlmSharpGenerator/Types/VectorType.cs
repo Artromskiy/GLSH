@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using GlmSharpGenerator.Members;
-using GlmSharpGenerator.Tests;
 
 namespace GlmSharpGenerator.Types
 {
-    partial class VectorType : AbstractType
+    internal partial class VectorType : AbstractType
     {
         public VectorType(BuiltinType type, int comps)
         {

@@ -1,10 +1,11 @@
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using System.Collections.Generic;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
-using Microsoft.CodeAnalysis;
-using System.Linq;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace GLSH;
 
@@ -17,8 +18,8 @@ internal class FunctionCallGraphDiscoverer
     public FunctionCallGraphDiscoverer(Compilation compilation, TypeAndMethodName rootMethod)
     {
         Compilation = compilation;
-        _rootNode = new CallGraphNode() { Name = rootMethod };
-        bool foundDecl = GetDeclaration(rootMethod, out _rootNode.Declaration);
+        bool foundDecl = GetDeclaration(rootMethod, out var declaration);
+        _rootNode = new CallGraphNode(rootMethod, declaration);
         Debug.Assert(foundDecl);
         _nodesByName.Add(rootMethod, _rootNode);
     }
@@ -34,9 +35,9 @@ internal class FunctionCallGraphDiscoverer
     {
         foreach (ShaderFunctionAndMethodDeclarationSyntax existing in result)
         {
-            if (node.Parents.Any(cgn => cgn.Name.Equals(existing)))
+            if (node.Parents.Any(cgn => cgn.name.Equals(existing)))
             {
-                throw new ShaderGenerationException("There was a cyclical call graph involving " + existing + " and " + node.Name);
+                throw new ShaderGenerationException("There was a cyclical call graph involving " + existing + " and " + node.name);
             }
         }
 
@@ -45,7 +46,7 @@ internal class FunctionCallGraphDiscoverer
             TraverseNode(result, child);
         }
 
-        ShaderFunctionAndMethodDeclarationSyntax sfab = Utilities.GetShaderFunction(node.Declaration, Compilation, false);
+        ShaderFunctionAndMethodDeclarationSyntax sfab = Utilities.GetShaderFunction(node.declaration, Compilation, false);
 
         result.Add(sfab);
     }
@@ -57,19 +58,19 @@ internal class FunctionCallGraphDiscoverer
 
     private void ExploreCallNode(CallGraphNode node)
     {
-        Debug.Assert(node.Declaration != null);
+        Debug.Assert(node.declaration != null);
         MethodWalker walker = new(this);
-        walker.Visit(node.Declaration);
+        walker.Visit(node.declaration);
         TypeAndMethodName[] childrenNames = walker.GetChildren();
         foreach (TypeAndMethodName childName in childrenNames)
         {
-            if (childName.Equals(node.Name))
+            if (childName.Equals(node.name))
             {
                 throw new ShaderGenerationException(
-                    $"A function invoked transitively by {_rootNode.Name} calls {childName}, which calls itself. Recursive functions are not supported.");
+                    $"A function invoked transitively by {_rootNode.name} calls {childName}, which calls itself. Recursive functions are not supported.");
             }
             CallGraphNode childNode = GetNode(childName);
-            if (childNode.Declaration != null)
+            if (childNode.declaration != null)
             {
                 childNode.Parents.Add(node);
                 node.Children.Add(childNode);
@@ -82,18 +83,18 @@ internal class FunctionCallGraphDiscoverer
     {
         if (!_nodesByName.TryGetValue(name, out CallGraphNode? node))
         {
-            node = new CallGraphNode() { Name = name };
-            GetDeclaration(name, out node.Declaration);
+            GetDeclaration(name, out var declaration);
+            node = new CallGraphNode(name, declaration);
             _nodesByName.Add(name, node);
         }
 
         return node;
     }
 
-    private bool GetDeclaration(TypeAndMethodName name, out BaseMethodDeclarationSyntax decl)
+    private bool GetDeclaration(TypeAndMethodName name, [NotNullWhen(true)] out BaseMethodDeclarationSyntax? decl)
     {
-        bool isConstructor = name.MethodName == ".ctor";
-        INamedTypeSymbol symb = Compilation.GetTypeByMetadataName(name.TypeName);
+        bool isConstructor = name.methodName == ".ctor";
+        INamedTypeSymbol symb = Compilation.GetTypeByMetadataName(name.typeName);
         foreach (SyntaxReference synRef in symb.DeclaringSyntaxReferences)
         {
             SyntaxNode node = synRef.GetSyntax();
@@ -111,7 +112,7 @@ internal class FunctionCallGraphDiscoverer
 
                 if (child is MethodDeclarationSyntax mds)
                 {
-                    if (mds.Identifier.ToFullString() == name.MethodName)
+                    if (mds.Identifier.ToFullString() == name.methodName)
                     {
                         decl = mds;
                         return true;
@@ -148,7 +149,7 @@ internal class FunctionCallGraphDiscoverer
             }
 
             string containingType = symbol.ContainingType.ToDisplayString();
-            _children.Add(new TypeAndMethodName() { TypeName = containingType, MethodName = ".ctor" });
+            _children.Add(new TypeAndMethodName(containingType, ".ctor"));
 
             base.VisitObjectCreationExpression(node);
         }
@@ -170,7 +171,7 @@ internal class FunctionCallGraphDiscoverer
 
                 string containingType = symbol.ContainingType.ToDisplayString();
                 string methodName = symbol.Name;
-                _children.Add(new TypeAndMethodName() { TypeName = containingType, MethodName = methodName });
+                _children.Add(new TypeAndMethodName(containingType, methodName));
             }
             else if (node.Expression is MemberAccessExpressionSyntax maes)
             {
@@ -189,7 +190,7 @@ internal class FunctionCallGraphDiscoverer
                 {
                     string containingType = ims.ContainingType.GetFullMetadataName();
                     string methodName = ims.MetadataName;
-                    _children.Add(new TypeAndMethodName() { TypeName = containingType, MethodName = methodName });
+                    _children.Add(new TypeAndMethodName(containingType, methodName));
                 }
             }
             else
@@ -206,14 +207,20 @@ internal class FunctionCallGraphDiscoverer
 
 internal class CallGraphNode
 {
-    public TypeAndMethodName Name;
+    public readonly TypeAndMethodName name;
     /// <summary>
     /// May be null.
     /// </summary>
-    public BaseMethodDeclarationSyntax Declaration;
+    public readonly BaseMethodDeclarationSyntax? declaration;
     /// <summary>
     /// Functions called by this function.
     /// </summary>
-    public HashSet<CallGraphNode> Children = [];
-    public HashSet<CallGraphNode> Parents = [];
+    public readonly HashSet<CallGraphNode> Children = [];
+    public readonly HashSet<CallGraphNode> Parents = [];
+
+    public CallGraphNode(TypeAndMethodName name, BaseMethodDeclarationSyntax? declaration)
+    {
+        this.name = name;
+        this.declaration = declaration;
+    }
 }

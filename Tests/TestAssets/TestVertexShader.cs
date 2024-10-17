@@ -1,4 +1,5 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
 using static GLSH.Primitives.ShaderBuiltins;
 
@@ -10,7 +11,7 @@ namespace Tests.TestAssets
         public Matrix4x4 View;
         public Matrix4x4 Projection;
 
-        [VertexShader]
+        [VertexEntryPoint]
         public VertexOutput VS(PositionTexture input)
         {
             VertexOutput output;

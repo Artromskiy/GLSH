@@ -1,16 +1,12 @@
-﻿using System;
+﻿using GlmSharpGenerator.Types;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GlmSharpGenerator.Types;
 
 namespace GlmSharpGenerator.Tests
 {
     /// <summary>
     /// Random distribution tests
     /// </summary>
-    class DistributionTestFunc : TestFunc
+    internal class DistributionTestFunc : TestFunc
     {
         public DistributionTestFunc(VectorType type, string name, string randomFuncName, string funcArgs, double avg, double variance) : base(type, name)
         {

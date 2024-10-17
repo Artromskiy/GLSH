@@ -1,13 +1,13 @@
 ﻿using GLSH.Primitives;
-using System.Numerics;
+using GLSH.Primitives.Attributes;
 using System;
-using static GLSH.Primitives.ShaderBuiltins;
+using System.Numerics;
 
 namespace Tests.TestAssets
 {
     public class MathFunctions
     {
-        [VertexShader]
+        [VertexEntryPoint]
         public SystemPosition4 VS(Position4 input)
         {
             SystemPosition4 output;

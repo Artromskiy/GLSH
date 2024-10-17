@@ -4,26 +4,24 @@ namespace GLSH;
 
 internal class ShaderSetInfo
 {
-    public string Name { get; }
-    public TypeAndMethodName VertexShader { get; }
-    public TypeAndMethodName FragmentShader { get; }
-    public TypeAndMethodName ComputeShader { get; }
+    public readonly string name;
+    public readonly TypeAndMethodName? vertexShader;
+    public readonly TypeAndMethodName? fragmentShader;
+    public readonly TypeAndMethodName? computeShader;
 
     public ShaderSetInfo(string name, TypeAndMethodName vs, TypeAndMethodName fs)
     {
         if (vs == null && fs == null)
-        {
             throw new ArgumentException("At least one of vs or fs must be non-null.");
-        }
 
-        Name = name;
-        VertexShader = vs;
-        FragmentShader = fs;
+        this.name = name;
+        vertexShader = vs;
+        fragmentShader = fs;
     }
 
     public ShaderSetInfo(string name, TypeAndMethodName cs)
     {
-        Name = name;
-        ComputeShader = cs;
+        this.name = name;
+        computeShader = cs;
     }
 }

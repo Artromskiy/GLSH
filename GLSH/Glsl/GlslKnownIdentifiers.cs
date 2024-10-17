@@ -7,7 +7,7 @@ namespace GLSH.Glsl;
 
 public static class GlslKnownIdentifiers
 {
-    private static Dictionary<string, Dictionary<string, string>> s_mappings = GetMappings();
+    private static readonly Dictionary<string, Dictionary<string, string>> s_mappings = GetMappings();
 
     private static Dictionary<string, Dictionary<string, string>> GetMappings()
     {

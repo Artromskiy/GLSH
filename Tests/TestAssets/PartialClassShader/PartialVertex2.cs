@@ -1,8 +1,7 @@
 ﻿using GLSH.Primitives;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 
-namespace TestShaders
+namespace Tests.TestAssets.PartialClassShader
 {
     public partial class PartialVertex
     {

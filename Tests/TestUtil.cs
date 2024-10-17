@@ -1,16 +1,15 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Microsoft.CodeAnalysis.Text;
 using System.Runtime.InteropServices;
 using System.Threading;
-using GLSH;
-using Tests.Tools;
 
 namespace Tests
 {
@@ -28,6 +27,9 @@ namespace Tests
 
         private static readonly string ProjectBasePath = Path.Combine(AppContext.BaseDirectory, "TestAssets");
 
+        private static IReadOnlyList<MetadataReference>? _projectReferences;
+        public static IReadOnlyList<MetadataReference> ProjectReferences => _projectReferences ??= GetReferences(GetSyntaxTrees());
+
         public static Compilation GetCompilation()
             => GetCompilation(GetSyntaxTrees());
         public static Compilation GetCompilation(string code)
@@ -39,9 +41,7 @@ namespace Tests
         public static Compilation GetCompilation(IEnumerable<SyntaxTree> syntaxTrees)
         {
             CSharpCompilation compilation = CSharpCompilation.Create(
-                "TestAssembly",
-                syntaxTrees,
-                ProjectReferences,
+                "TestAssembly", syntaxTrees, ProjectReferences,
                 new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
             return compilation;
         }
@@ -64,97 +64,43 @@ namespace Tests
         {
             foreach (string sourceItem in Directory.EnumerateFiles(ProjectBasePath, "*.cs", SearchOption.AllDirectories).ToArray())
             {
-                using (FileStream fs = File.OpenRead(sourceItem))
-                {
-                    SourceText st = SourceText.From(fs);
-                    yield return CSharpSyntaxTree.ParseText(st, path: sourceItem);
-                }
+                using FileStream fs = File.OpenRead(sourceItem);
+                SourceText st = SourceText.From(fs);
+                yield return CSharpSyntaxTree.ParseText(st, path: sourceItem);
             }
         }
 
-        private static readonly Lazy<IReadOnlyList<string>> _projectReferencePaths
-            = new Lazy<IReadOnlyList<string>>(
-                () =>
-                {
-                    // Get all paths from References.txt
-                    string[] paths = File.ReadAllLines(Path.Combine(ProjectBasePath, "References.txt"))
-                        .Select(l => l.Trim())
-                        .ToArray();
+
+        private static List<MetadataReference> GetReferences(IEnumerable<SyntaxTree> trees)
+        {
+            MetadataReference mscorlib = MetadataReference.CreateFromFile(typeof(object).Assembly.Location);
+            List<MetadataReference> references = [mscorlib];
+
+            string assemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
+            references.AddRange(Assembly.
+                GetEntryAssembly()!.
+                GetReferencedAssemblies().
+                Select(a => MetadataReference.CreateFromFile(Assembly.Load(a).Location)));
+
+            references.AddRange(trees.
+                Select(tree => tree.GetRoot().ChildNodes().
+                OfType<UsingDirectiveSyntax>().
+                Where(x => x.Name != null).
+                Select(x => x.Name)).
+            SelectMany(s => s).
+            Select(u => Path.Combine(assemblyPath, u!.ToString() + ".dll")).
+            Where(File.Exists).
+            Select(p => MetadataReference.CreateFromFile(p)));
+            return references;
+        }
 
 
-                    List<string> dirs = new List<string>
-                    {
-                        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget",
-                            "packages")
-                    };
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
-                        dirs.Add(@"C:\Program Files\dotnet\sdk\NuGetFallbackFolder");
-                    }
-                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                    {
-                        dirs.Add("/usr/local/share/dotnet/sdk/NuGetFallbackFolder");
-                    }
-                    else
-                    {
-                        dirs.Add("/usr/share/dotnet/sdk/NuGetFallbackFolder");
-                    }
 
-                    IReadOnlyCollection<string> packageDirs = dirs.Where(Directory.Exists).ToArray();
-
-                    for (int index = 0; index < paths.Length; index++)
-                    {
-                        string path = paths[index];
-                        bool found = false;
-                        foreach (string packageDir in packageDirs)
-                        {
-                            string transformed = path.Replace("{nupkgdir}", packageDir);
-                            transformed = transformed.Replace("{appcontextbasedirectory}", AppContext.BaseDirectory);
-                            if (File.Exists(transformed))
-                            {
-                                found = true;
-                                paths[index] = transformed;
-                                break;
-                            }
-                        }
-
-                        if (!found)
-                        {
-                            throw new InvalidOperationException($"Unable to find reference \"{path}\".");
-                        }
-                    }
-
-                    return paths;
-                },
-                LazyThreadSafetyMode.ExecutionAndPublication);
-
-        public static IReadOnlyList<string> ProjectReferencePaths => _projectReferencePaths.Value;
-
-        private static readonly Lazy<IReadOnlyList<MetadataReference>> _projectReferences
-            = new Lazy<IReadOnlyList<MetadataReference>>(
-                () =>
-                {
-                    IReadOnlyList<string> paths = _projectReferencePaths.Value;
-                    MetadataReference[] references = new MetadataReference[paths.Count];
-                    for (int index = 0; index < paths.Count; index++)
-                    {
-                        string path = paths[index];
-                        using (FileStream fs = File.OpenRead(path))
-                        {
-                            references[index] = MetadataReference.CreateFromStream(fs, filePath: path);
-                        }
-                    }
-
-                    return references;
-                },
-                LazyThreadSafetyMode.ExecutionAndPublication);
-
-        public static IReadOnlyList<MetadataReference> ProjectReferences => _projectReferences.Value;
 
         public static IReadOnlyList<(string fieldName, object aValue, object bValue)> DeepCompareObjectFields(object a, object b)
         {
             // Creat failures list
-            List<(string fieldName, object aValue, object bValue)> failures = new List<(string fieldName, object aValue, object bValue)>();
+            List<(string fieldName, object aValue, object bValue)> failures = [];
 
             if (a == b)
             {
@@ -162,14 +108,12 @@ namespace Tests
             }
 
             // Get dictionary of fields by field name and type
-            Dictionary<Type, IReadOnlyCollection<FieldInfo>> childFieldInfos =
-                new Dictionary<Type, IReadOnlyCollection<FieldInfo>>();
+            Dictionary<Type, IReadOnlyCollection<FieldInfo>> childFieldInfos = [];
 
             Type currentType = a?.GetType() ?? b.GetType();
             object aValue = a;
             object bValue = b;
-            Stack<(string fieldName, Type fieldType, object aValue, object bValue)> stack
-                = new Stack<(string fieldName, Type fieldType, object aValue, object bValue)>();
+            Stack<(string fieldName, Type fieldType, object aValue, object bValue)> stack = [];
             stack.Push((string.Empty, currentType, aValue, bValue));
 
             while (stack.Count > 0)
@@ -223,8 +167,7 @@ namespace Tests
         /// <summary>
         /// The random number generators for each thread.
         /// </summary>
-        private static readonly ThreadLocal<Random> _randomGenerators =
-            new ThreadLocal<Random>(() => new Random());
+        private static readonly ThreadLocal<Random> _randomGenerators = new(() => new Random());
 
         /// <summary>
         /// Fills a struct with Random floats.
@@ -240,14 +183,10 @@ namespace Tests
         /// </exception>
         public static unsafe T FillRandomFloats<T>(int minMantissa = -126, int maxMantissa = 128) where T : struct
         {
-            if (minMantissa < -126)
-            {
-                throw new ArgumentOutOfRangeException(nameof(minMantissa));
-            }
-            if (maxMantissa < minMantissa || maxMantissa > 128)
-            {
-                throw new ArgumentOutOfRangeException(nameof(maxMantissa));
-            }
+            ArgumentOutOfRangeException.ThrowIfLessThan(minMantissa, -126);
+            ArgumentOutOfRangeException.ThrowIfLessThan(maxMantissa, minMantissa);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(maxMantissa, 128);
+
             Random random = _randomGenerators.Value;
             int floatCount = Unsafe.SizeOf<T>() / sizeof(float);
             float* floats = stackalloc float[floatCount];

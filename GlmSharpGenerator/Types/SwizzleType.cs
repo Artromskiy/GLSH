@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using GlmSharpGenerator.Members;
 
 namespace GlmSharpGenerator.Types
 {
-    partial class SwizzleType : AbstractType
+    internal partial class SwizzleType : AbstractType
     {
         public int Components { get; set; }
 

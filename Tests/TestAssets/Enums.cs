@@ -1,6 +1,6 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
@@ -14,7 +14,7 @@ namespace Tests.TestAssets
 
         public MaterialConstantsType MaterialConstants;
 
-        [FragmentShader]
+        [FragmentEntryPoint]
         public Vector4 FS()
         {
             var result = DoMaterialStuff(MaterialConstants.Material);

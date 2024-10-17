@@ -1,6 +1,5 @@
-using System.Collections.Generic;
 using GLSH.Primitives;
-using System;
+using System.Collections.Generic;
 using System.Numerics;
 namespace GLSH;
 
@@ -22,14 +21,6 @@ internal static class ShaderPrimitiveTypes
         typeof(Int2).FullName!,
         typeof(Int3).FullName!,
         typeof(Int4).FullName!,
-        // typeof(Byte2).FullName!,
-        // typeof(Byte4).FullName!,
-        // typeof(SByte2).FullName!,
-        // typeof(SByte4).FullName!,
-        // typeof(UShort2).FullName!,
-        // typeof(UShort4).FullName!,
-        // typeof(Short2).FullName!,
-        // typeof(Short4).FullName!,
     ];
 
     public static bool IsPrimitiveType(string name)

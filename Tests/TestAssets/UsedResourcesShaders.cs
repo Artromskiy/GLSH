@@ -1,4 +1,5 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
 using static GLSH.Primitives.ShaderBuiltins;
 
@@ -17,8 +18,8 @@ namespace Tests.TestAssets
         public SamplerResource FS_S0;
         public Matrix4x4 FS_M2_Indirect;
 
-        [VertexShader]
-        SystemPosition4 VS(Position4 input)
+        [VertexEntryPoint]
+        private SystemPosition4 VS(Position4 input)
         {
             Vector2 v2 = new Vector2(VS_M0.M11, VS_M1.M22);
             Vector4 v4 = Sample(VS_T0, VS_S0, v2);
@@ -28,8 +29,8 @@ namespace Tests.TestAssets
             return output;
         }
 
-        [FragmentShader]
-        Vector4 FS(SystemPosition4 input)
+        [FragmentEntryPoint]
+        private Vector4 FS(SystemPosition4 input)
         {
             Vector2 v2 = new Vector2(FS_M0.M11, FS_M1.M22);
             v2.X += GetIndirectOffset();

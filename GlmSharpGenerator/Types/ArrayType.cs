@@ -1,13 +1,10 @@
-﻿using System;
+﻿using GlmSharpGenerator.Members;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GlmSharpGenerator.Members;
 
 namespace GlmSharpGenerator.Types
 {
-    class ArrayType : AbstractType
+    internal class ArrayType : AbstractType
     {
         /// <summary>
         /// Array suffix

@@ -1,12 +1,11 @@
 using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Numerics;
 using System.Text;
 
 namespace GLSH;
@@ -15,17 +14,16 @@ internal static class Utilities
 {
     public static string GetFullTypeName(this SemanticModel model, ExpressionSyntax type)
     {
-        bool _; return model.GetFullTypeName(type, out _);
+        return model.GetFullTypeName(type, out _);
     }
 
     public static string GetFullTypeName(this SemanticModel model, ExpressionSyntax type, out bool isArray)
     {
         ArgumentNullException.ThrowIfNull(model);
         ArgumentNullException.ThrowIfNull(type);
+
         if (type.SyntaxTree != model.SyntaxTree)
-        {
-            model = GetSemanticModel(model.Compilation, type.SyntaxTree);
-        }
+            model = model.Compilation.GetSemanticModel(type.SyntaxTree);
 
         TypeInfo typeInfo = model.GetTypeInfo(type);
         if (typeInfo.Type == null)
@@ -57,14 +55,10 @@ internal static class Utilities
     public static string GetFullMetadataName(this ISymbol s)
     {
         if (s == null || IsRootNamespace(s))
-        {
             return string.Empty;
-        }
 
         if (s.Kind == SymbolKind.ArrayType)
-        {
             return ((IArrayTypeSymbol)s).ElementType.GetFullMetadataName() + "[]";
-        }
 
         StringBuilder sb = new(s.MetadataName);
         ISymbol last = s;
@@ -73,126 +67,22 @@ internal static class Utilities
 
         while (!IsRootNamespace(s))
         {
-            if (s is ITypeSymbol && last is ITypeSymbol)
-            {
-                sb.Insert(0, '+');
-            }
-            else
-            {
-                sb.Insert(0, '.');
-            }
-
+            var separator = (s is ITypeSymbol && last is ITypeSymbol) ? '+' : '.';
+            sb.Insert(0, separator);
             sb.Insert(0, s.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat));
-            //sb.Insert(0, s.MetadataName);
             s = s.ContainingSymbol;
         }
-
         return sb.ToString();
     }
 
-    private static bool IsRootNamespace(ISymbol symbol)
+    private static bool IsRootNamespace(ISymbol symbol) => symbol is INamespaceSymbol s && s.IsGlobalNamespace;
+
+    public static string? GetFunctionContainingTypeName(
+        BaseMethodDeclarationSyntax node,
+        Compilation compilation)
     {
-        return symbol is INamespaceSymbol s && s.IsGlobalNamespace;
-    }
-
-    private static SemanticModel GetSemanticModel(Compilation compilation, SyntaxTree syntaxTree)
-    {
-        return compilation.GetSemanticModel(syntaxTree);
-    }
-
-    public static string GetFullName(INamespaceSymbol ns)
-    {
-        Debug.Assert(ns != null);
-        string currentNamespace = ns.Name;
-        if (ns.ContainingNamespace != null && !ns.ContainingNamespace.IsGlobalNamespace)
-        {
-            return GetFullName(ns.ContainingNamespace) + "." + currentNamespace;
-        }
-        else
-        {
-            return currentNamespace;
-        }
-    }
-
-    public static string GetFullName(INamedTypeSymbol symbol)
-    {
-        Debug.Assert(symbol != null);
-        string name = symbol.Name;
-        if (symbol.ContainingNamespace != null && !symbol.ContainingNamespace.IsGlobalNamespace)
-        {
-            return GetFullName(symbol.ContainingNamespace) + "." + name;
-        }
-        else
-        {
-            return name;
-        }
-    }
-
-    public static string GetFullNamespace(SyntaxNode node)
-    {
-        if (!SyntaxNodeHelper.TryGetParentSyntax(node, out NamespaceDeclarationSyntax? namespaceDeclarationSyntax))
-        {
-            return string.Empty; // or whatever you want to do in this scenario
-        }
-
-        string namespaceName = namespaceDeclarationSyntax.Name.ToString();
-        return namespaceName;
-    }
-
-    public static string GetFullNestedTypePrefix(SyntaxNode node, out bool nested)
-    {
-        string ns = GetFullNamespace(node);
-        List<string> nestedTypeParts = [];
-        while (SyntaxNodeHelper.TryGetParentSyntax(node, out TypeDeclarationSyntax? tds))
-        {
-            nestedTypeParts.Add(tds.Identifier.ToFullString().Trim());
-            node = tds;
-        }
-
-        string nestedTypeStr = string.Join("+", nestedTypeParts);
-        if (string.IsNullOrEmpty(ns))
-        {
-            nested = true;
-            return nestedTypeStr;
-        }
-        else
-        {
-            if (string.IsNullOrEmpty(nestedTypeStr))
-            {
-                nested = false;
-                return ns;
-            }
-            else
-            {
-                nested = true;
-                return ns + "." + nestedTypeStr;
-            }
-        }
-    }
-
-    private static readonly HashSet<string> s_basicNumericTypes =
-    [
-        typeof(Vector2).FullName!,
-        typeof(Vector3).FullName!,
-        typeof(Vector4).FullName!,
-        typeof(Matrix4x4).FullName!,
-    ];
-
-    public static bool IsBasicNumericType(string fullName)
-    {
-        return s_basicNumericTypes.Contains(fullName);
-    }
-
-    public static AttributeSyntax[] GetMemberAttributes(CSharpSyntaxNode vds, string name)
-    {
-        return vds.Parent.Parent.DescendantNodes().OfType<AttributeSyntax>()
-            .Where(attrSyntax => attrSyntax.Name.ToString().Contains(name)).ToArray();
-    }
-
-    public static AttributeSyntax[] GetMethodAttributes(BaseMethodDeclarationSyntax mds, string name)
-    {
-        return mds.DescendantNodes().OfType<AttributeSyntax>()
-        .Where(attrSyntax => attrSyntax.Name.ToString().Contains(name)).ToArray();
+        var model = compilation.GetSemanticModel(node.SyntaxTree);
+        return model.GetDeclaredSymbol(node)?.ContainingSymbol.GetFullMetadataName();
     }
 
     /// <summary>
@@ -201,19 +91,7 @@ internal static class Utilities
     public static string GetFullName(SymbolInfo symbolInfo)
     {
         Debug.Assert(symbolInfo.Symbol != null);
-        string fullName = symbolInfo.Symbol.Name;
-        string ns = GetFullName(symbolInfo.Symbol.ContainingNamespace);
-        if (!string.IsNullOrEmpty(ns))
-        {
-            fullName = ns + "." + fullName;
-        }
-
-        return fullName;
-    }
-
-    internal static string JoinIgnoreNull(string separator, IEnumerable<string> value)
-    {
-        return string.Join(separator, value.Where(s => !string.IsNullOrEmpty(s)));
+        return symbolInfo.Symbol.GetFullMetadataName();
     }
 
     internal static ShaderFunctionAndMethodDeclarationSyntax GetShaderFunction(
@@ -222,61 +100,56 @@ internal static class Utilities
         bool generateOrderedFunctionList)
     {
         SemanticModel semanticModel = compilation.GetSemanticModel(node.SyntaxTree);
-
         string functionName;
         TypeReference returnTypeReference;
+        UInt3 computeGroupCounts = new();
+        bool isVertexShader;
+        bool isFragmentShader;
+        bool isComputeShader;
+
         if (node is MethodDeclarationSyntax mds)
         {
             functionName = mds.Identifier.ToFullString();
-            returnTypeReference = new TypeReference(semanticModel.GetFullTypeName(mds.ReturnType), semanticModel.GetTypeInfo(mds.ReturnType).Type);
+            returnTypeReference = new(semanticModel.GetFullTypeName(mds.ReturnType), semanticModel.GetTypeInfo(mds.ReturnType).Type);
         }
         else if (node is ConstructorDeclarationSyntax cds)
         {
             functionName = ".ctor";
             ITypeSymbol typeSymbol = semanticModel.GetDeclaredSymbol(cds).ContainingType;
-            returnTypeReference = new TypeReference(GetFullTypeName(typeSymbol, out _), typeSymbol);
+            returnTypeReference = new(GetFullTypeName(typeSymbol, out _), typeSymbol);
         }
         else
         {
             throw new ArgumentOutOfRangeException(nameof(node), "Unsupported BaseMethodDeclarationSyntax type.");
         }
 
-        UInt3 computeGroupCounts = new();
-        bool isFragmentShader = false, isComputeShader = false;
-        bool isVertexShader = GetMethodAttributes(node, "VertexShader").Any();
-        if (!isVertexShader)
+        isVertexShader = AttributeHelper.TryGetAttribute<VertexEntryPointAttribute>(node, semanticModel, out _);
+        isFragmentShader = AttributeHelper.TryGetAttribute<FragmentEntryPointAttribute>(node, semanticModel, out _);
+        isComputeShader = AttributeHelper.TryGetAttribute<ComputeEntryPointAttribute>(node, semanticModel, out var computeEntryAttributeSyntax);
+        if (isComputeShader)
         {
-            isFragmentShader = GetMethodAttributes(node, "FragmentShader").Any();
-        }
-        if (!isVertexShader && !isFragmentShader)
-        {
-            AttributeSyntax computeShaderAttr = GetMethodAttributes(node, "ComputeShader").FirstOrDefault();
-            if (computeShaderAttr != null)
-            {
-                isComputeShader = true;
-                computeGroupCounts.X = GetAttributeArgumentUIntValue(computeShaderAttr, 0);
-                computeGroupCounts.Y = GetAttributeArgumentUIntValue(computeShaderAttr, 1);
-                computeGroupCounts.Z = GetAttributeArgumentUIntValue(computeShaderAttr, 2);
-            }
+            Debug.Assert(computeEntryAttributeSyntax != null);
+            var data = computeEntryAttributeSyntax.CreateAttributeOfType<ComputeEntryPointAttribute>(semanticModel);
+            computeGroupCounts.X = data.GroupCountX;
+            computeGroupCounts.Y = data.GroupCountY;
+            computeGroupCounts.Z = data.GroupCountZ;
         }
 
-        ShaderFunctionType type = isVertexShader
-            ? ShaderFunctionType.VertexEntryPoint
-            : isFragmentShader
-                ? ShaderFunctionType.FragmentEntryPoint
-                : isComputeShader
-                    ? ShaderFunctionType.ComputeEntryPoint
-                    : ShaderFunctionType.Normal;
+        ShaderFunctionType type;
+        if (isVertexShader)
+            type = ShaderFunctionType.VertexEntryPoint;
+        else if (isFragmentShader)
+            type = ShaderFunctionType.FragmentEntryPoint;
+        else if (isComputeShader)
+            type = ShaderFunctionType.ComputeEntryPoint;
+        else
+            type = ShaderFunctionType.Normal;
 
-        string nestedTypePrefix = GetFullNestedTypePrefix(node, out bool nested);
-
-
+        string nestedTypePrefix = GetFunctionContainingTypeName(node, compilation);
 
         List<ParameterDefinition> parameters = [];
         foreach (ParameterSyntax ps in node.ParameterList.Parameters)
-        {
             parameters.Add(ParameterDefinition.GetParameterDefinition(compilation, ps));
-        }
 
         ShaderFunction sf = new(
             nestedTypePrefix,
@@ -291,7 +164,7 @@ internal static class Utilities
         {
             FunctionCallGraphDiscoverer fcgd = new(
                 compilation,
-                new TypeAndMethodName { TypeName = sf.DeclaringType, MethodName = sf.Name });
+                new TypeAndMethodName(sf.declaringType, sf.name));
             fcgd.GenerateFullGraph();
             orderedFunctionList = fcgd.GetOrderedCallList();
         }
@@ -301,23 +174,5 @@ internal static class Utilities
         }
 
         return new ShaderFunctionAndMethodDeclarationSyntax(sf, node, orderedFunctionList);
-    }
-
-    private static uint GetAttributeArgumentUIntValue(AttributeSyntax attr, int index)
-    {
-        if (attr.ArgumentList.Arguments.Count < index + 1)
-        {
-            throw new ShaderGenerationException(
-                "Too few arguments in attribute " + attr.ToFullString() + ". Required + " + (index + 1));
-        }
-        string fullArg0 = attr.ArgumentList.Arguments[index].ToFullString();
-        if (uint.TryParse(fullArg0, out uint ret))
-        {
-            return ret;
-        }
-        else
-        {
-            throw new ShaderGenerationException("Incorrectly formatted attribute: " + attr.ToFullString());
-        }
     }
 }

@@ -1,7 +1,6 @@
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace GLSH;
 
@@ -36,20 +35,16 @@ public partial class ShaderGenerator
     public ShaderGenerator(
         Compilation compilation,
         LanguageBackend[] languages,
-        string vertexFunctionName = null,
-        string fragmentFunctionName = null,
-        string computeFunctionName = null,
+        string? vertexFunctionName = null,
+        string? fragmentFunctionName = null,
+        string? computeFunctionName = null,
         params IShaderSetProcessor[] processors)
     {
-
         ArgumentNullException.ThrowIfNull(languages);
-
-        if (languages.Length < 1)
-        {
-            throw new ArgumentException("At least one LanguageBackend must be provided.");
-        }
-
         _compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
+        if (languages.Length <= 0)
+            throw new ArgumentException("At least one LanguageBackend must be provided.");
+
         _languages = [.. languages];
         _processors = processors;
 
@@ -58,96 +53,27 @@ public partial class ShaderGenerator
             string.IsNullOrWhiteSpace(fragmentFunctionName) &&
             string.IsNullOrWhiteSpace(computeFunctionName))
         {
-            ShaderSetDiscoverer ssd = new();
-            ssd.compilation = compilation;
+            PipelineDiscoverer pipelineDiscoverer = new(compilation);
             foreach (SyntaxTree tree in _compilation.SyntaxTrees)
-            {
-                ssd.Visit(tree.GetRoot());
-            }
+                pipelineDiscoverer.Visit(tree.GetRoot());
 
-            _shaderSets = ssd.GetShaderSets();
+            _shaderSets = pipelineDiscoverer.ShaderSets;
             return;
         }
-
-        // We've explicitly specified shaders so find them directly.
-        List<ShaderSetInfo> shaderSets = [];
-
-        TypeAndMethodName? vertex = null;
-        if (!string.IsNullOrWhiteSpace(vertexFunctionName)
-            && !TypeAndMethodName.Get(vertexFunctionName, out vertex))
-        {
-            throw new ShaderGenerationException(
-                $"The name passed to {nameof(vertexFunctionName)} must be a fully-qualified type and method.");
-        }
-
-        TypeAndMethodName? fragment = null;
-        if (!string.IsNullOrWhiteSpace(fragmentFunctionName)
-            && !TypeAndMethodName.Get(fragmentFunctionName, out fragment))
-        {
-            throw new ShaderGenerationException(
-                $"The name passed to {nameof(fragmentFunctionName)} must be a fully-qualified type and method.");
-        }
-
-        if (vertex != null || fragment != null)
-        {
-            // We have either a vertex or fragment, so create a graphics shader set.
-            string setName = string.Empty;
-
-            if (vertex != null)
-            {
-                setName = vertexFunctionName;
-            }
-
-            if (fragment != null)
-            {
-                if (setName == string.Empty)
-                {
-                    setName = fragmentFunctionName;
-                }
-                else
-                {
-                    setName += "+" + fragmentFunctionName;
-                }
-            }
-
-            shaderSets.Add(new ShaderSetInfo(setName, vertex, fragment));
-        }
-
-        TypeAndMethodName? compute = null;
-        if (!string.IsNullOrWhiteSpace(computeFunctionName)
-            && !TypeAndMethodName.Get(computeFunctionName, out compute))
-        {
-            throw new ShaderGenerationException(
-                $"The name passed to {nameof(computeFunctionName)} must be a fully-qualified type and method.");
-        }
-
-        if (compute != null)
-        {
-            shaderSets.Add(new ShaderSetInfo(computeFunctionName, compute));
-        }
-
-        _shaderSets = [.. shaderSets];
     }
 
     public ShaderGenerationResult GenerateShaders()
     {
         ShaderGenerationResult result = new();
         foreach (ShaderSetInfo ss in _shaderSets)
-        {
             GenerateShaders(ss, result);
-        }
 
-        // Activate processors
         foreach (IShaderSetProcessor processor in _processors)
         {
             // Kind of a hack, but the relevant info should be the same.
             foreach (GeneratedShaderSet gss in result.GetOutput(_languages[0]))
             {
-                ShaderSetProcessorInput input = new(
-                    gss.Name,
-                    gss.VertexFunction,
-                    gss.FragmentFunction,
-                    gss.Model);
+                ShaderSetProcessorInput input = new(gss.name, gss.vertexFunction, gss.fragmentFunction, gss.model);
                 processor.ProcessShaderSet(input);
             }
         }
@@ -155,68 +81,40 @@ public partial class ShaderGenerator
         return result;
     }
 
-    private void GenerateShaders(ShaderSetInfo ss, ShaderGenerationResult result)
+    private void GenerateShaders(ShaderSetInfo shaderSetInfo, ShaderGenerationResult output)
     {
-        TypeAndMethodName vertexFunctionName = ss.VertexShader;
-        TypeAndMethodName fragmentFunctionName = ss.FragmentShader;
-        TypeAndMethodName computeFunctionName = ss.ComputeShader;
+        TypeAndMethodName vertexFunctionName = shaderSetInfo.vertexShader;
+        TypeAndMethodName fragmentFunctionName = shaderSetInfo.fragmentShader;
+        TypeAndMethodName computeFunctionName = shaderSetInfo.computeShader;
 
         HashSet<SyntaxTree> treesToVisit = [];
         if (vertexFunctionName != null)
-        {
-            GetTrees(treesToVisit, vertexFunctionName.TypeName);
-        }
+            GetTrees(treesToVisit, vertexFunctionName.typeName);
         if (fragmentFunctionName != null)
-        {
-            GetTrees(treesToVisit, fragmentFunctionName.TypeName);
-        }
+            GetTrees(treesToVisit, fragmentFunctionName.typeName);
         if (computeFunctionName != null)
-        {
-            GetTrees(treesToVisit, computeFunctionName.TypeName);
-        }
+            GetTrees(treesToVisit, computeFunctionName.typeName);
 
         foreach (LanguageBackend language in _languages)
-        {
-            language.InitContext(ss.Name);
-        }
+            language.InitContext(shaderSetInfo.name);
 
-        ShaderSyntaxWalker walker = new(_compilation, [.. _languages], ss);
+        ShaderSyntaxWalker walker = new(_compilation, [.. _languages], shaderSetInfo);
+
         foreach (SyntaxTree tree in treesToVisit)
-        {
             walker.Visit(tree.GetRoot());
-        }
 
         foreach (LanguageBackend language in _languages)
         {
-            ShaderModel model = language.GetShaderModel(ss.Name);
-            ShaderFunction? vsFunc = ss.VertexShader != null
-                ? model.GetFunction(ss.VertexShader.FullName)
-                : null;
-            ShaderFunction? fsFunc = ss.FragmentShader != null
-                ? model.GetFunction(ss.FragmentShader.FullName)
-                : null;
-            ShaderFunction? csFunc = ss.ComputeShader != null
-                ? model.GetFunction(ss.ComputeShader.FullName)
-                : null;
-            string? vsCode = null;
-            string? fsCode = null;
-            string? csCode = null;
-            if (vsFunc != null)
-            {
-                vsCode = language.ProcessEntryFunction(ss.Name, vsFunc).FullText;
-            }
-            if (fsFunc != null)
-            {
-                fsCode = language.ProcessEntryFunction(ss.Name, fsFunc).FullText;
-            }
-            if (csFunc != null)
-            {
-                csCode = language.ProcessEntryFunction(ss.Name, csFunc).FullText;
-            }
+            ShaderModel model = language.GetShaderModel(shaderSetInfo.name);
+            ShaderFunction? vsFunc = shaderSetInfo.vertexShader != null ? model.GetFunction(shaderSetInfo.vertexShader.fullName) : null;
+            ShaderFunction? fsFunc = shaderSetInfo.fragmentShader != null ? model.GetFunction(shaderSetInfo.fragmentShader.fullName) : null;
+            ShaderFunction? csFunc = shaderSetInfo.computeShader != null ? model.GetFunction(shaderSetInfo.computeShader.fullName) : null;
+            string? vsCode = vsFunc != null ? language.ProcessEntryFunction(shaderSetInfo.name, vsFunc).fullText : null;
+            string? fsCode = fsFunc != null ? language.ProcessEntryFunction(shaderSetInfo.name, fsFunc).fullText : null;
+            string? csCode = csFunc != null ? language.ProcessEntryFunction(shaderSetInfo.name, csFunc).fullText : null;
 
-            result.AddShaderSet(
-                language,
-                new GeneratedShaderSet(ss.Name, vsCode, fsCode, csCode, vsFunc, fsFunc, csFunc, model));
+            output.AddShaderSet(language,
+                new GeneratedShaderSet(shaderSetInfo.name, vsCode, fsCode, csCode, vsFunc, fsFunc, csFunc, model));
         }
     }
 

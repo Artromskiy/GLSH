@@ -1,4 +1,5 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
 using static GLSH.Primitives.ShaderBuiltins;
 namespace Tests.TestAssets.VeldridShaders
@@ -9,7 +10,7 @@ namespace Tests.TestAssets.VeldridShaders
         public Matrix4x4 View;
         public Matrix4x4 World;
 
-        [VertexShader]
+        [VertexEntryPoint]
         public FragmentInput VS(VertexInput input)
         {
             FragmentInput output;
@@ -17,19 +18,19 @@ namespace Tests.TestAssets.VeldridShaders
             return output;
         }
 
-        [FragmentShader]
+        [FragmentEntryPoint]
         public void FS(FragmentInput input) { }
 
         public struct VertexInput
         {
-            [PositionSemantic] public Vector3 Position;
-            [NormalSemantic] public Vector3 Normal;
-            [TextureCoordinateSemantic] public Vector2 TexCoord;
+            [VertexSemantic(SemanticType.Position)] public Vector3 Position;
+            [VertexSemantic(SemanticType.Normal)] public Vector3 Normal;
+            [VertexSemantic(SemanticType.TextureCoordinate)] public Vector2 TexCoord;
         }
 
         public struct FragmentInput
         {
-            [SystemPositionSemantic]
+            [VertexSemantic(SemanticType.SystemPosition)]
             public Vector4 Position;
         }
     }

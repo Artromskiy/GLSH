@@ -1,13 +1,13 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
-    class Swizzles
+    internal class Swizzles
     {
-        [VertexShader]
-        SystemPosition4Texture2 VS(Position4Texture2 input)
+        [VertexEntryPoint]
+        private SystemPosition4Texture2 VS(Position4Texture2 input)
         {
             input.Position = input.Position.WZYX();
             input.Position = input.Position.WWXY();

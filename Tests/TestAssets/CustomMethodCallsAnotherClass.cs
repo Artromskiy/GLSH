@@ -1,6 +1,4 @@
-﻿using GLSH.Primitives;
-using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
+﻿using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {

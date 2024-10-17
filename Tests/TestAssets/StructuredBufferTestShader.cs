@@ -1,4 +1,5 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
 using static GLSH.Primitives.ShaderBuiltins;
 
@@ -9,7 +10,7 @@ namespace Tests.TestAssets
         public StructuredBuffer<Matrix4x4> StructuredInput;
         public StructuredBuffer<TestStructure> TestStructures;
 
-        [VertexShader]
+        [VertexEntryPoint]
         public VertexOutput VS(PositionTexture input)
         {
             Matrix4x4 World = StructuredInput[0];
@@ -24,7 +25,7 @@ namespace Tests.TestAssets
             return output;
         }
 
-        [FragmentShader]
+        [FragmentEntryPoint]
         public Vector4 FS(VertexOutput input)
         {
             Vector4 ret = new Vector4(

@@ -2,18 +2,18 @@ namespace GLSH;
 
 public class ResourceDefinition
 {
-    public string Name { get; }
-    public int Set { get; }
-    public int Binding { get; }
-    public TypeReference ValueType { get; }
-    public ShaderResourceKind ResourceKind { get; }
+    public readonly string name;
+    public readonly int set;
+    public readonly int binding;
+    public readonly TypeReference valueType;
+    public readonly ShaderResourceKind resourceKind;
 
     public ResourceDefinition(string name, int set, int binding, TypeReference valueType, ShaderResourceKind kind)
     {
-        Name = name;
-        Set = set;
-        Binding = binding;
-        ValueType = valueType;
-        ResourceKind = kind;
+        this.name = name;
+        this.set = set;
+        this.binding = binding;
+        this.valueType = valueType;
+        resourceKind = kind;
     }
 }

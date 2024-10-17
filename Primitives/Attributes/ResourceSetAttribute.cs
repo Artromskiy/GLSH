@@ -1,6 +1,6 @@
 using System;
 
-namespace GLSH.Primitives;
+namespace GLSH.Primitives.Attributes;
 
 public class ResourceSetAttribute : Attribute
 {

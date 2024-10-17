@@ -1,13 +1,10 @@
-﻿using System;
+﻿using GlmSharpGenerator.Types;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GlmSharpGenerator.Types;
 
 namespace GlmSharpGenerator.Members
 {
-    class ComponentWiseOperator : Member
+    internal class ComponentWiseOperator : Member
     {
         /// <summary>
         /// Func return type
@@ -26,7 +23,7 @@ namespace GlmSharpGenerator.Members
         /// If true, parameter 2 could be scalar
         /// </summary>
         public bool CanScalar2 { get; set; } = true;
-        
+
 
         /// <summary>
         /// string.Format-compatible string for each component

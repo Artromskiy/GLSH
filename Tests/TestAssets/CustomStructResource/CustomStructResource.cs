@@ -1,8 +1,6 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using System.Numerics;
-using Tests.TestAssets;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets.CustomStructResource
 {
@@ -11,7 +9,7 @@ namespace Tests.TestAssets.CustomStructResource
         public CustomBlittableStruct CustomField;
         public Matrix4x4 RegularField;
 
-        [VertexShader]
+        [VertexEntryPoint]
         public SystemPosition4 VS(Position4 input)
         {
             input.Position.X += CustomField.F2_4.X;

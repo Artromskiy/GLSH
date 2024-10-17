@@ -1,13 +1,9 @@
-﻿using System;
+﻿using GlmSharpGenerator.Members;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GlmSharpGenerator.Members;
 
 namespace GlmSharpGenerator.Types
 {
-    partial class SwizzleType
+    internal partial class SwizzleType
     {
         public override IEnumerable<Member> GenerateMembers()
         {

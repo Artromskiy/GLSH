@@ -1,4 +1,5 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
 using static GLSH.Primitives.ShaderBuiltins;
 
@@ -18,7 +19,7 @@ namespace Tests.TestAssets
         public DepthTexture2DArrayResource TexArray;
         public SamplerComparisonResource Sampler;
 
-        [FragmentShader]
+        [FragmentEntryPoint]
         public Vector4 FS(FragmentInput input)
         {
             float arraySample = SampleComparisonLevelZero(TexArray, Sampler, new Vector2(1, 2), 3, 0.5f);

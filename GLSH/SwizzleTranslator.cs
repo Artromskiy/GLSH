@@ -26,7 +26,7 @@ internal class SwizzleTranslator : TypeInvocationTranslator
 
     private static string TranslateCore(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        string target = parameters[0].Identifier;
+        string target = parameters[0].identifier;
         StringBuilder swizzle = new();
         foreach (char c in methodName)
         {

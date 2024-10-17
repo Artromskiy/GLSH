@@ -9,7 +9,7 @@ namespace Tests.TestAssets
         // Not supported by GLSL ES
         public RWTexture2DResource<Vector4> RWTex;
 
-        [ComputeShader(1, 1, 1)]
+        [ComputeEntryPoint(1, 1, 1)]
         public void CS()
         {
             Vector4 existing = Load(RWTex, new UInt2(10, 20));

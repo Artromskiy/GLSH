@@ -1,7 +1,6 @@
 using GLSH.Primitives;
 using System.Collections.Generic;
 using System.Numerics;
-using System;
 
 namespace GLSH.Glsl;
 

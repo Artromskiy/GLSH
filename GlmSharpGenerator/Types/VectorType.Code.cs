@@ -1,13 +1,11 @@
-﻿using System;
+﻿using GlmSharpGenerator.Members;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GlmSharpGenerator.Members;
 
 namespace GlmSharpGenerator.Types
 {
-    partial class VectorType
+    internal partial class VectorType
     {
         private IEnumerable<string> InlineSwizzle(int nr = 0)
         {

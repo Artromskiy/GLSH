@@ -4,14 +4,14 @@ namespace GLSH;
 
 public class TypeReference
 {
-    public string Name { get; }
-    public ITypeSymbol TypeInfo { get; }
+    public readonly string name;
+    public readonly ITypeSymbol typeInfo;
 
     public TypeReference(string name, ITypeSymbol typeInfo)
     {
-        Name = name;
-        TypeInfo = typeInfo;
+        this.name = name;
+        this.typeInfo = typeInfo;
     }
 
-    public override string ToString() => Name;
+    public override string ToString() => name;
 }

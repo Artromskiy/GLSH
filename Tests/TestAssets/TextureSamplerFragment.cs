@@ -1,4 +1,5 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
 using static GLSH.Primitives.ShaderBuiltins;
 
@@ -19,7 +20,7 @@ namespace Tests.TestAssets
         public Texture2DArrayResource TexArray;
         public SamplerResource Sampler;
 
-        [FragmentShader]
+        [FragmentEntryPoint]
         public Vector4 FS(FragmentInput input)
         {
             Vector4 cubeSample = Sample(TexCube, Sampler, new Vector3(1, 2, 3));

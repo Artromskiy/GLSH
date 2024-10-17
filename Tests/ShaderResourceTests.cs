@@ -1,6 +1,7 @@
 ﻿using GLSH;
 using GLSH.Glsl;
 using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using Microsoft.CodeAnalysis;
 using Tests.TestAssets;
 using Xunit;
@@ -19,13 +20,13 @@ namespace Tests
         }
     }
 
-    class ReferenceTypeField
+    internal class ReferenceTypeField
     {
 #pragma warning disable 0649
         public object ReferenceField;
 #pragma warning restore 0649
 
-        [VertexShader]
+        [VertexEntryPoint]
         public Position4Texture2 VS(PositionTexture input)
         {
             Position4Texture2 output;

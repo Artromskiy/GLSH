@@ -1,4 +1,5 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using static GLSH.Primitives.ShaderBuiltins;
@@ -13,14 +14,14 @@ namespace Tests.TestAssets
             public Matrix4x4 M4x4;
             public Vector4 V4;
             public Vector2 V2;
-            private float _padding0;
-            private float _padding1;
+            private readonly float _padding0;
+            private readonly float _padding1;
             public Vector3 V3;
         }
 
         public VectorHolder VH;
 
-        [VertexShader]
+        [VertexEntryPoint]
         public SystemPosition4 VS(Position4 input)
         {
             float f = 0;
@@ -119,7 +120,7 @@ namespace Tests.TestAssets
             return output;
         }
 
-        [FragmentShader]
+        [FragmentEntryPoint]
         public Vector4 FS(SystemPosition4 input)
         {
             Vector4 ret = Vector4.Zero;

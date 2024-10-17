@@ -1,13 +1,10 @@
-﻿using System;
+﻿using GlmSharpGenerator.Members;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GlmSharpGenerator.Members;
 
 namespace GlmSharpGenerator.Types
 {
-    class AnyType : AbstractType
+    internal class AnyType : AbstractType
     {
         public AnyType(string name)
         {

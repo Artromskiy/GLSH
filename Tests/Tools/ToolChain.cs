@@ -1,11 +1,10 @@
-﻿using System;
+﻿using GLSH;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using Microsoft.CodeAnalysis;
-using GLSH;
 
 namespace Tests.Tools
 {

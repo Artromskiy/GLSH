@@ -1,10 +1,9 @@
-﻿using Microsoft.CodeAnalysis;
-using System.Collections.Generic;
-using System.Linq;
-using GLSH;
-using Xunit;
-using Tests.Tools;
+﻿using GLSH;
 using GLSH.Glsl;
+using Microsoft.CodeAnalysis;
+using System.Collections.Generic;
+using Tests.Tools;
+using Xunit;
 
 namespace Tests
 {
@@ -20,12 +19,12 @@ namespace Tests
             IReadOnlyList<GeneratedShaderSet> hlslSets = generationResult.GetOutput(backend);
             Assert.Equal(4, hlslSets.Count);
             GeneratedShaderSet set = hlslSets[0];
-            Assert.Equal("VertexAndFragment", set.Name);
+            Assert.Equal("VertexAndFragment", set.name);
 
-            CompileResult result = ToolChain.Compile(set.VertexShaderCode, Stage.Vertex, "VS");
+            CompileResult result = ToolChain.Compile(set.vertexShaderCode, Stage.Vertex, "VS");
             Assert.False(result.HasError, result.ToString());
 
-            result = ToolChain.Compile(set.FragmentShaderCode, Stage.Fragment, "FS");
+            result = ToolChain.Compile(set.fragmentShaderCode, Stage.Fragment, "FS");
             Assert.False(result.HasError, result.ToString());
         }
     }

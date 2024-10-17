@@ -86,31 +86,30 @@ namespace Tests
             LanguageBackend backend = new Glsl450Backend(compilation);
             ShaderGenerator sg = new(compilation, backend, vsName, fsName, csName);
             ShaderGenerationResult generationResult = sg.GenerateShaders();
-
             IReadOnlyList<GeneratedShaderSet> sets = generationResult.GetOutput(backend);
-            Assert.Equal(1, sets.Count);
+            Assert.Single(sets);
             GeneratedShaderSet set = sets[0];
-            ShaderModel shaderModel = set.Model;
+            ShaderModel shaderModel = set.model;
 
             List<CompileResult> results = new List<CompileResult>();
             if (!string.IsNullOrWhiteSpace(vsName))
             {
                 ShaderFunction vsFunction = shaderModel.GetFunction(vsName);
-                string vsCode = set.VertexShaderCode;
+                string vsCode = set.vertexShaderCode;
 
-                results.Add(ToolChain.Compile(vsCode, Stage.Vertex, vsFunction.Name));
+                results.Add(ToolChain.Compile(vsCode, Stage.Vertex, vsFunction.name));
             }
             if (!string.IsNullOrWhiteSpace(fsName))
             {
                 ShaderFunction fsFunction = shaderModel.GetFunction(fsName);
-                string fsCode = set.FragmentShaderCode;
-                results.Add(ToolChain.Compile(fsCode, Stage.Fragment, fsFunction.Name));
+                string fsCode = set.fragmentShaderCode;
+                results.Add(ToolChain.Compile(fsCode, Stage.Fragment, fsFunction.name));
             }
             if (!string.IsNullOrWhiteSpace(csName))
             {
                 ShaderFunction csFunction = shaderModel.GetFunction(csName);
-                string csCode = set.ComputeShaderCode;
-                results.Add(ToolChain.Compile(csCode, Stage.Compute, csFunction.Name));
+                string csCode = set.computeShaderCode;
+                results.Add(ToolChain.Compile(csCode, Stage.Compute, csFunction.name));
             }
 
             // Collate results

@@ -1,16 +1,16 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
     public class ExpressionBodiedMethods
     {
-        [FragmentShader]
+        [FragmentEntryPoint]
         public Vector4 ExpressionBodyWithReturn()
             => new Vector4(0f, 0f, 0f, 1f);
 
-        [FragmentShader]
+        [FragmentEntryPoint]
         public void ExpressionBodyWithoutReturn()
             => new Vector4(0f, 0f, 0f, 1f);
     }

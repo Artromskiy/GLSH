@@ -1,5 +1,4 @@
 using GLSH.Primitives;
-using System;
 using Microsoft.CodeAnalysis;
 using System.Diagnostics;
 using System.Numerics;
@@ -16,8 +15,7 @@ public class Glsl450Backend : GlslBackendBase
     protected override string CSharpToShaderTypeCore(string fullType)
     {
         return GlslKnownTypes.GetMappedName(fullType, true)
-            .Replace(".", "_")
-            .Replace("+", "_");
+            .Replace(".", "_");
     }
 
     protected override void WriteVersionHeader(
@@ -33,26 +31,26 @@ public class Glsl450Backend : GlslBackendBase
     protected override void WriteUniform(StringBuilder sb, ResourceDefinition rd)
     {
         string layout = FormatLayoutStr(rd);
-        sb.AppendLine($"{layout} uniform {rd.Name}");
+        sb.AppendLine($"{layout} uniform {rd.name}");
         sb.AppendLine("{");
-        sb.AppendLine($"    {CSharpToShaderType(rd.ValueType.Name)} field_{CorrectIdentifier(rd.Name.Trim())};");
+        sb.AppendLine($"    {CSharpToShaderType(rd.valueType.name)} field_{CorrectIdentifier(rd.name.Trim())};");
         sb.AppendLine("};");
         sb.AppendLine();
     }
 
     protected override void WriteStructuredBuffer(StringBuilder sb, ResourceDefinition rd, bool isReadOnly, int index)
     {
-        string valueType = rd.ValueType.Name;
+        string valueType = rd.valueType.name;
         string type = valueType == typeof(AtomicBufferUInt32).FullName
             ? "uint"
             : valueType == typeof(AtomicBufferInt32).FullName
                 ? "int"
-                : CSharpToShaderType(rd.ValueType.Name);
+                : CSharpToShaderType(rd.valueType.name);
         string layout = FormatLayoutStr(rd, "std430");
         string readOnlyStr = isReadOnly ? " readonly" : " ";
-        sb.AppendLine($"{layout}{readOnlyStr} buffer {rd.Name}");
+        sb.AppendLine($"{layout}{readOnlyStr} buffer {rd.name}");
         sb.AppendLine("{");
-        sb.AppendLine($"    {type} field_{CorrectIdentifier(rd.Name.Trim())}[];");
+        sb.AppendLine($"    {type} field_{CorrectIdentifier(rd.name.Trim())}[];");
         sb.AppendLine("};");
     }
 
@@ -61,7 +59,7 @@ public class Glsl450Backend : GlslBackendBase
         sb.Append(FormatLayoutStr(rd));
         sb.Append(' ');
         sb.Append("uniform sampler ");
-        sb.Append(CorrectIdentifier(rd.Name));
+        sb.Append(CorrectIdentifier(rd.name));
         sb.AppendLine(";");
     }
 
@@ -70,7 +68,7 @@ public class Glsl450Backend : GlslBackendBase
         sb.Append(FormatLayoutStr(rd));
         sb.Append(' ');
         sb.Append("uniform samplerShadow ");
-        sb.Append(CorrectIdentifier(rd.Name));
+        sb.Append(CorrectIdentifier(rd.name));
         sb.AppendLine(";");
     }
 
@@ -79,7 +77,7 @@ public class Glsl450Backend : GlslBackendBase
         sb.Append(FormatLayoutStr(rd));
         sb.Append(' ');
         sb.Append("uniform texture2D ");
-        sb.Append(CorrectIdentifier(rd.Name));
+        sb.Append(CorrectIdentifier(rd.name));
         sb.AppendLine(";");
     }
 
@@ -88,7 +86,7 @@ public class Glsl450Backend : GlslBackendBase
         sb.Append(FormatLayoutStr(rd));
         sb.Append(' ');
         sb.Append("uniform texture2DArray ");
-        sb.Append(CorrectIdentifier(rd.Name));
+        sb.Append(CorrectIdentifier(rd.name));
         sb.AppendLine(";");
     }
 
@@ -97,7 +95,7 @@ public class Glsl450Backend : GlslBackendBase
         sb.Append(FormatLayoutStr(rd));
         sb.Append(' ');
         sb.Append("uniform textureCube ");
-        sb.Append(CorrectIdentifier(rd.Name));
+        sb.Append(CorrectIdentifier(rd.name));
         sb.AppendLine(";");
     }
 
@@ -106,7 +104,7 @@ public class Glsl450Backend : GlslBackendBase
         sb.Append(FormatLayoutStr(rd));
         sb.Append(' ');
         sb.Append("uniform texture2DMS ");
-        sb.Append(CorrectIdentifier(rd.Name));
+        sb.Append(CorrectIdentifier(rd.name));
         sb.AppendLine(";");
     }
 
@@ -147,17 +145,17 @@ public class Glsl450Backend : GlslBackendBase
     {
         string layoutType;
 
-        if (rd.ValueType.Name == typeof(Vector4).FullName)
+        if (rd.valueType.name == typeof(Vector4).FullName)
             layoutType = "rgba32f";
-        else if (rd.ValueType.Name == typeof(float).FullName!)
+        else if (rd.valueType.name == typeof(float).FullName!)
             layoutType = "r32f";
         else
             throw new ShaderGenerationException($"Invalid RWTexture2D type. T must be Vector4 or float.");
-        
+
         sb.Append(FormatLayoutStr(rd, layoutType));
         sb.Append(' ');
         sb.Append("uniform image2D ");
-        sb.Append(CorrectIdentifier(rd.Name));
+        sb.Append(CorrectIdentifier(rd.name));
         sb.AppendLine(";");
         sb.AppendLine();
     }
@@ -170,7 +168,7 @@ public class Glsl450Backend : GlslBackendBase
     private string FormatLayoutStr(ResourceDefinition rd, string storageSpec = null)
     {
         string storageSpecPart = storageSpec != null ? $"{storageSpec}, " : string.Empty;
-        return $"layout({storageSpecPart}set = {rd.Set}, binding = {rd.Binding})";
+        return $"layout({storageSpecPart}set = {rd.set}, binding = {rd.binding})";
     }
 
     protected override void EmitGlPositionCorrection(StringBuilder sb)

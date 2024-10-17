@@ -1,6 +1,6 @@
 ﻿using GLSH.Primitives;
+using GLSH.Primitives.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
 
 namespace Tests.TestAssets
 {
@@ -8,7 +8,7 @@ namespace Tests.TestAssets
     {
         public RWStructuredBuffer<Vector4> Vectors;
 
-        [VertexShader]
+        [VertexEntryPoint]
         public SystemPosition4 VS()
         {
             SystemPosition4 output;

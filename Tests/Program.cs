@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 internal class Program
 {
-    static int Main(string[] args)
+    private static int Main(string[] args)
     {
         List<string> newArgs = new(args);
         newArgs.Insert(0, typeof(Program).Assembly.Location);
