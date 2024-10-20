@@ -1,4 +1,4 @@
-namespace GLSH.Primitives;
+namespace GLSH;
 
 public class AtomicBufferInt32
 {

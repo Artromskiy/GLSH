@@ -15,7 +15,19 @@ namespace GlmSharpGenerator.Members
         /// </summary>
         public bool Readonly { get; set; }
 
-        public override string MemberPrefix => base.MemberPrefix + (Readonly ? " readonly" : "");
+        /// <summary>
+        /// True iff field is constant
+        /// </summary>
+        public bool Constant { get; set; }
+
+        public override string MemberPrefix => base.MemberPrefix + (Constant ? " const" : (Readonly ? " readonly" : ""));
+
+        /// <summary>
+        /// Value that will be used as initializer
+        /// </summary>
+        public string DefaultValue { get; set; }
+
+        private string GetDefaultValue => string.IsNullOrEmpty(DefaultValue) ? string.Empty : " = " + DefaultValue;
 
         public override IEnumerable<string> Lines
         {
@@ -24,7 +36,7 @@ namespace GlmSharpGenerator.Members
                 foreach (var line in base.Lines)
                     yield return line;
 
-                yield return $"{MemberPrefix} {Type.NameThat} {Name};";
+                yield return $"{MemberPrefix} {Type.NameThat} {Name}{GetDefaultValue};";
             }
         }
 
@@ -32,7 +44,7 @@ namespace GlmSharpGenerator.Members
         {
             Name = name;
             Type = type;
-            Attributes = AbstractType.Version >= 40 ? new[] { "DataMember" } : new string[] { };
+            Attributes = new[] { "DataMember" };
         }
     }
 }

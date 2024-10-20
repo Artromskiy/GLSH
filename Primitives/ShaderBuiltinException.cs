@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace GLSH.Primitives;
+namespace GLSH;
 
 public class ShaderBuiltinException : Exception
 {

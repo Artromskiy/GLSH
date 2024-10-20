@@ -1,29 +1,28 @@
-﻿using GLSH.Primitives;
-using GLSH.Primitives.Attributes;
+﻿using GLSH;
+using GLSH.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
-
+using static GLSH.ShaderBuiltins;
 namespace Runner.Some.StupidNamespace;
 
 [GraphicsPipeline(nameof(MinExample))]
 public class MinExample
 {
-    public Matrix4x4 Projection;
-    public Matrix4x4 View;
-    public Matrix4x4 World;
-    public Texture2DResource SurfaceTexture;
-    public SamplerResource Sampler;
+    [Layout(set: 0, binding: 0)] public Matrix4x4 Projection;
+    [Layout(set: 0, binding: 1)] public Matrix4x4 View;
+    [Layout(set: 0, binding: 2)] public Matrix4x4 World;
+    [Layout(set: 1, binding: 0)] public Texture2DResource SurfaceTexture;
+    [Layout(set: 1, binding: 1)] public SamplerResource Sampler;
 
     public struct VertexInput
     {
-        [VertexSemantic(SemanticType.Position)] public Vector3 Position;
-        [VertexSemantic(SemanticType.TextureCoordinate)] public Vector2 TextureCoord;
+        [Layout(location: 0)] public Vector3 Position;
+        [Layout(location: 1)] public Vector2 TextureCoord;
     }
 
     public struct FragmentInput
     {
-        [VertexSemantic(SemanticType.SystemPosition)] public Vector4 Position;
-        [VertexSemantic(SemanticType.TextureCoordinate)] public Vector2 TextureCoord;
+        [Layout(location: 0)] public Vector4 Position;
+        [Layout(location: 1)] public Vector2 TextureCoord;
     }
 
     [VertexEntryPoint]

@@ -1,6 +1,6 @@
 using System;
 
-namespace GLSH.Primitives.Attributes;
+namespace GLSH.Attributes;
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
 public class VertexEntryPointAttribute : Attribute { }

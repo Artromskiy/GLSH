@@ -1,6 +1,6 @@
 using System;
 
-namespace GLSH.Primitives.Attributes;
+namespace GLSH.Attributes;
 
 [AttributeUsage(AttributeTargets.All, AllowMultiple = false)]
 public class ArraySizeAttribute : Attribute

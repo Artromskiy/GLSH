@@ -17,7 +17,8 @@ namespace GlmSharpGenerator.Types
 
         public IEnumerable<string> Fields => "xyzw".Substring(0, Components).Select(c => c.ToString());
 
-        public override string Name => BaseName + Components;
+        public override string Name => GetName(BaseType, Components);
+        public static string GetName(BuiltinType type, int components) => type.Name + components;
 
         public override string Folder => "Vec" + Components;
         public override string DataContractArg { get; } = "(Namespace = \"vec\")";
@@ -27,17 +28,6 @@ namespace GlmSharpGenerator.Types
 
         public override string TypeComment => $"A vector of type {BaseTypeName} with {Components} components.";
 
-        public override IEnumerable<string> BaseClasses
-        {
-            get
-            {
-                if (Version >= 45)
-                    yield return $"IReadOnlyList<{BaseTypeName}>";
-                else
-                    yield return $"IEnumerable<{BaseTypeName}>";
-                yield return $"IEquatable<{NameThat}>";
-            }
-        }
 
         public string CompArgString => CompString.CommaSeparated();
 

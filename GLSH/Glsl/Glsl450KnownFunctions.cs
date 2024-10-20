@@ -1,4 +1,4 @@
-using GLSH.Primitives;
+using GLSH.Compiler.Internal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 
-namespace GLSH.Glsl;
+namespace GLSH.Compiler.Glsl;
 
 [Obsolete("Rewrite this hell")]
 public static class Glsl450KnownFunctions
@@ -273,7 +273,7 @@ public static class Glsl450KnownFunctions
     {
         return (type, method, parameters) =>
         {
-            return $"{nameTarget ?? method.ToLower()}({InvocationParameterInfo.GetInvocationParameterList(parameters)})";
+            return $"{nameTarget ?? method.ToLower()}({InvocationParameterInfo.FormatParameters(parameters)})";
         };
     }
 

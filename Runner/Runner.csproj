@@ -8,7 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GLSH\GLSH.csproj" />
+    <ProjectReference Include="..\GLSH.Extensions\GLSH.Extensions.csproj" />
+    <ProjectReference Include="..\GLSH\GLSH.Compiler.csproj" />
+    <ProjectReference Include="..\Primitives\GLSH.csproj" />
   </ItemGroup>
 
 </Project>

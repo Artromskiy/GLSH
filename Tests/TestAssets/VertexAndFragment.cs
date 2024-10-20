@@ -1,5 +1,4 @@
-﻿using GLSH.Primitives;
-using GLSH.Primitives.Attributes;
+﻿using GLSH.Attributes;
 using System.Numerics;
 
 namespace Tests.TestAssets
@@ -22,13 +21,13 @@ namespace Tests.TestAssets
 
         public struct VertexInput
         {
-            [VertexSemantic(SemanticType.Position)]
+            [Layout(location: 0)]
             public Vector3 Position;
         }
 
         public struct FragmentInput
         {
-            [VertexSemantic(SemanticType.SystemPosition)]
+            [Layout(location: 0)]
             public Vector4 Position;
         }
     }

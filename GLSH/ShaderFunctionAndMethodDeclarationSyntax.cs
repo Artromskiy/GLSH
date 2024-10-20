@@ -1,7 +1,7 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 
-namespace GLSH;
+namespace GLSH.Compiler;
 
 public class ShaderFunctionAndMethodDeclarationSyntax : IEquatable<ShaderFunctionAndMethodDeclarationSyntax>
 {
@@ -27,6 +27,6 @@ public class ShaderFunctionAndMethodDeclarationSyntax : IEquatable<ShaderFunctio
     }
 
     public override bool Equals(object? obj) => Equals(obj as ShaderFunctionAndMethodDeclarationSyntax);
-    public override int GetHashCode()=> HashCode.Combine(function.declaringType, function.name);
+    public override int GetHashCode() => HashCode.Combine(function.declaringType, function.name);
     public override string ToString() => function.ToString();
 }

@@ -26,19 +26,6 @@ namespace GlmSharpGenerator.Types
 
         public string CompString => "xyzw".Substring(0, Components);
 
-
-        public override IEnumerable<string> BaseClasses
-        {
-            get
-            {
-                if (Version >= 45)
-                    yield return $"IReadOnlyList<{BaseTypeName}>";
-                else
-                    yield return $"IEnumerable<{BaseTypeName}>";
-                yield return $"IEquatable<{NameThat}>";
-            }
-        }
-
         public string CompArgString => CompString.CommaSeparated();
 
 
@@ -127,12 +114,6 @@ namespace GlmSharpGenerator.Types
                 };
             }
 
-            // values
-            yield return new Property("Values", new ArrayType(BaseType))
-            {
-                GetterLine = $"new[] {{ {CompArgString} }}",
-                Comment = "Returns an array with all values"
-            };
 
             // ctors
             yield return new Constructor(this, Fields)
@@ -283,18 +264,20 @@ namespace GlmSharpGenerator.Types
 
 
             // IEnumerable
-            yield return new Function(new AnyType($"IEnumerator<{BaseTypeName}>"), "GetEnumerator")
-            {
-                Code = Fields.Select(f => $"yield return {f};"),
-                Comment = "Returns an enumerator that iterates through all components."
-            };
+            if (!FullUnmanaged)
+                yield return new Function(new AnyType($"IEnumerator<{BaseTypeName}>"), "GetEnumerator")
+                {
+                    Code = Fields.Select(f => $"yield return {f};"),
+                    Comment = "Returns an enumerator that iterates through all components."
+                };
 
-            yield return new Function(new AnyType("IEnumerator"), "IEnumerable.GetEnumerator")
-            {
-                Visibility = "",
-                CodeString = "GetEnumerator()",
-                Comment = "Returns an enumerator that iterates through all components."
-            };
+            if (!FullUnmanaged)
+                yield return new Function(new AnyType("IEnumerator"), "IEnumerable.GetEnumerator")
+                {
+                    Visibility = "",
+                    CodeString = "GetEnumerator()",
+                    Comment = "Returns an enumerator that iterates through all components."
+                };
 
 
             // ToString
@@ -336,85 +319,86 @@ namespace GlmSharpGenerator.Types
             }
 
             // Parsing
-            if (!BaseType.IsComplex && !BaseType.Generic)
-            {
-                // Parse
-                yield return new Function(this, "Parse")
+            if (!FullUnmanaged)
+                if (!BaseType.IsComplex && !BaseType.Generic)
                 {
-                    Static = true,
-                    ParameterString = "string s",
-                    CodeString = "Parse(s, \", \")",
-                    Comment = "Converts the string representation of the quaternion into a quaternion representation (using ', ' as a separator)."
-                };
-
-                yield return new Function(this, "Parse")
-                {
-                    Static = true,
-                    ParameterString = "string s, string sep",
-                    Code = new[]
+                    // Parse
+                    yield return new Function(this, "Parse")
                     {
+                        Static = true,
+                        ParameterString = "string s",
+                        CodeString = "Parse(s, \", \")",
+                        Comment = "Converts the string representation of the quaternion into a quaternion representation (using ', ' as a separator)."
+                    };
+
+                    yield return new Function(this, "Parse")
+                    {
+                        Static = true,
+                        ParameterString = "string s, string sep",
+                        Code = new[]
+                        {
                         "var kvp = s.Split(new[] { sep }, StringSplitOptions.None);",
                         string.Format("if (kvp.Length != {0}) throw new FormatException(\"input has not exactly {0} parts\");", Components),
                         $"return new {NameThat}({Components.ForIndexUpTo(i => $"{BaseTypeName}.Parse(kvp[{i}].Trim())").CommaSeparated()});"
                     },
-                    Comment = "Converts the string representation of the quaternion into a quaternion representation (using a designated separator)."
-                };
+                        Comment = "Converts the string representation of the quaternion into a quaternion representation (using a designated separator)."
+                    };
 
-                if (BaseType.Name != "bool")
-                {
-                    yield return new Function(this, "Parse")
+                    if (BaseType.Name != "bool")
                     {
-                        Static = true,
-                        ParameterString = "string s, string sep, IFormatProvider provider",
-                        Code = new[]
+                        yield return new Function(this, "Parse")
                         {
+                            Static = true,
+                            ParameterString = "string s, string sep, IFormatProvider provider",
+                            Code = new[]
+                            {
                             "var kvp = s.Split(new[] { sep }, StringSplitOptions.None);",
                             string.Format("if (kvp.Length != {0}) throw new FormatException(\"input has not exactly {0} parts\");", Components),
                             $"return new {NameThat}({Components.ForIndexUpTo(i => $"{BaseTypeName}.Parse(kvp[{i}].Trim(), provider)").CommaSeparated()});"
                         },
-                        Comment = "Converts the string representation of the quaternion into a quaternion representation (using a designated separator and a type provider)."
-                    };
-                    yield return new Function(this, "Parse")
-                    {
-                        Static = true,
-                        ParameterString = "string s, string sep, NumberStyles style",
-                        Code = new[]
+                            Comment = "Converts the string representation of the quaternion into a quaternion representation (using a designated separator and a type provider)."
+                        };
+                        yield return new Function(this, "Parse")
                         {
+                            Static = true,
+                            ParameterString = "string s, string sep, NumberStyles style",
+                            Code = new[]
+                            {
                             "var kvp = s.Split(new[] { sep }, StringSplitOptions.None);",
                             string.Format("if (kvp.Length != {0}) throw new FormatException(\"input has not exactly {0} parts\");", Components),
                             $"return new {NameThat}({Components.ForIndexUpTo(i => $"{BaseTypeName}.Parse(kvp[{i}].Trim(), style)").CommaSeparated()});"
                         },
-                        Comment = "Converts the string representation of the quaternion into a quaternion representation (using a designated separator and a number style)."
-                    };
-                    yield return new Function(this, "Parse")
-                    {
-                        Static = true,
-                        ParameterString = "string s, string sep, NumberStyles style, IFormatProvider provider",
-                        Code = new[]
+                            Comment = "Converts the string representation of the quaternion into a quaternion representation (using a designated separator and a number style)."
+                        };
+                        yield return new Function(this, "Parse")
                         {
+                            Static = true,
+                            ParameterString = "string s, string sep, NumberStyles style, IFormatProvider provider",
+                            Code = new[]
+                            {
                             "var kvp = s.Split(new[] { sep }, StringSplitOptions.None);",
                             string.Format("if (kvp.Length != {0}) throw new FormatException(\"input has not exactly {0} parts\");", Components),
                             $"return new {NameThat}({Components.ForIndexUpTo(i => $"{BaseTypeName}.Parse(kvp[{i}].Trim(), style, provider)").CommaSeparated()});"
                         },
-                        Comment = "Converts the string representation of the quaternion into a quaternion representation (using a designated separator and a number style and a format provider)."
-                    };
-                }
+                            Comment = "Converts the string representation of the quaternion into a quaternion representation (using a designated separator and a number style and a format provider)."
+                        };
+                    }
 
-                // TryParse
-                yield return new Function(BuiltinType.TypeBool, "TryParse")
-                {
-                    Static = true,
-                    ParameterString = $"string s, out {NameThat} result",
-                    CodeString = "TryParse(s, \", \", out result)",
-                    Comment = "Tries to convert the string representation of the quaternion into a quaternion representation (using ', ' as a separator), returns false if string was invalid."
-                };
-
-                yield return new Function(BuiltinType.TypeBool, "TryParse")
-                {
-                    Static = true,
-                    ParameterString = $"string s, string sep, out {NameThat} result",
-                    Code = new[]
+                    // TryParse
+                    yield return new Function(BuiltinType.TypeBool, "TryParse")
                     {
+                        Static = true,
+                        ParameterString = $"string s, out {NameThat} result",
+                        CodeString = "TryParse(s, \", \", out result)",
+                        Comment = "Tries to convert the string representation of the quaternion into a quaternion representation (using ', ' as a separator), returns false if string was invalid."
+                    };
+
+                    yield return new Function(BuiltinType.TypeBool, "TryParse")
+                    {
+                        Static = true,
+                        ParameterString = $"string s, string sep, out {NameThat} result",
+                        Code = new[]
+                        {
                         "result = Zero;",
                         "if (string.IsNullOrEmpty(s)) return false;",
                         "var kvp = s.Split(new[] { sep }, StringSplitOptions.None);",
@@ -424,17 +408,17 @@ namespace GlmSharpGenerator.Types
                         $"result = ok ? new {NameThat}({CompArgString}) : Zero;",
                         "return ok;"
                     },
-                    Comment = "Tries to convert the string representation of the quaternion into a quaternion representation (using a designated separator), returns false if string was invalid."
-                };
+                        Comment = "Tries to convert the string representation of the quaternion into a quaternion representation (using a designated separator), returns false if string was invalid."
+                    };
 
-                if (!BaseType.IsBool)
-                {
-                    yield return new Function(BuiltinType.TypeBool, "TryParse")
+                    if (!BaseType.IsBool)
                     {
-                        Static = true,
-                        ParameterString = $"string s, string sep, NumberStyles style, IFormatProvider provider, out {NameThat} result",
-                        Code = new[]
+                        yield return new Function(BuiltinType.TypeBool, "TryParse")
                         {
+                            Static = true,
+                            ParameterString = $"string s, string sep, NumberStyles style, IFormatProvider provider, out {NameThat} result",
+                            Code = new[]
+                            {
                             "result = Zero;",
                             "if (string.IsNullOrEmpty(s)) return false;",
                             "var kvp = s.Split(new[] { sep }, StringSplitOptions.None);",
@@ -444,15 +428,16 @@ namespace GlmSharpGenerator.Types
                             $"result = ok ? new {NameThat}({CompArgString}) : Zero;",
                             "return ok;"
                         },
-                        Comment = "Tries to convert the string representation of the quaternion into a quaternion representation (using a designated separator and a number style and a format provider), returns false if string was invalid."
-                    };
+                            Comment = "Tries to convert the string representation of the quaternion into a quaternion representation (using a designated separator and a number style and a format provider), returns false if string was invalid."
+                        };
+                    }
                 }
-            }
 
             // IReadOnlyList
-            yield return new Property("Count", BuiltinType.TypeInt)
+            yield return new Field("Count", BuiltinType.TypeInt)
             {
-                GetterLine = Components.ToString(),
+                Constant = true,
+                DefaultValue = Components.ToString(),
                 Comment = $"Returns the number of components ({Components})."
             };
 
@@ -465,38 +450,42 @@ namespace GlmSharpGenerator.Types
             };
 
             // Equality comparisons
-            yield return new Function(BuiltinType.TypeBool, "Equals")
-            {
-                ParameterString = NameThat + " rhs",
-                CodeString = Fields.Select(Comparer).Aggregated(" && "),
-                Comment = "Returns true iff this equals rhs component-wise."
-            };
-
-            yield return new Function(BuiltinType.TypeBool, "Equals")
-            {
-                Override = true,
-                ParameterString = "object obj",
-                Code = new[]
+            if (!FullUnmanaged)
+                yield return new Function(BuiltinType.TypeBool, "Equals")
                 {
+                    ParameterString = NameThat + " rhs",
+                    CodeString = Fields.Select(Comparer).Aggregated(" && "),
+                    Comment = "Returns true iff this equals rhs component-wise."
+                };
+
+            if (!FullUnmanaged)
+                yield return new Function(BuiltinType.TypeBool, "Equals")
+                {
+                    Override = true,
+                    ParameterString = "object obj",
+                    Code = new[]
+                    {
                     "if (ReferenceEquals(null, obj)) return false;",
                     string.Format("return obj is {0} && Equals(({0}) obj);", NameThat)
                 },
-                Comment = "Returns true iff this equals rhs type- and component-wise."
-            };
+                    Comment = "Returns true iff this equals rhs type- and component-wise."
+                };
 
-            yield return new Operator(BuiltinType.TypeBool, "==")
-            {
-                Parameters = this.LhsRhs(),
-                CodeString = "lhs.Equals(rhs)",
-                Comment = "Returns true iff this equals rhs component-wise."
-            };
+            if (!FullUnmanaged)
+                yield return new Operator(BuiltinType.TypeBool, "==")
+                {
+                    Parameters = this.LhsRhs(),
+                    CodeString = "lhs.Equals(rhs)",
+                    Comment = "Returns true iff this equals rhs component-wise."
+                };
 
-            yield return new Operator(BuiltinType.TypeBool, "!=")
-            {
-                Parameters = this.LhsRhs(),
-                CodeString = "!lhs.Equals(rhs)",
-                Comment = "Returns true iff this does not equal rhs (component-wise)."
-            };
+            if (!FullUnmanaged)
+                yield return new Operator(BuiltinType.TypeBool, "!=")
+                {
+                    Parameters = this.LhsRhs(),
+                    CodeString = "!lhs.Equals(rhs)",
+                    Comment = "Returns true iff this does not equal rhs (component-wise)."
+                };
 
             yield return new Function(BuiltinType.TypeInt, "GetHashCode")
             {
@@ -827,7 +816,7 @@ namespace GlmSharpGenerator.Types
                 };
 
                 // mix
-                if (BaseType.IsFloatingPoint)
+                if (GenerateQuaternions && BaseType.IsFloatingPoint)
                 {
                     yield return new Function(this, "Mix")
                     {

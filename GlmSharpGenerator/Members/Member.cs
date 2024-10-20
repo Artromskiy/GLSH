@@ -31,6 +31,11 @@ namespace GlmSharpGenerator.Members
         public bool Static { get; set; }
 
         /// <summary>
+        /// True if member is extension
+        /// </summary>
+        public bool Extension { get; set; }
+
+        /// <summary>
         /// Attributes of this member
         /// </summary>
         public string[] Attributes { get; set; } = new string[] { };

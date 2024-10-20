@@ -1,5 +1,5 @@
-﻿using GLSH.Primitives;
-using GLSH.Primitives.Attributes;
+﻿using GLSH;
+using GLSH.Attributes;
 using System.Runtime.InteropServices;
 
 namespace Tests.TestAssets
@@ -9,18 +9,18 @@ namespace Tests.TestAssets
         [StructLayout(LayoutKind.Sequential)]
         public struct VertexInput
         {
-            [VertexSemantic(SemanticType.Position)]
+            [Layout(location: 0)]
             public UInt2 U32x2;
-            [VertexSemantic(SemanticType.TextureCoordinate)]
+            [Layout(location: 1)]
             public UInt3 U32x3;
-            [VertexSemantic(SemanticType.Color)]
+            [Layout(location: 2)]
             public UInt4 U32x4;
 
-            [VertexSemantic(SemanticType.Position)]
+            [Layout(location: 0)]
             public Int2 I32x2;
-            [VertexSemantic(SemanticType.Position)]
+            [Layout(location: 0)]
             public Int3 I32x3;
-            [VertexSemantic(SemanticType.Position)]
+            [Layout(location: 0)]
             public Int4 I32x4;
         }
 

@@ -1,12 +1,12 @@
 using Microsoft.CodeAnalysis;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 
-namespace GLSH;
+namespace GLSH.Compiler;
 
 public static class StructureDependencyGraph
 {
-    public static StructureDefinition[] GetOrderedStructureList(Compilation compilation, List<StructureDefinition> allDefs)
+    public static StructureDefinition[] GetOrderedStructureList(Compilation compilation, ReadOnlySpan<StructureDefinition> allDefs)
     {
         List<StructureDefinition> results = [];
 
@@ -18,7 +18,7 @@ public static class StructureDependencyGraph
 
     private static void Traverse(
         Compilation compilation,
-        List<StructureDefinition> allDefs,
+        ReadOnlySpan<StructureDefinition> allDefs,
         StructureDefinition current,
         List<StructureDefinition> results)
     {

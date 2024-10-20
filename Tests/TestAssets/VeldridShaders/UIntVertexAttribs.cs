@@ -1,5 +1,5 @@
-﻿using GLSH.Primitives;
-using GLSH.Primitives.Attributes;
+﻿using GLSH;
+using GLSH.Attributes;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
@@ -9,17 +9,17 @@ namespace Tests.TestAssets.VeldridShaders
     {
         public struct Vertex
         {
-            [VertexSemantic(SemanticType.Position)]
+            [Layout(location: 0)]
             public Vector2 Position;
-            [VertexSemantic(SemanticType.Color)]
+            [Layout(location: 1)]
             public UInt4 Color_Int;
         }
 
         public struct FragmentInput
         {
-            [VertexSemantic(SemanticType.SystemPosition)]
+            [Layout(location: 0)]
             public Vector4 Position;
-            [VertexSemantic(SemanticType.Color)]
+            [Layout(location: 1)]
             public Vector4 Color;
         }
 

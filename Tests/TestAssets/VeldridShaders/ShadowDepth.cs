@@ -1,7 +1,6 @@
-﻿using GLSH.Primitives;
-using GLSH.Primitives.Attributes;
+﻿using GLSH.Attributes;
 using System.Numerics;
-using static GLSH.Primitives.ShaderBuiltins;
+using static GLSH.ShaderBuiltins;
 namespace Tests.TestAssets.VeldridShaders
 {
     public class ShadowDepth
@@ -23,14 +22,14 @@ namespace Tests.TestAssets.VeldridShaders
 
         public struct VertexInput
         {
-            [VertexSemantic(SemanticType.Position)] public Vector3 Position;
-            [VertexSemantic(SemanticType.Normal)] public Vector3 Normal;
-            [VertexSemantic(SemanticType.TextureCoordinate)] public Vector2 TexCoord;
+            [Layout(location: 0)] public Vector3 Position;
+            [Layout(location: 1)] public Vector3 Normal;
+            [Layout(location: 2)] public Vector2 TexCoord;
         }
 
         public struct FragmentInput
         {
-            [VertexSemantic(SemanticType.SystemPosition)]
+            [Layout(location: 0)]
             public Vector4 Position;
         }
     }

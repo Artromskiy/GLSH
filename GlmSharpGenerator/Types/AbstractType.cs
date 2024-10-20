@@ -9,6 +9,15 @@ namespace GlmSharpGenerator.Types
 {
     internal abstract class AbstractType
     {
+        public const bool GenerateHalfs = false;
+        public const bool GenerateDecimals = false;
+        public const bool GenerateLongs = false;
+        public const bool GenerateQuaternions = false;
+
+        public const bool FullUnmanaged = true;
+
+        public const bool SeparateUnmanagedAsExtensions = true;
+
         /// <summary>
         /// true iff test generation is active
         /// </summary>
@@ -28,11 +37,6 @@ namespace GlmSharpGenerator.Types
         /// Math class prefix
         /// </summary>
         public virtual string MathClass => BaseType?.MathClass;
-
-        /// <summary>
-        /// Currently active version
-        /// </summary>
-        public static int Version { get; set; }
 
         /// <summary>
         /// Base name (e.g. vec, mat, quat)
@@ -66,7 +70,7 @@ namespace GlmSharpGenerator.Types
         /// <summary>
         /// Namespace of this type
         /// </summary>
-        public virtual string Namespace { get; } = "GlmSharp";
+        public virtual string Namespace { get; } = "GLSH";
 
         /// <summary>
         /// Additional arg for data contracts
@@ -86,6 +90,7 @@ namespace GlmSharpGenerator.Types
         /// </summary>
         public string PathOf(string basePath) => string.IsNullOrEmpty(Folder) ? Path.Combine(basePath, Name + ".cs") : Path.Combine(basePath, Folder, Name + ".cs");
         public string GlmPathOf(string basePath) => string.IsNullOrEmpty(Folder) ? Path.Combine(basePath, Name + ".cs") : Path.Combine(basePath, Folder, Name + ".glm.cs");
+        public string ExtPathOf(string basePath) => string.IsNullOrEmpty(Folder) ? Path.Combine(basePath, Name + ".cs") : Path.Combine(basePath, Folder, Name + ".ext.cs");
         public string TestPathOf(string basePath) => string.IsNullOrEmpty(Folder) ? Path.Combine(basePath, Name + ".cs") : Path.Combine(basePath, Folder, Name + ".Test.cs");
 
         /// <summary>
@@ -115,6 +120,7 @@ namespace GlmSharpGenerator.Types
         private ComponentWiseStaticFunction[] componentWiseStaticFunctions;
         private ComponentWiseOperator[] componentWiseOp;
         private Member[] glmMembers;
+        private Function[] extensionFunctions;
 
         /// <summary>
         /// Generate all members
@@ -141,12 +147,12 @@ namespace GlmSharpGenerator.Types
             implicitOperators = members.OfType<ImplicitOperator>().ToArray();
             explicitOperators = members.OfType<ExplicitOperator>().ToArray();
             operators = members.OfType<Operator>().ToArray();
-            functions = members.Where(m => !m.Static && m.GetType() == typeof(Function)).OfType<Function>().ToArray();
-            staticFunctions = members.Where(m => m.Static && m.GetType() == typeof(Function)).OfType<Function>().ToArray();
+            functions = members.Where(m => !m.Static && !m.Extension && m.GetType() == typeof(Function)).OfType<Function>().ToArray();
+            staticFunctions = members.Where(m => m.Static && !m.Extension && m.GetType() == typeof(Function)).OfType<Function>().ToArray();
             indexer = members.OfType<Indexer>().ToArray();
             componentWiseStaticFunctions = members.OfType<ComponentWiseStaticFunction>().ToArray();
             componentWiseOp = members.OfType<ComponentWiseOperator>().ToArray();
-
+            extensionFunctions = members.Where(m => m.Static && m.Extension && m.GetType() == typeof(Function)).OfType<Function>().ToArray();
             glmMembers = members.SelectMany(m => m.GlmMembers()).ToArray();
         }
 
@@ -182,14 +188,11 @@ namespace GlmSharpGenerator.Types
                 yield return "using System.Globalization;";
                 yield return "using System.Runtime.InteropServices;";
                 yield return "using System.Runtime.Serialization;";
-                if (Version >= 40)
-                {
-                    yield return "using System.Numerics;";
-                    yield return "using System.Linq;";
-                }
+                yield return "using System.Numerics;";
+                yield return "using System.Linq;";
                 yield return "using NUnit.Framework;";
                 yield return "using Newtonsoft.Json;";
-                yield return "using GlmSharp;";
+                yield return "using GLSH;";
                 yield return "";
                 yield return "// ReSharper disable InconsistentNaming";
                 yield return "";
@@ -227,12 +230,9 @@ namespace GlmSharpGenerator.Types
                 yield return "using System.Globalization;";
                 yield return "using System.Runtime.InteropServices;";
                 yield return "using System.Runtime.Serialization;";
-                if (Version >= 40)
-                {
-                    yield return "using System.Numerics;";
-                    yield return "using System.Linq;";
-                }
-                yield return "using GlmSharp.Swizzle;";
+                yield return "using System.Numerics;";
+                yield return "using System.Linq;";
+                yield return "using GLSH.Swizzle;";
                 yield return "";
                 yield return "// ReSharper disable InconsistentNaming";
                 yield return "";
@@ -252,6 +252,47 @@ namespace GlmSharpGenerator.Types
             }
         }
 
+        public IEnumerable<string> ExtCSharpFile
+        {
+            get
+            {
+                var baseclasses = BaseClasses.ToArray();
+                yield return "using System;";
+                yield return "using System.Collections;";
+                yield return "using System.Collections.Generic;";
+                yield return "using System.Globalization;";
+                yield return "using System.Runtime.InteropServices;";
+                yield return "using System.Runtime.Serialization;";
+                yield return "using System.Numerics;";
+                yield return "using System.Linq;";
+                yield return "using GLSH.Swizzle;";
+                yield return "";
+                yield return "// ReSharper disable InconsistentNaming";
+                yield return "";
+                yield return "namespace " + Namespace + ".Extensions";
+                yield return "{";
+                foreach (var line in TypeComment.AsComment()) yield return line.Indent();
+                yield return "    public static class " + Name + "Extensions" + GenericSuffix + (baseclasses.Length == 0 ? "" : " : " + baseclasses.CommaSeparated());
+                yield return "    {";
+
+
+                if (extensionFunctions.Length > 0)
+                {
+                    yield return "";
+                    yield return "        #region ExtensionFunctions";
+                    foreach (var func in extensionFunctions)
+                        foreach (var line in func.Lines)
+                            yield return line.Indent(2);
+                    yield return "";
+                    yield return "        #endregion";
+                    yield return "";
+                }
+
+                yield return "    }";
+                yield return "}";
+            }
+        }
+
         public IEnumerable<string> CSharpFile
         {
             get
@@ -263,12 +304,9 @@ namespace GlmSharpGenerator.Types
                 yield return "using System.Globalization;";
                 yield return "using System.Runtime.InteropServices;";
                 yield return "using System.Runtime.Serialization;";
-                if (Version >= 40)
-                {
-                    yield return "using System.Numerics;";
-                    yield return "using System.Linq;";
-                }
-                yield return "using GlmSharp.Swizzle;";
+                yield return "using System.Numerics;";
+                yield return "using System.Linq;";
+                yield return "using GLSH.Swizzle;";
                 yield return "";
                 yield return "// ReSharper disable InconsistentNaming";
                 yield return "";
@@ -276,8 +314,7 @@ namespace GlmSharpGenerator.Types
                 yield return "{";
                 foreach (var line in TypeComment.AsComment()) yield return line.Indent();
                 yield return "    [Serializable]";
-                if (Version >= 40)
-                    yield return $"    [DataContract{DataContractArg}]";
+                yield return $"    [DataContract{DataContractArg}]";
                 yield return "    [StructLayout(LayoutKind.Sequential)]";
                 yield return "    public struct " + Name + GenericSuffix + (baseclasses.Length == 0 ? "" : " : " + baseclasses.CommaSeparated());
                 yield return "    {";
@@ -525,10 +562,13 @@ namespace GlmSharpGenerator.Types
                 }
 
             // quat
-            foreach (var type in BuiltinType.BaseTypes)
+            if (GenerateQuaternions)
             {
-                var quat = new QuaternionType(type);
-                Types.Add(quat.Name, quat);
+                foreach (var type in BuiltinType.BaseTypes)
+                {
+                    var quat = new QuaternionType(type);
+                    Types.Add(quat.Name, quat);
+                }
             }
 
             // matrices

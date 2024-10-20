@@ -1,5 +1,4 @@
-﻿using GLSH.Primitives;
-using GLSH.Primitives.Attributes;
+﻿using GLSH.Attributes;
 using System.Numerics;
 
 namespace Tests.TestAssets
@@ -25,9 +24,9 @@ namespace Tests.TestAssets
 
         public struct DualOutput
         {
-            [VertexSemantic(SemanticType.ColorTarget)]
+            [Layout(location: 0)]
             public Vector4 FirstOutput;
-            [VertexSemantic(SemanticType.ColorTarget)]
+            [Layout(location: 1)]
             public Vector4 SecondOutput;
         }
     }

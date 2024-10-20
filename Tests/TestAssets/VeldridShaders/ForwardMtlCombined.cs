@@ -1,9 +1,9 @@
 ﻿
-using GLSH.Primitives;
-using GLSH.Primitives.Attributes;
+using GLSH;
+using GLSH.Attributes;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using static GLSH.Primitives.ShaderBuiltins;
+using static GLSH.ShaderBuiltins;
 
 namespace Tests.TestAssets.VeldridShaders
 {
@@ -66,18 +66,18 @@ namespace Tests.TestAssets.VeldridShaders
 
         public struct VertexInput
         {
-            [VertexSemantic(SemanticType.Position)] public Vector3 Position;
-            [VertexSemantic(SemanticType.Normal)] public Vector3 Normal;
-            [VertexSemantic(SemanticType.TextureCoordinate)] public Vector2 TexCoord;
+            [Layout(location: 0)] public Vector3 Position;
+            [Layout(location: 1)] public Vector3 Normal;
+            [Layout(location: 2)] public Vector2 TexCoord;
         }
 
         public struct PixelInput
         {
-            [VertexSemantic(SemanticType.SystemPosition)] public Vector4 Position;
-            [VertexSemantic(SemanticType.Position)] public Vector3 Position_WorldSpace;
-            [VertexSemantic(SemanticType.TextureCoordinate)] public Vector4 LightPosition;
-            [VertexSemantic(SemanticType.Normal)] public Vector3 Normal;
-            [VertexSemantic(SemanticType.TextureCoordinate)] public Vector2 TexCoord;
+            [Layout(location: 0)] public Vector4 Position;
+            [Layout(location: 1)] public Vector3 Position_WorldSpace;
+            [Layout(location: 2)] public Vector4 LightPosition;
+            [Layout(location: 3)] public Vector3 Normal;
+            [Layout(location: 4)] public Vector2 TexCoord;
         }
 
         [VertexEntryPoint]

@@ -1,7 +1,7 @@
 using Microsoft.CodeAnalysis;
 using System.Diagnostics.CodeAnalysis;
 
-namespace GLSH;
+namespace GLSH.Compiler;
 
 // https://stackoverflow.com/questions/20458457/getting-class-fullname-including-namespace-from-roslyn-classdeclarationsyntax
 internal static class SyntaxNodeHelper

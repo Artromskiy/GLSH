@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace GLSH;
+namespace GLSH.Compiler;
 
 public class MethodProcessResult
 {

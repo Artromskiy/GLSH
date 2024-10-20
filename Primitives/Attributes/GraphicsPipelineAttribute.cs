@@ -1,6 +1,6 @@
 using System;
 
-namespace GLSH.Primitives.Attributes;
+namespace GLSH.Attributes;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
 public class GraphicsPipelineAttribute : Attribute

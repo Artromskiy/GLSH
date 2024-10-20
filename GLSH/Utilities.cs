@@ -1,5 +1,5 @@
-using GLSH.Primitives;
-using GLSH.Primitives.Attributes;
+using GLSH.Attributes;
+using GLSH.Compiler.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace GLSH;
+namespace GLSH.Compiler;
 
 internal static class Utilities
 {
@@ -53,6 +53,14 @@ internal static class Utilities
         }
     }
 
+    public static string GetFullTypeName(ITypeSymbol type)
+    {
+        if (type is IArrayTypeSymbol ats)
+            return ats.ElementType.GetFullMetadataName();
+        else
+            return type.GetFullMetadataName();
+    }
+
     public static string GetFullMetadataName(this ISymbol s)
     {
         if (s == null || IsRootNamespace(s))
@@ -68,7 +76,7 @@ internal static class Utilities
 
         while (!IsRootNamespace(s))
         {
-            var separator = (s is ITypeSymbol && last is ITypeSymbol) ? '+' : '.';
+            var separator = s is ITypeSymbol && last is ITypeSymbol ? '+' : '.';
             sb.Insert(0, separator);
             sb.Insert(0, s.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat));
             s = s.ContainingSymbol;
@@ -79,10 +87,9 @@ internal static class Utilities
     private static bool IsRootNamespace(ISymbol symbol) => symbol is INamespaceSymbol s && s.IsGlobalNamespace;
 
     public static string? GetFunctionContainingTypeName(
-        BaseMethodDeclarationSyntax node,
-        Compilation compilation)
+        SyntaxNode node,
+        SemanticModel model)
     {
-        var model = compilation.GetSemanticModel(node.SyntaxTree);
         return model.GetDeclaredSymbol(node)?.ContainingSymbol.GetFullMetadataName();
     }
 
@@ -118,7 +125,7 @@ internal static class Utilities
         {
             functionName = ".ctor";
             ITypeSymbol typeSymbol = semanticModel.GetDeclaredSymbol(cds).ContainingType;
-            returnTypeReference = new(GetFullTypeName(typeSymbol, out _), typeSymbol);
+            returnTypeReference = new(GetFullTypeName(typeSymbol), typeSymbol);
         }
         else
         {
@@ -132,9 +139,9 @@ internal static class Utilities
         {
             Debug.Assert(computeEntryAttributeSyntax != null);
             var data = computeEntryAttributeSyntax.CreateAttributeOfType<ComputeEntryPointAttribute>(semanticModel);
-            computeGroupCounts.X = data.GroupCountX;
-            computeGroupCounts.Y = data.GroupCountY;
-            computeGroupCounts.Z = data.GroupCountZ;
+            computeGroupCounts.X = data.localSizeX;
+            computeGroupCounts.Y = data.localSizeY;
+            computeGroupCounts.Z = data.localSizeZ;
         }
 
         ShaderFunctionType type;
@@ -147,7 +154,7 @@ internal static class Utilities
         else
             type = ShaderFunctionType.Normal;
 
-        string nestedTypePrefix = GetFunctionContainingTypeName(node, compilation);
+        string nestedTypePrefix = GetFunctionContainingTypeName(node, semanticModel);
 
         List<ParameterDefinition> parameters = [];
         foreach (ParameterSyntax ps in node.ParameterList.Parameters)

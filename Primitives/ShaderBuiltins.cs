@@ -2,7 +2,7 @@ using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace GLSH.Primitives;
+namespace GLSH;
 
 public static class ShaderBuiltins
 {

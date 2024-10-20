@@ -15,14 +15,16 @@ namespace GlmSharpGenerator.Types
                 yield return TypeInt;
                 yield return TypeUint;
                 yield return TypeFloat;
-                yield return TypeHalf;
+                if (GenerateHalfs)
+                    yield return TypeHalf;
                 yield return TypeDouble;
-                yield return TypeDecimal;
-                if (Version >= 30)
-                    yield return TypeComplex;
-                yield return TypeLong;
+                if (GenerateDecimals)
+                    yield return TypeDecimal;
+                //yield return TypeComplex;
+                if (GenerateLongs)
+                    yield return TypeLong;
                 yield return TypeBool;
-                yield return TypeGeneric;
+                //yield return TypeGeneric;
             }
         }
 
@@ -33,26 +35,36 @@ namespace GlmSharpGenerator.Types
                 // from -> to
                 var dic = new List<KeyValuePair<BuiltinType, BuiltinType>>
                 {
-                    new KeyValuePair<BuiltinType, BuiltinType>(TypeInt, TypeLong),
                     new KeyValuePair<BuiltinType, BuiltinType>(TypeInt, TypeFloat),
-                    new KeyValuePair<BuiltinType, BuiltinType>(TypeInt, TypeHalf),
                     new KeyValuePair<BuiltinType, BuiltinType>(TypeInt, TypeDouble),
-                    new KeyValuePair<BuiltinType, BuiltinType>(TypeInt, TypeDecimal),
 
-                    new KeyValuePair<BuiltinType, BuiltinType>(TypeUint, TypeLong),
                     new KeyValuePair<BuiltinType, BuiltinType>(TypeUint, TypeFloat),
-                    new KeyValuePair<BuiltinType, BuiltinType>(TypeUint, TypeHalf),
                     new KeyValuePair<BuiltinType, BuiltinType>(TypeUint, TypeDouble),
-                    new KeyValuePair<BuiltinType, BuiltinType>(TypeUint, TypeDecimal),
-
-                    new KeyValuePair<BuiltinType, BuiltinType>(TypeHalf, TypeFloat),
-                    new KeyValuePair<BuiltinType, BuiltinType>(TypeHalf, TypeDouble),
 
                     new KeyValuePair<BuiltinType, BuiltinType>(TypeFloat, TypeDouble),
 
-                    new KeyValuePair<BuiltinType, BuiltinType>(TypeLong, TypeDecimal)
                 };
-                if (Version >= 30)
+                if (GenerateLongs)
+                {
+                    dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeInt, TypeLong));
+                    dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeUint, TypeLong));
+                }
+                if (GenerateHalfs)
+                {
+                    dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeInt, TypeHalf));
+                    dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeUint, TypeHalf));
+                    dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeHalf, TypeFloat));
+                    dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeHalf, TypeDouble));
+                }
+                if (GenerateDecimals)
+                {
+                    dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeInt, TypeDecimal));
+                    dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeUint, TypeDecimal));
+                }
+                if (GenerateDecimals && GenerateLongs)
+                    dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeLong, TypeDecimal));
+
+                if (false)
                 {
                     dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeInt, TypeComplex));
                     dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeUint, TypeComplex));
@@ -211,7 +223,7 @@ namespace GlmSharpGenerator.Types
         public string EqualFormat { get; set; } = "{0} == {1}";
         public string NotEqualFormat { get; set; } = "{0} != {1}";
 
-        public bool HasFormatString { get; set; } = true;
+        public bool HasFormatString { get; set; } = false;
 
         public bool IsBool { get; set; }
 

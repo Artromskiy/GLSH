@@ -1,4 +1,4 @@
-namespace GLSH;
+namespace GLSH.Compiler;
 
 public enum ShaderResourceKind
 {
@@ -15,4 +15,18 @@ public enum ShaderResourceKind
     DepthTexture2D,
     DepthTexture2DArray,
     AtomicBuffer,
+}
+
+
+public static class ShaderResourceKindExtensions
+{
+    public static bool IsGenericResource(this ShaderResourceKind kind) =>
+            kind == ShaderResourceKind.StructuredBuffer ||
+            kind == ShaderResourceKind.RWStructuredBuffer ||
+            kind == ShaderResourceKind.RWTexture2D;
+
+    public static bool NeedsForceTypeDiscovery(this ShaderResourceKind kind) =>
+            kind == ShaderResourceKind.Uniform ||
+            kind == ShaderResourceKind.RWStructuredBuffer ||
+            kind == ShaderResourceKind.StructuredBuffer;
 }

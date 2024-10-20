@@ -1,11 +1,10 @@
-using GLSH.Primitives;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
-namespace GLSH;
+namespace GLSH.Compiler;
 
 public class ShaderModel
 {
@@ -55,9 +54,9 @@ public class ShaderModel
         if (s_knownTypeSizes.TryGetValue(tr.name, out int ret))
             return ret;
 
-        if (tr.typeInfo.TypeKind == TypeKind.Enum)
+        if (tr.isEnum)
         {
-            string enumBaseType = ((INamedTypeSymbol)tr.typeInfo).EnumUnderlyingType.GetFullMetadataName();
+            string enumBaseType = tr.enumTypeName!;
             if (s_knownTypeSizes.TryGetValue(enumBaseType, out int enumRet))
                 return enumRet;
             else
@@ -66,7 +65,7 @@ public class ShaderModel
         StructureDefinition sd = GetStructureDefinition(tr);
         return sd == null
             ? throw new InvalidOperationException("Unable to determine the size for type: " + tr.name)
-            : sd.alignment.CSharpSize;
+            : sd.alignment.csharpSize;
     }
 
     private static readonly Dictionary<string, int> s_knownTypeSizes = new()

@@ -1,4 +1,4 @@
-﻿using GLSH.Primitives;
+﻿using GLSH;
 using System.Numerics;
 
 namespace Tests.TestAssets.PartialClassShader

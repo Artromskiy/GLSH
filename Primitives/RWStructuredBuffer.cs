@@ -1,4 +1,4 @@
-namespace GLSH.Primitives;
+namespace GLSH;
 
 /// <summary>
 /// A writable structured buffer.

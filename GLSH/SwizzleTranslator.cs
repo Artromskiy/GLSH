@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
-namespace GLSH;
+namespace GLSH.Compiler;
 
 internal class SwizzleTranslator : TypeInvocationTranslator
 {

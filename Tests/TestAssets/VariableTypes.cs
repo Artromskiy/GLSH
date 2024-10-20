@@ -1,5 +1,4 @@
-﻿using GLSH.Primitives;
-using GLSH.Primitives.Attributes;
+﻿using GLSH.Attributes;
 using System.Numerics;
 
 namespace Tests.TestAssets
@@ -30,7 +29,7 @@ namespace Tests.TestAssets
 
         public struct VertexOutput
         {
-            [VertexSemantic(SemanticType.SystemPosition)]
+            [Layout(location: 0)]
             public Vector4 Position;
         }
     }

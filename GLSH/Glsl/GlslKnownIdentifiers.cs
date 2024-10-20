@@ -1,9 +1,8 @@
-using GLSH.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace GLSH.Glsl;
+namespace GLSH.Compiler.Glsl;
 
 public static class GlslKnownIdentifiers
 {

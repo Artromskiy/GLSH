@@ -1,18 +1,18 @@
 using System;
 
-namespace GLSH.Primitives;
+namespace GLSH.Attributes;
 
 [AttributeUsage(AttributeTargets.Method)]
 public class ComputeEntryPointAttribute : Attribute
 {
-    public uint GroupCountX { get; }
-    public uint GroupCountY { get; }
-    public uint GroupCountZ { get; }
+    public uint localSizeX;
+    public uint localSizeY;
+    public uint localSizeZ;
 
-    public ComputeEntryPointAttribute(uint groupCountX, uint groupCountY, uint groupCountZ)
+    public ComputeEntryPointAttribute(uint localSizeX = 1, uint localSizeY = 1, uint localSizeZ = 1)
     {
-        GroupCountX = groupCountX;
-        GroupCountY = groupCountY;
-        GroupCountZ = groupCountZ;
+        this.localSizeX = localSizeX;
+        this.localSizeY = localSizeY;
+        this.localSizeZ = localSizeZ;
     }
 }

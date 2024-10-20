@@ -1,4 +1,4 @@
-using GLSH.Primitives;
+using GLSH.Compiler.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -9,7 +9,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 
-namespace GLSH;
+namespace GLSH.Compiler;
 
 public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 {
@@ -17,8 +17,8 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     protected readonly string _setName;
     protected readonly LanguageBackend _backend;
     protected readonly ShaderFunction _shaderFunction;
-    private readonly string? _containingTypeName;
     private readonly HashSet<ResourceDefinition> _resourcesUsed = [];
+    private string? _containingTypeName;
 
     public ShaderMethodVisitor(
         Compilation compilation,
@@ -38,6 +38,8 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     [Obsolete("Rewrite this hell")]
     public MethodProcessResult VisitFunction(BaseMethodDeclarationSyntax node)
     {
+        //var nodeBody = (SyntaxNode)node.Body ?? node.ExpressionBody;
+        _containingTypeName = Utilities.GetFunctionContainingTypeName(node, GetModel(node));
         StringBuilder sb = new();
         string blockResult;
         // Visit block first in order to discover builtin variables.
@@ -70,13 +72,12 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
         foreach (StatementSyntax ss in node.Statements)
         {
-            sb.Append(DeclareInlineOutVariables(ss));
-
             string? statementResult = Visit(ss);
             if (string.IsNullOrEmpty(statementResult))
                 throw new NotImplementedException($"{ss.GetType()} statements are not implemented.");
-            else
-                sb.AppendLine("    " + statementResult);
+
+            sb.Append(DeclareInlineOutVariables(ss));
+            sb.AppendLine("    " + statementResult);
         }
 
         sb.AppendLine("}");
@@ -93,21 +94,19 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
         SemanticModel semanticModel = GetModel(block);
 
-        IEnumerable<ISymbol> discardedVariables = block
+        IEnumerable<IDiscardSymbol> discardedVariables = block
             .DescendantNodes()
             .Where(x => x.IsKind(SyntaxKind.IdentifierName))
             .Select(x => semanticModel.GetSymbolInfo(x).Symbol)
             .Where(x => x.Kind == SymbolKind.Discard)
-            .Cast<IDiscardSymbol>();
+            .OfType<IDiscardSymbol>();
 
         List<ISymbol> alreadyWrittenTypes = [];
 
         foreach (IDiscardSymbol discardedVariable in discardedVariables)
         {
             if (alreadyWrittenTypes.Contains(discardedVariable.Type))
-            {
                 continue;
-            }
 
             sb.Append("    ");
             sb.Append(GetDiscardedVariableType(discardedVariable));
@@ -130,31 +129,21 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     {
         StringBuilder sb = new();
 
-        IEnumerable<SyntaxNode> declarationExpressionNodes = statement
-            .DescendantNodes(x => !x.IsKind(SyntaxKind.Block)) // Don't descend into child blocks
-            .Where(x => x.IsKind(SyntaxKind.DeclarationExpression));
+        var declarationExpressionNodes = statement.
+            DescendantNodes(x => !x.IsKind(SyntaxKind.Block)). // Don't descend into child blocks
+            Where(x => x.IsKind(SyntaxKind.DeclarationExpression)).
+            OfType<DeclarationExpressionSyntax>();
 
         foreach (DeclarationExpressionSyntax declarationExpressionNode in declarationExpressionNodes)
         {
+            if (declarationExpressionNode.Designation is not SingleVariableDesignationSyntax svds)
+                throw new NotImplementedException($"{declarationExpressionNode.Designation.GetType()} designations are not implemented.");
+
             string varType = _compilation.GetSemanticModel(declarationExpressionNode.Type.SyntaxTree).GetFullTypeName(declarationExpressionNode.Type);
             string mappedType = _backend.CSharpToShaderType(varType);
+            string identifier = _backend.CorrectIdentifier(svds.Identifier.Text);
 
-            sb.Append("    ");
-            sb.Append(mappedType);
-            sb.Append(' ');
-
-            switch (declarationExpressionNode.Designation)
-            {
-                case SingleVariableDesignationSyntax svds:
-                    string identifier = _backend.CorrectIdentifier(svds.Identifier.Text);
-                    sb.Append(identifier);
-                    sb.Append(';');
-                    sb.AppendLine();
-                    break;
-
-                default:
-                    throw new NotImplementedException($"{declarationExpressionNode.Designation.GetType()} designations are not implemented.");
-            }
+            sb.AppendLine($"    {mappedType} {identifier};");
         }
 
         return sb.ToString();
@@ -163,68 +152,48 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     [Obsolete("Rewrite this hell")]
     public override string VisitArrowExpressionClause(ArrowExpressionClauseSyntax node)
     {
-        StringBuilder sb = new();
-        sb.AppendLine("{");
-
         string? expressionResult = Visit(node.Expression);
-
         if (string.IsNullOrEmpty(expressionResult))
             throw new NotImplementedException($"{node.Expression.GetType()} expressions are not implemented.");
 
-        if (_shaderFunction.returnType.name == typeof(void).FullName!)
+        bool voidReturn = _shaderFunction.returnType.name == typeof(void).FullName!;
+        string returnSymbol = voidReturn ? "return " : string.Empty;
+        return
+        $$"""
         {
-            sb.AppendLine($"    {expressionResult};");
+            {{returnSymbol}}{{expressionResult}};
         }
-        else
-        {
-            sb.AppendLine($"    return {expressionResult};");
-        }
-
-        sb.AppendLine("}");
-        return sb.ToString();
+        """;
     }
 
-    [Obsolete("Rewrite this hell")]
     protected virtual string GetFunctionDeclStr()
     {
         string returnType = _backend.CSharpToShaderType(_shaderFunction.returnType.name);
         string fullDeclType = _backend.CSharpToShaderType(_shaderFunction.declaringType);
         string shaderFunctionName = _shaderFunction.name.Replace(".", "0_");
-        string funcName = _shaderFunction.IsEntryPoint
-            ? shaderFunctionName
-            : fullDeclType + "_" + shaderFunctionName;
+        string funcName = _shaderFunction.IsEntryPoint ? shaderFunctionName : $"{fullDeclType}_{shaderFunctionName}";
         return $"{returnType} {funcName}({GetParameterDeclList()})";
     }
 
-    public override string VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
-    {
-        if (node.Modifiers.Any(x => x.IsKind(SyntaxKind.ConstKeyword)))
-        {
-            return " "; // TODO: Can't return empty string here because of validation check in VisitBlock
-        }
-        return Visit(node.Declaration);
-    }
+    [Obsolete("TODO: Can't return empty string here because of validation check in VisitBlock")]
+    public override string VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node) =>
+        node.Modifiers.Any(x => x.IsKind(SyntaxKind.ConstKeyword)) ? " " : Visit(node.Declaration)!;
 
-    public override string VisitEqualsValueClause(EqualsValueClauseSyntax node)
-    {
-        return node.EqualsToken.ToFullString() + Visit(node.Value);
-    }
+    public override string VisitEqualsValueClause(EqualsValueClauseSyntax node) =>
+        $"{node.EqualsToken.ToFullString()}{Visit(node.Value)}";
 
-    [Obsolete("Rewrite this hell")]
     public override string VisitAssignmentExpression(AssignmentExpressionSyntax node)
     {
         string token = node.OperatorToken.ToFullString().Trim();
-        if (token == "%=")
-        {
-            throw new ShaderGenerationException(
-                "Modulus operator not supported in shader functions. Use ShaderBuiltins.Mod instead.");
-        }
 
-        string leftExpr = base.Visit(node.Left);
+        ShaderGenerationException.ThrowIf(token == "%=",
+            "Modulus operator not supported in shader functions. Use ShaderBuiltins.Mod instead.");
+
+        string? leftExpr = base.Visit(node.Left);
         string leftExprType = GetModel(node).GetFullTypeName(node.Left);
-        string rightExpr = base.Visit(node.Right);
+        string? rightExpr = base.Visit(node.Right);
         string rightExprType = GetModel(node).GetFullTypeName(node.Right);
-
+        Asserts.NotNull(leftExpr, rightExpr);
         string assignedValue = _backend.CorrectAssignedValue(leftExprType, rightExpr, rightExprType);
         return $"{leftExpr} {token} {assignedValue}";
     }
@@ -233,57 +202,53 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     public override string VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
     {
         SymbolInfo exprSymbol = GetModel(node).GetSymbolInfo(node.Expression);
-        if (exprSymbol.Symbol.Kind == SymbolKind.NamedType)
+        if (exprSymbol.Symbol.Kind != SymbolKind.NamedType)
         {
-            SymbolInfo symbolInfo = GetModel(node).GetSymbolInfo(node);
-            ISymbol? symbol = symbolInfo.Symbol;
+            // Other accesses
+            bool isIndexerAccess = _backend.IsIndexerAccess(GetModel(node).GetSymbolInfo(node.Name));
+            // string expr = Visit(node.Expression);
+            // string name = Visit(node.Name);
+            // Visit(node.Expression); // why the hell we even do it?
+            // Visit(node.Name);
 
-            // Enum field
-            INamedTypeSymbol namedTypeSymbol = (INamedTypeSymbol)exprSymbol.Symbol;
-            if (namedTypeSymbol.TypeKind == TypeKind.Enum)
-            {
-                IFieldSymbol enumFieldSymbol = (IFieldSymbol)symbol;
-                string constantValueString = enumFieldSymbol.ConstantValue.ToString();
-                if (namedTypeSymbol.EnumUnderlyingType.SpecialType == SpecialType.System_UInt32)
-                {
-                    // TODO: We need to do this for literal values too, if they don't already have this suffix, 
-                    // so this should be refactored.
-                    constantValueString += "u";
-                }
-                return constantValueString;
-            }
-
-            // Static member access
-            if (symbol.Kind == SymbolKind.Property || symbol.Kind == SymbolKind.Field)
-                return Visit(node.Name);
-
-            string typeName = exprSymbol.Symbol.GetFullMetadataName();
-            string targetName = Visit(node.Name);
-            return _backend.FormatInvocation(_setName, typeName, targetName, Array.Empty<InvocationParameterInfo>());
+            if (!isIndexerAccess)
+                return $"{Visit(node.Expression)}{node.OperatorToken.ToFullString()}{Visit(node.Name)}";
+            else
+                return $"{Visit(node.Expression)}{Visit(node.Name)}";
         }
 
-        // Other accesses
-        bool isIndexerAccess = _backend.IsIndexerAccess(GetModel(node).GetSymbolInfo(node.Name));
-        // string expr = Visit(node.Expression);
-        // string name = Visit(node.Name);
-        Visit(node.Expression);
-        Visit(node.Name);
+        SymbolInfo symbolInfo = GetModel(node).GetSymbolInfo(node);
+        ISymbol? symbol = symbolInfo.Symbol;
+        ShaderGenerationException.ThrowIfNull(symbol, "Unable to get symbol");
 
-        if (!isIndexerAccess)
-            return Visit(node.Expression) + node.OperatorToken.ToFullString() + Visit(node.Name);
-        else
-            return Visit(node.Expression) + Visit(node.Name);
+        // Enum field
+        INamedTypeSymbol namedTypeSymbol = (INamedTypeSymbol)exprSymbol.Symbol;
+        if (namedTypeSymbol.TypeKind == TypeKind.Enum)
+        {
+            string? constantValueString = (symbol as IFieldSymbol)?.ConstantValue?.ToString();
+            ShaderGenerationException.ThrowIfNull(constantValueString, "Unable to extract constant value from symbol");
+            if (namedTypeSymbol.EnumUnderlyingType!.SpecialType == SpecialType.System_UInt32)
+                constantValueString += "u";
+            return constantValueString;
+        }
+
+        // Static member access
+        if (symbol.Kind == SymbolKind.Property || symbol.Kind == SymbolKind.Field)
+            return Visit(node.Name);
+
+        string typeName = exprSymbol.Symbol.GetFullMetadataName();
+        string? targetName = Visit(node.Name);
+        Debug.Assert(targetName != null);
+        return _backend.FormatInvocation(_setName, typeName, targetName, []);
+
     }
 
-    public override string VisitExpressionStatement(ExpressionStatementSyntax node)
-    {
-        return $"{Visit(node.Expression)};";
-    }
+    public override string VisitExpressionStatement(ExpressionStatementSyntax node) =>
+        $"{Visit(node.Expression)};";
 
-    public override string VisitReturnStatement(ReturnStatementSyntax node)
-    {
-        return $"return {Visit(node.Expression)};";
-    }
+    public override string VisitReturnStatement(ReturnStatementSyntax node) =>
+        $"return {Visit(node.Expression)};";
+
 
     [Obsolete("Rewrite this hell")]
     public override string VisitInvocationExpression(InvocationExpressionSyntax node)
@@ -292,64 +257,58 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         {
             InvocationParameterInfo[] parameterInfos = GetParameterInfos(node.ArgumentList);
             SymbolInfo symbolInfo = GetModel(node).GetSymbolInfo(ins);
+            Debug.Assert(symbolInfo.Symbol != null);
             string type = symbolInfo.Symbol.ContainingType.ToDisplayString();
             string method = symbolInfo.Symbol.Name;
-
             if (type == typeof(ShaderBuiltins).FullName)
                 ProcessBuiltInMethodInvocation(method, node);
-
-
             return _backend.FormatInvocation(_setName, type, method, parameterInfos);
         }
-        else if (node.Expression is MemberAccessExpressionSyntax maes)
+
+        if (node.Expression is not MemberAccessExpressionSyntax maes)
         {
-            SymbolInfo methodSymbol = GetModel(maes).GetSymbolInfo(maes);
-            if (methodSymbol.Symbol is IMethodSymbol ims)
-            {
-                string containingType = ims.ContainingType.GetFullMetadataName();
-                string methodName = ims.MetadataName;
-                List<InvocationParameterInfo> pis = [];
-                if (ims.IsExtensionMethod)
-                {
-                    string identifier = Visit(maes.Expression);
-                    string identifierType = GetModel(maes.Expression).GetFullTypeName(maes.Expression);
-                    Debug.Assert(identifier != null);
-                    // Might need FullTypeName here too.
-                    pis.Add(new InvocationParameterInfo(identifier, identifierType));
-                }
-
-                else if (!ims.IsStatic) // Add implicit "this" parameter.
-                {
-                    string identifier = null;
-                    if (maes.Expression is MemberAccessExpressionSyntax subExpression)
-                    {
-                        identifier = Visit(subExpression);
-                    }
-                    else if (maes.Expression is IdentifierNameSyntax identNameSyntax)
-                    {
-                        identifier = Visit(identNameSyntax);
-                    }
-
-                    Debug.Assert(identifier != null);
-                    pis.Add(new InvocationParameterInfo(containingType, identifier));
-                }
-
-                if (containingType == typeof(ShaderBuiltins).FullName)
-                {
-                    ProcessBuiltInMethodInvocation(methodName, node);
-                }
-
-                pis.AddRange(GetParameterInfos(node.ArgumentList));
-                return _backend.FormatInvocation(_setName, containingType, methodName, [.. pis]);
-            }
-
-            throw new NotImplementedException();
+            string message =
+            $$"""
+            Function calls must be made through an {{nameof(IdentifierNameSyntax)}} or a {{nameof(MemberAccessExpressionSyntax)}}.
+            This node used a {{node.Expression.GetType().Name}}
+            {{node.ToFullString()}}
+            """;
+            throw new NotImplementedException(message);
         }
 
-        string message = "Function calls must be made through an IdentifierNameSyntax or a MemberAccessExpressionSyntax.";
-        message += Environment.NewLine + "This node used a " + node.Expression.GetType().Name;
-        message += Environment.NewLine + node.ToFullString();
-        throw new NotImplementedException(message);
+        SymbolInfo methodSymbol = GetModel(maes).GetSymbolInfo(maes);
+
+        if (methodSymbol.Symbol is not IMethodSymbol ims)
+            throw new NotImplementedException();
+
+        string containingType = ims.ContainingType.GetFullMetadataName();
+        string methodName = ims.MetadataName;
+        List<InvocationParameterInfo> pis = [];
+        if (ims.IsExtensionMethod)
+        {
+            string? identifier = Visit(maes.Expression);
+            string identifierType = GetModel(maes.Expression).GetFullTypeName(maes.Expression);
+            Debug.Assert(identifier != null);
+            pis.Add(new InvocationParameterInfo(identifier, identifierType));// Might need FullTypeName here too.
+        }
+
+        else if (!ims.IsStatic) // Add implicit "this" parameter.
+        {
+            string? identifier = null;
+            if (maes.Expression is MemberAccessExpressionSyntax subExpression)
+                identifier = Visit(subExpression);
+            else if (maes.Expression is IdentifierNameSyntax identNameSyntax)
+                identifier = Visit(identNameSyntax);
+
+            Debug.Assert(identifier != null);
+            pis.Add(new InvocationParameterInfo(containingType, identifier));
+        }
+
+        if (containingType == typeof(ShaderBuiltins).FullName)
+            ProcessBuiltInMethodInvocation(methodName, node);
+
+        pis.AddRange(GetParameterInfos(node.ArgumentList));
+        return _backend.FormatInvocation(_setName, containingType, methodName, [.. pis]);
     }
 
     private void ProcessBuiltInMethodInvocation(string name, InvocationExpressionSyntax node)
@@ -369,38 +328,32 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         }
     }
 
-    [Obsolete("Rewrite this hell")]
     public override string VisitBinaryExpression(BinaryExpressionSyntax node)
     {
         string token = node.OperatorToken.ToFullString().Trim();
-        if (token == "%")
-        {
-            throw new ShaderGenerationException(
-                "Modulus operator not supported in shader functions. Use ShaderBuiltins.Mod instead.");
-        }
 
-        string leftExpr = Visit(node.Left);
+        ShaderGenerationException.ThrowIf(token == "%=",
+            "Modulus operator not supported in shader functions. Use ShaderBuiltins.Mod instead.");
+
+        string? leftExpr = Visit(node.Left);
         string leftExprType = GetModel(node).GetFullTypeName(node.Left);
         string operatorToken = node.OperatorToken.ToString();
-        string rightExpr = Visit(node.Right);
+        string? rightExpr = Visit(node.Right);
         string rightExprType = GetModel(node).GetFullTypeName(node.Right);
+        Asserts.NotNull(leftExpr, rightExpr);
 
         return _backend.CorrectBinaryExpression(leftExpr, leftExprType, operatorToken, rightExpr, rightExprType);
     }
 
-    public override string VisitParenthesizedExpression(ParenthesizedExpressionSyntax node)
-    {
-        return node.OpenParenToken + Visit(node.Expression) + node.CloseParenToken;
-    }
+    public override string VisitParenthesizedExpression(ParenthesizedExpressionSyntax node) =>
+        $"{node.OpenParenToken}{Visit(node.Expression)}{node.CloseParenToken}";
 
-    public override string VisitArgumentList(ArgumentListSyntax node)
-    {
-        return string.Join(", ", node.Arguments.Select(Visit));
-    }
+    public override string VisitArgumentList(ArgumentListSyntax node) =>
+        string.Join(", ", node.Arguments.Select(Visit));
 
     public override string VisitArgument(ArgumentSyntax node)
     {
-        string result = Visit(node.Expression);
+        string? result = Visit(node.Expression);
         if (string.IsNullOrEmpty(result))
             throw new NotImplementedException($"{node.Expression.GetType()} arguments are not implemented.");
 
@@ -410,6 +363,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     public override string VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
     {
         SymbolInfo symbolInfo = GetModel(node).GetSymbolInfo(node.Type);
+        ShaderGenerationException.ThrowIfNull(symbolInfo.Symbol, "Unable to get symbol");
         string fullName = symbolInfo.Symbol.GetFullMetadataName();
         InvocationParameterInfo[] parameters = GetParameterInfos(node.ArgumentList);
         return _backend.FormatInvocation(_setName, fullName, ".ctor", parameters);
@@ -418,7 +372,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     private string GetDiscardedVariableType(ISymbol symbol)
     {
         Debug.Assert(symbol.Kind == SymbolKind.Discard);
-        string varType = Utilities.GetFullTypeName(((IDiscardSymbol)symbol).Type, out _);
+        string varType = Utilities.GetFullTypeName(((IDiscardSymbol)symbol).Type);
         return _backend.CSharpToShaderType(varType);
     }
 
@@ -441,7 +395,6 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
             TryRecognizeBuiltInVariable(symbolInfo);
 
         if (symbol is IFieldSymbol fs && fs.HasConstantValue)
-            // TODO: Share code to format constant values.
             return string.Format(CultureInfo.InvariantCulture, "{0}", fs.ConstantValue);
 
         else if (symbol.Kind == SymbolKind.Field && containingTypeName == _containingTypeName)
@@ -451,67 +404,51 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
             if (referencedResource != null)
             {
                 _resourcesUsed.Add(referencedResource);
-                _shaderFunction.UsesTexture2DMS |= referencedResource.resourceKind == ShaderResourceKind.Texture2DMS;
-                bool usesStructuredBuffer = referencedResource.resourceKind == ShaderResourceKind.StructuredBuffer
-                    || referencedResource.resourceKind == ShaderResourceKind.RWStructuredBuffer
-                    || referencedResource.resourceKind == ShaderResourceKind.AtomicBuffer;
-                _shaderFunction.UsesStructuredBuffer |= usesStructuredBuffer;
-                _shaderFunction.UsesRWTexture2D |= referencedResource.resourceKind == ShaderResourceKind.RWTexture2D;
+                var resKind = referencedResource.resourceKind;
+                _shaderFunction.UsesTexture2DMS |= resKind == ShaderResourceKind.Texture2DMS;
+                _shaderFunction.UsesRWTexture2D |= resKind == ShaderResourceKind.RWTexture2D;
+
+                _shaderFunction.UsesStructuredBuffer |=
+                    resKind == ShaderResourceKind.StructuredBuffer ||
+                    resKind == ShaderResourceKind.RWStructuredBuffer ||
+                    resKind == ShaderResourceKind.AtomicBuffer;
             }
 
             return _backend.CorrectFieldAccess(symbolInfo);
         }
         else if (symbol.Kind == SymbolKind.Property)
-        {
-            return _backend.FormatInvocation(_setName, containingTypeName, symbol.Name, Array.Empty<InvocationParameterInfo>());
-        }
+            return _backend.FormatInvocation(_setName, containingTypeName, symbol.Name, []);
         else if (symbol is ILocalSymbol ls && ls.HasConstantValue)
-        {
-            // TODO: Share code to format constant values.
             return string.Format(CultureInfo.InvariantCulture, "{0}", ls.ConstantValue);
-        }
 
         string mapped = _backend.CSharpToShaderIdentifierName(symbolInfo);
         return _backend.CorrectIdentifier(mapped);
     }
 
-    [Obsolete("Rewrite this hell")]
     private void TryRecognizeBuiltInVariable(SymbolInfo symbolInfo)
     {
+        Debug.Assert(symbolInfo.Symbol != null);
         string name = symbolInfo.Symbol.Name;
-        if (name == nameof(ShaderBuiltins.VertexID))
-        {
-            if (_shaderFunction.type != ShaderFunctionType.VertexEntryPoint)
-                throw new ShaderGenerationException("VertexID can only be used within Vertex shaders.");
 
-            _shaderFunction.UsesVertexID = true;
-        }
-        else if (name == nameof(ShaderBuiltins.InstanceID))
-        {
-            _shaderFunction.UsesInstanceID = true;
-        }
-        else if (name == nameof(ShaderBuiltins.DispatchThreadID))
-        {
-            if (_shaderFunction.type != ShaderFunctionType.ComputeEntryPoint)
-                throw new ShaderGenerationException("DispatchThreadID can only be used within Vertex shaders.");
+        ShaderGenerationException.ThrowIf(GetTypeByFunctionName(name) != _shaderFunction.type,
+            "{0} can only be used within {1}", name, _shaderFunction.type);
 
-            _shaderFunction.UsesDispatchThreadID = true;
-        }
-        else if (name == nameof(ShaderBuiltins.GroupThreadID))
-        {
-            if (_shaderFunction.type != ShaderFunctionType.ComputeEntryPoint)
-                throw new ShaderGenerationException("GroupThreadID can only be used within Vertex shaders.");
-
-            _shaderFunction.UsesGroupThreadID = true;
-        }
-        else if (name == nameof(ShaderBuiltins.IsFrontFace))
-        {
-            if (_shaderFunction.type != ShaderFunctionType.FragmentEntryPoint)
-                throw new ShaderGenerationException("IsFrontFace can only be used within Fragment shaders.");
-
-            _shaderFunction.UsesFrontFace = true;
-        }
+        _shaderFunction.UsesVertexID |= name == nameof(ShaderBuiltins.VertexID);
+        _shaderFunction.UsesInstanceID |= name == nameof(ShaderBuiltins.InstanceID);
+        _shaderFunction.UsesDispatchThreadID |= name == nameof(ShaderBuiltins.DispatchThreadID);
+        _shaderFunction.UsesGroupThreadID |= name == nameof(ShaderBuiltins.GroupThreadID);
+        _shaderFunction.UsesFrontFace |= name == nameof(ShaderBuiltins.IsFrontFace);
     }
+
+    private static ShaderFunctionType GetTypeByFunctionName(string name) => name switch
+    {
+        nameof(ShaderBuiltins.VertexID) => ShaderFunctionType.VertexEntryPoint,
+        nameof(ShaderBuiltins.InstanceID) => ShaderFunctionType.VertexEntryPoint,
+        nameof(ShaderBuiltins.IsFrontFace) => ShaderFunctionType.FragmentEntryPoint,
+        nameof(ShaderBuiltins.DispatchThreadID) => ShaderFunctionType.ComputeEntryPoint,
+        nameof(ShaderBuiltins.GroupThreadID) => ShaderFunctionType.ComputeEntryPoint,
+        _ => ShaderFunctionType.Normal
+    };
 
     public override string VisitLiteralExpression(LiteralExpressionSyntax node)
     {
@@ -528,24 +465,24 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return sb.ToString();
     }
 
-    public override string VisitElseClause(ElseClauseSyntax node)
-    {
-        StringBuilder sb = new();
-        sb.AppendLine("else");
-        sb.AppendLine(Visit(node.Statement));
-        return sb.ToString();
-    }
+    public override string VisitElseClause(ElseClauseSyntax node) =>
+        $$"""
+        else
+        {{Visit(node.Statement)}}
+        """;
 
     [Obsolete("Rewrite this hell")]
     public override string VisitForStatement(ForStatementSyntax node)
     {
-        StringBuilder sb = new();
-        string declaration = Visit(node.Declaration);
-        string incrementers = string.Join(", ", node.Incrementors.Select(es => Visit(es)));
-        string condition = Visit(node.Condition);
-        sb.AppendLine($"for ({declaration} {condition}; {incrementers})");
-        sb.AppendLine(Visit(node.Statement));
-        return sb.ToString();
+        string? declaration = Visit(node.Declaration);
+        string? condition = Visit(node.Condition);
+        Asserts.NotNull(condition, declaration);
+        string incrementers = string.Join(", ", node.Incrementors.Select(Visit));
+        return
+        $$"""
+        for ({{declaration}} {{condition}}; {{incrementers}})
+        {{Visit(node.Statement)}}
+        """;
     }
 
     [Obsolete("Rewrite this hell")]
@@ -565,73 +502,47 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         sb.AppendLine("}");
         return sb.ToString();
     }
-    [Obsolete("Rewrite this hell")]
-    public override string VisitCaseSwitchLabel(CaseSwitchLabelSyntax node)
-    {
-        StringBuilder sb = new();
-        sb.AppendLine($"case {Visit(node.Value)}:");
-        return sb.ToString();
-    }
 
-    public override string VisitDefaultSwitchLabel(DefaultSwitchLabelSyntax node)
-    {
-        return "default:";
-    }
+    public override string VisitCaseSwitchLabel(CaseSwitchLabelSyntax node) =>
+        $"case {Visit(node.Value)}:";
 
-    public override string VisitBreakStatement(BreakStatementSyntax node)
-    {
-        return "break;";
-    }
+    public override string VisitDefaultSwitchLabel(DefaultSwitchLabelSyntax node) =>
+        "default:";
 
-    public override string VisitPrefixUnaryExpression(PrefixUnaryExpressionSyntax node)
-    {
-        return node.OperatorToken.ToFullString() + Visit(node.Operand);
-    }
+    public override string VisitBreakStatement(BreakStatementSyntax node) =>
+        "break;";
 
-    public override string VisitPostfixUnaryExpression(PostfixUnaryExpressionSyntax node)
-    {
-        return Visit(node.Operand) + node.OperatorToken.ToFullString();
-    }
+    public override string VisitPrefixUnaryExpression(PrefixUnaryExpressionSyntax node) =>
+        node.OperatorToken.ToFullString() + Visit(node.Operand);
 
-    public override string VisitElementAccessExpression(ElementAccessExpressionSyntax node)
-    {
-        return Visit(node.Expression) + Visit(node.ArgumentList);
-    }
+    public override string VisitPostfixUnaryExpression(PostfixUnaryExpressionSyntax node) =>
+        Visit(node.Operand) + node.OperatorToken.ToFullString();
 
-    [Obsolete("Rewrite this hell")]
+    public override string VisitElementAccessExpression(ElementAccessExpressionSyntax node) =>
+        Visit(node.Expression) + Visit(node.ArgumentList);
+
+
     public override string VisitVariableDeclaration(VariableDeclarationSyntax node)
     {
         if (node.Variables.Count != 1)
             throw new NotImplementedException();
 
-        StringBuilder sb = new();
-
-        SemanticModel semanticModel = GetModel(node);
-        string varType = semanticModel.GetFullTypeName(node.Type);
-        TypeReference typeRef = new(varType, semanticModel.GetTypeInfo(node.Type).Type);
+        SemanticModel model = GetModel(node);
+        string varType = model.GetFullTypeName(node.Type);
+        TypeReference typeRef = new(varType, model.GetTypeInfo(node.Type).Type);
         string mappedType = _backend.CSharpToShaderType(typeRef);
-
-        sb.Append(mappedType);
-        sb.Append(' ');
         VariableDeclaratorSyntax varDeclarator = node.Variables[0];
         string identifier = _backend.CorrectIdentifier(varDeclarator.Identifier.ToString());
-        sb.Append(identifier);
 
-        if (varDeclarator.Initializer != null)
-        {
-            sb.Append(' ');
-            sb.Append(varDeclarator.Initializer.EqualsToken.ToString());
-            sb.Append(' ');
+        if (varDeclarator.Initializer == null)
+            return $"{mappedType} {identifier};";
 
-            string? rightExpr = base.Visit(varDeclarator.Initializer.Value);
-            string rightExprType = GetModel(node).GetFullTypeName(varDeclarator.Initializer.Value);
+        string? rightExpr = base.Visit(varDeclarator.Initializer.Value);
+        string rightExprType = model.GetFullTypeName(varDeclarator.Initializer.Value);
+        string assignedValue = _backend.CorrectAssignedValue(varType, rightExpr, rightExprType);
+        string initializer = varDeclarator.Initializer.EqualsToken.ToString();
 
-            sb.Append(_backend.CorrectAssignedValue(varType, rightExpr, rightExprType));
-        }
-
-        sb.Append(';');
-
-        return sb.ToString();
+        return $"{mappedType} {identifier} {initializer} {assignedValue};";
     }
 
 
@@ -650,15 +561,11 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return _backend.CorrectCastExpression(mappedType, Visit(node.Expression));
     }
 
-    public override string? VisitDeclarationExpression(DeclarationExpressionSyntax node)
-    {
-        return Visit(node.Designation);
-    }
+    public override string? VisitDeclarationExpression(DeclarationExpressionSyntax node) =>
+        Visit(node.Designation);
 
-    public override string VisitSingleVariableDesignation(SingleVariableDesignationSyntax node)
-    {
-        return _backend.CorrectIdentifier(node.Identifier.Text);
-    }
+    public override string VisitSingleVariableDesignation(SingleVariableDesignationSyntax node) =>
+        _backend.CorrectIdentifier(node.Identifier.Text);
 
     public override string VisitConditionalExpression(ConditionalExpressionSyntax node)
     {
@@ -669,51 +576,39 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
             + Visit(node.WhenFalse);
     }
 
-    [Obsolete("Rewrite this hell")]
     public override string VisitDoStatement(DoStatementSyntax node)
     {
-        StringBuilder sb = new();
-        sb.Append(node.DoKeyword);
-        sb.Append(" {");
-        sb.AppendLine();
-        sb.Append(Visit(node.Statement));
-        sb.AppendLine();
-        sb.Append(" } while (");
-        sb.Append(Visit(node.Condition));
-        sb.Append(");");
-        return sb.ToString();
-
+        return
+        $$"""
+        {{node.DoKeyword}}
+        {
+            {{Visit(node.Statement)}}
+        } while({{Visit(node.Condition)}});
+        """;
     }
 
-    [Obsolete("Rewrite this hell")]
     public override string VisitWhileStatement(WhileStatementSyntax node)
     {
-        StringBuilder sb = new();
-        sb.Append("while (");
-        sb.Append(Visit(node.Condition));
-        sb.AppendLine(")");
-        sb.Append(Visit(node.Statement));
-        return sb.ToString();
+        return
+        $$"""
+        while({{Visit(node.Condition)}})
+        {{Visit(node.Statement)}}
+        """;
     }
 
-    protected string GetParameterDeclList()
-    {
-        return string.Join(", ", _shaderFunction.parameters.Select(FormatParameter));
-    }
+    protected string GetParameterDeclList() =>
+        string.Join(", ", _shaderFunction.parameters.Select(FormatParameter));
 
-    protected virtual string FormatParameter(ParameterDefinition pd)
-    {
-        return $"{_backend.ParameterDirection(pd.direction)} {_backend.CSharpToShaderType(pd.type)} {_backend.CorrectIdentifier(pd.name)}";
-    }
+    protected virtual string FormatParameter(ParameterDefinition pd) =>
+        $"{_backend.ParameterDirection(pd.direction)} {_backend.CSharpToShaderType(pd.type)} {_backend.CorrectIdentifier(pd.name)}";
 
-    private InvocationParameterInfo[] GetParameterInfos(ArgumentListSyntax argumentList)
-    {
-        return argumentList.Arguments.Select(GetInvocationParameterInfo).ToArray();
-    }
+    private InvocationParameterInfo[] GetParameterInfos(ArgumentListSyntax? argumentList) =>
+        argumentList?.Arguments.Select(GetInvocationParameterInfo).ToArray() ?? [];
 
     private InvocationParameterInfo GetInvocationParameterInfo(ArgumentSyntax argSyntax)
     {
         TypeInfo typeInfo = GetModel(argSyntax).GetTypeInfo(argSyntax.Expression);
+        ShaderGenerationException.ThrowIfNull(typeInfo.Type, "Unable to get symbol");
         return new InvocationParameterInfo(typeInfo.Type.ToDisplayString(), Visit(argSyntax.Expression));
     }
 }

@@ -1,16 +1,24 @@
 using Microsoft.CodeAnalysis;
 
-namespace GLSH;
+namespace GLSH.Compiler;
 
 public class TypeReference
 {
     public readonly string name;
-    public readonly ITypeSymbol typeInfo;
+    public readonly bool isEnum;
+    public readonly string? enumTypeName;
+    public readonly bool isArray;
+    public readonly string? arrayTypeName;
 
-    public TypeReference(string name, ITypeSymbol typeInfo)
+    internal TypeReference(string name, ITypeSymbol typeInfo)
     {
         this.name = name;
-        this.typeInfo = typeInfo;
+        isEnum = typeInfo.TypeKind == TypeKind.Enum;
+        if (isEnum && typeInfo is INamedTypeSymbol e)
+            enumTypeName = e.EnumUnderlyingType?.GetFullMetadataName();
+        isArray = typeInfo.TypeKind == TypeKind.Array;
+        if (isArray && typeInfo is INamedTypeSymbol namedTypeSymb)
+            arrayTypeName = Utilities.GetFullTypeName(namedTypeSymb.TypeArguments[0]);
     }
 
     public override string ToString() => name;

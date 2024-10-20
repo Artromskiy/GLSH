@@ -1,4 +1,4 @@
-using GLSH.Primitives;
+using GLSH.Compiler.Internal;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Concurrent;
@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
-namespace GLSH;
+namespace GLSH.Compiler;
 
 [Obsolete("Rewrite this hell")]
 public static class TypeSizeCache
@@ -113,10 +113,10 @@ public static class TypeSizeCache
         {
             // Determine if type is blittable
             alignmentInfo = Analyze(fieldType);
-            csharpAlignment = Math.Max(csharpAlignment, alignmentInfo.CSharpAlignment);
-            csharpSize += alignmentInfo.CSharpSize + csharpSize % alignmentInfo.CSharpAlignment;
-            shaderAlignment = Math.Max(shaderAlignment, alignmentInfo.ShaderAlignment);
-            shaderSize += alignmentInfo.ShaderSize + shaderSize % alignmentInfo.ShaderAlignment;
+            csharpAlignment = Math.Max(csharpAlignment, alignmentInfo.csharpAlignment);
+            csharpSize += alignmentInfo.csharpSize + csharpSize % alignmentInfo.csharpAlignment;
+            shaderAlignment = Math.Max(shaderAlignment, alignmentInfo.shaderAlignment);
+            shaderSize += alignmentInfo.shaderSize + shaderSize % alignmentInfo.shaderAlignment;
         }
 
         // Return new alignment info after adding into cache.

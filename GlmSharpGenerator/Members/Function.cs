@@ -36,7 +36,6 @@ namespace GlmSharpGenerator.Members
         /// True if override property
         /// </summary>
         public bool Override { get; set; }
-
         public virtual string ReturnName => ReturnType.NameThat;
         public virtual string FunctionName => Name;
 

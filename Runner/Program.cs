@@ -1,5 +1,5 @@
-﻿using GLSH;
-using GLSH.Glsl;
+﻿using GLSH.Compiler;
+using GLSH.Compiler.Glsl;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -34,11 +34,14 @@ internal static class Program
         Compilation compilation = CompileScripts();
         Glsl450Backend glsl450 = new(compilation);
 
-        ShaderGenerator sg = new(compilation, [glsl450]);
+        ShaderGenerator sg = new(compilation, glsl450);
         ShaderGenerationResult shaderGenResult;
         try
         {
             shaderGenResult = sg.GenerateShaders();
+            var output = shaderGenResult.GetOutput();
+            var fragment = output[0].fragmentShaderCode;
+            var vertex = output[0].vertexShaderCode;
         }
         catch (Exception e) when (!Debugger.IsAttached)
         {

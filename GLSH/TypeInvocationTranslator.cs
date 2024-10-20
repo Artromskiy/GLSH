@@ -1,7 +1,6 @@
-
 using System.Diagnostics.CodeAnalysis;
 
-namespace GLSH;
+namespace GLSH.Compiler;
 
 internal abstract class TypeInvocationTranslator
 {

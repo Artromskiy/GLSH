@@ -13,39 +13,16 @@ namespace GlmSharpGenerator
         {
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
-
-            if (args.Length != 1)
-            {
-                Console.WriteLine("Usage: path/to/sln-folder/ path/to/gen-folder/");
-                return;
-            }
-
-            var basePath = args[0];
-            if (!File.Exists(Path.Combine(basePath, "GlmSharp.sln")))
-            {
-                Console.WriteLine("File " + Path.Combine(basePath, "GlmSharp.sln") + " does not exist. Maybe wrong path?");
-                return;
-            }
+            //var slnFolder = "C:\\Users\\FLOW\\Documents\\GitHub\\GLSH";
+            var genFolder = "C:\\Users\\FLOW\\Documents\\GitHub\\GLSH\\Primitives\\Generated";
+            var extGenFolder = "C:\\Users\\FLOW\\Documents\\GitHub\\GLSH\\GLSH.Extensions";
+            args = [genFolder];
 
             Console.WriteLine("GlmSharp Generator");
-            bool compatibilityMode = false;
-            int version = compatibilityMode ? 20 : 45;
-            string path;
-            var testpath = "";
-            switch (version)
-            {
-                case 45:
-                    path = Path.Combine(basePath, "GlmSharp");
-                    testpath = Path.Combine(basePath, "GlmSharpTest");
-                    break;
-                case 20:
-                    path = Path.Combine(basePath, "GlmSharpCompat");
-                    break;
-                default:
-                    throw new InvalidOperationException();
-            }
+            string path = genFolder;//  Path.Combine(basePath, "GlmSharp");
+            string extPath = extGenFolder;
+            //string testpath = Path.Combine(basePath, "GlmSharpTest");
 
-            AbstractType.Version = version;
             AbstractType.InitTypes();
 
             // see: https://www.opengl.org/sdk/docs/man4/html/ for functions
@@ -65,7 +42,15 @@ namespace GlmSharpGenerator
                     if (type.GlmSharpFile.WriteToFileIfChanged(filename))
                         Console.WriteLine("    CHANGED " + filename);
                 }
-
+                if (AbstractType.SeparateUnmanagedAsExtensions)
+                {
+                    var filename = type.ExtPathOf(extPath);
+                    new FileInfo(filename).Directory?.Create();
+                    if (type.ExtCSharpFile.WriteToFileIfChanged(filename))
+                        Console.WriteLine("    CHANGED " + filename);
+                }
+                continue;
+                /*
                 // generate test code
                 if (!string.IsNullOrEmpty(testpath))
                 {
@@ -74,6 +59,7 @@ namespace GlmSharpGenerator
                     if (type.TestFile.WriteToFileIfChanged(filename))
                         Console.WriteLine("    CHANGED " + filename);
                 }
+                */
             }
         }
     }

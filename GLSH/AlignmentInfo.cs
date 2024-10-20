@@ -1,6 +1,6 @@
 using System;
 
-namespace GLSH;
+namespace GLSH.Compiler;
 
 /// <summary>
 /// Holds information about a types alignment and size
@@ -8,10 +8,10 @@ namespace GLSH;
 /// <seealso cref="IEquatable{AlignmentInfo}" />
 public readonly struct AlignmentInfo : IEquatable<AlignmentInfo>
 {
-    public readonly int CSharpSize;
-    public readonly int ShaderSize;
-    public readonly int CSharpAlignment;
-    public readonly int ShaderAlignment;
+    public readonly int csharpSize;
+    public readonly int shaderSize;
+    public readonly int csharpAlignment;
+    public readonly int shaderAlignment;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AlignmentInfo"/> struct.
@@ -22,10 +22,10 @@ public readonly struct AlignmentInfo : IEquatable<AlignmentInfo>
     /// <param name="shaderAlignment">The shader alignment.</param>
     public AlignmentInfo(int csharpSize, int shaderSize, int csharpAlignment, int shaderAlignment)
     {
-        CSharpSize = csharpSize;
-        ShaderSize = shaderSize;
-        CSharpAlignment = csharpAlignment;
-        ShaderAlignment = shaderAlignment;
+        this.csharpSize = csharpSize;
+        this.shaderSize = shaderSize;
+        this.csharpAlignment = csharpAlignment;
+        this.shaderAlignment = shaderAlignment;
     }
 
     /// <summary>
@@ -45,10 +45,10 @@ public readonly struct AlignmentInfo : IEquatable<AlignmentInfo>
     /// true if the current object is equal to the <paramref name="other">other</paramref> parameter; otherwise, false.
     /// </returns>
     public bool Equals(AlignmentInfo other)
-        => CSharpSize == other.CSharpSize &&
-           ShaderSize == other.ShaderSize &&
-           CSharpAlignment == other.CSharpAlignment &&
-           ShaderAlignment == other.ShaderAlignment;
+        => csharpSize == other.csharpSize &&
+           shaderSize == other.shaderSize &&
+           csharpAlignment == other.csharpAlignment &&
+           shaderAlignment == other.shaderAlignment;
 
     /// <summary>
     /// Returns a hash code for this instance.
@@ -58,7 +58,7 @@ public readonly struct AlignmentInfo : IEquatable<AlignmentInfo>
     /// </returns>
     public override int GetHashCode()
     {
-        return HashCode.Combine(CSharpSize, ShaderSize, CSharpAlignment, ShaderAlignment);
+        return HashCode.Combine(csharpSize, shaderSize, csharpAlignment, shaderAlignment);
     }
 
     /// <summary>
@@ -88,5 +88,5 @@ public readonly struct AlignmentInfo : IEquatable<AlignmentInfo>
     /// A <see cref="string" /> that represents this instance.
     /// </returns>
     public override string ToString()
-        => $"Size: C#={CSharpSize}, Shader={ShaderSize}; Alignment: C#={CSharpAlignment}, Shader={ShaderAlignment}";
+        => $"Size: C#={csharpSize}, Shader={shaderSize}; Alignment: C#={csharpAlignment}, Shader={shaderAlignment}";
 }

@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace GLSH.Primitives;
+namespace GLSH;
 
 public static class VectorExtensions
 {

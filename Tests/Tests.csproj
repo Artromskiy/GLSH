@@ -9,13 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="xunit" Version="2.9.2" />
-    <PackageReference Include="xunit.console" Version="2.9.2" />
-    <PackageReference Include="Xunit.SkippableFact" Version="1.4.13" />
+    <PackageReference Include="TUnit" Version="0.1.1082" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GLSH\GLSH.csproj" />
+    <ProjectReference Include="..\GLSH\GLSH.Compiler.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,6 +21,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
 
 
 </Project>

@@ -1,4 +1,4 @@
-namespace GLSH;
+namespace GLSH.Compiler;
 
 public class StructureDefinition
 {
@@ -29,11 +29,11 @@ public class StructureDefinition
 
     private static bool CheckAlignments(FieldDefinition fd, ref int cs, ref int shader)
     {
-        if (cs % fd.alignment.CSharpAlignment != 0 || shader % fd.alignment.ShaderAlignment != 0)
+        if (cs % fd.alignment.csharpAlignment != 0 || shader % fd.alignment.shaderAlignment != 0)
             return false;
 
-        cs += fd.alignment.CSharpSize;
-        shader += fd.alignment.CSharpSize;
+        cs += fd.alignment.csharpSize;
+        shader += fd.alignment.csharpSize;
         return cs == shader;
     }
 }

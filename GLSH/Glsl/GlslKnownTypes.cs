@@ -1,8 +1,7 @@
-using GLSH.Primitives;
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace GLSH.Glsl;
+namespace GLSH.Compiler.Glsl;
 
 internal static class GlslKnownTypes
 {
@@ -23,7 +22,6 @@ internal static class GlslKnownTypes
         { typeof(Int2).FullName!, "ivec2" },
         { typeof(Int3).FullName!, "ivec3" },
         { typeof(Int4).FullName!, "ivec4" },
-
     };
 
     private static readonly Dictionary<string, string> s_knownTypesGL = new()

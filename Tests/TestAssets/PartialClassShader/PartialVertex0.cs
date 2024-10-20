@@ -1,5 +1,4 @@
-﻿using GLSH.Primitives;
-using GLSH.Primitives.Attributes;
+﻿using GLSH.Attributes;
 using System.Numerics;
 
 namespace Tests.TestAssets.PartialClassShader
@@ -8,8 +7,8 @@ namespace Tests.TestAssets.PartialClassShader
     {
         public struct VertexInput
         {
-            [VertexSemantic(SemanticType.Position)] public Vector3 Position;
-            [VertexSemantic(SemanticType.Color)] public Vector4 Color;
+            [Layout(location: 0)] public Vector3 Position;
+            [Layout(location: 1)] public Vector4 Color;
         }
 
         public Matrix4x4 First;

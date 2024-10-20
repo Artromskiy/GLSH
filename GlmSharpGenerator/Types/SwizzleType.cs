@@ -9,7 +9,7 @@ namespace GlmSharpGenerator.Types
 
         public override string Name => BaseName + Components;
 
-        public override string Namespace { get; } = "GlmSharp.Swizzle";
+        public override string Namespace { get; } = "GLSH.Swizzle";
 
         public override string Folder => "Swizzle";
         public override string DataContractArg { get; } = "(Namespace = \"swizzle\")";
@@ -26,11 +26,11 @@ namespace GlmSharpGenerator.Types
         /// <summary>
         /// Type for swizzling
         /// </summary>
-        public VectorType VectorType => Types[BaseType.Prefix + "vec" + Components] as VectorType;
+        public VectorType VectorType => Types[BaseType.Name + Components] as VectorType;
         /// <summary>
         /// Type for swizzling
         /// </summary>
-        public VectorType VectorTypeFor(int comps) => Types[BaseType.Prefix + "vec" + comps] as VectorType;
+        public VectorType VectorTypeFor(int comps) => Types[BaseType.Name + comps] as VectorType;
 
         private IEnumerable<string> Swizzle(int i)
         {

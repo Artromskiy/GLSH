@@ -1,5 +1,4 @@
-using GLSH.Primitives;
-using GLSH.Primitives.Attributes;
+using GLSH.Attributes;
 using System.Numerics;
 
 namespace Tests.TestAssets

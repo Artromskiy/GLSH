@@ -1,6 +1,4 @@
-using GLSH.Primitives;
-
-namespace GLSH;
+namespace GLSH.Compiler;
 
 public class ShaderFunction
 {
