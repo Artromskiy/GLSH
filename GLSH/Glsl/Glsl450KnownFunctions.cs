@@ -33,21 +33,13 @@ public static class Glsl450KnownFunctions
             { nameof(ShaderBuiltins.Cos), SimpleNameTranslator() },
             { nameof(ShaderBuiltins.Cosh), SimpleNameTranslator() },
             { nameof(ShaderBuiltins.Degrees), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Ddx), SimpleNameTranslator("dFdx") },
-            { nameof(ShaderBuiltins.DdxFine), SimpleNameTranslator("dFdxFine") },
-            { nameof(ShaderBuiltins.Ddy), SimpleNameTranslator("dFdy") },
-            { nameof(ShaderBuiltins.DdyFine), SimpleNameTranslator("dFdyFine") },
             { nameof(ShaderBuiltins.Discard), Discard },
-            { nameof(ShaderBuiltins.DispatchThreadID), DispatchThreadID },
             { nameof(ShaderBuiltins.Exp), SimpleNameTranslator() },
             { nameof(ShaderBuiltins.Exp2), SimpleNameTranslator() },
             { nameof(ShaderBuiltins.Floor), SimpleNameTranslator() },
             { nameof(ShaderBuiltins.FMod), FMod },
             { nameof(ShaderBuiltins.Frac), SimpleNameTranslator("fract") },
-            { nameof(ShaderBuiltins.GroupThreadID), GroupThreadID },
-            { nameof(ShaderBuiltins.InstanceID), InstanceID },
             { nameof(ShaderBuiltins.InterlockedAdd), InterlockedAdd },
-            { nameof(ShaderBuiltins.IsFrontFace), IsFrontFace },
             { nameof(ShaderBuiltins.Lerp), SimpleNameTranslator("mix") },
             { nameof(ShaderBuiltins.Load), Load },
             { nameof(ShaderBuiltins.Log), Log },
@@ -75,6 +67,15 @@ public static class Glsl450KnownFunctions
             { nameof(ShaderBuiltins.Tan), SimpleNameTranslator() },
             { nameof(ShaderBuiltins.Tanh), SimpleNameTranslator() },
             { nameof(ShaderBuiltins.Truncate), SimpleNameTranslator("trunc") },
+
+            { nameof(ShaderBuiltins.Ddx), SimpleNameTranslator("dFdx") },
+            { nameof(ShaderBuiltins.DdxFine), SimpleNameTranslator("dFdxFine") },
+            { nameof(ShaderBuiltins.Ddy), SimpleNameTranslator("dFdy") },
+            { nameof(ShaderBuiltins.DdyFine), SimpleNameTranslator("dFdyFine") },
+            { nameof(ShaderBuiltins.DispatchThreadID), DispatchThreadID },
+            { nameof(ShaderBuiltins.GroupThreadID), GroupThreadID },
+            { nameof(ShaderBuiltins.InstanceID), InstanceID },
+            { nameof(ShaderBuiltins.IsFrontFace), IsFrontFace },
             { nameof(ShaderBuiltins.VertexID), VertexID }
         };
         ret.Add(typeof(ShaderBuiltins).FullName!, new DictionaryTypeInvocationTranslator(builtinMappings));
@@ -102,11 +103,11 @@ public static class Glsl450KnownFunctions
             { nameof(Vector2.Subtract), BinaryOpTranslator("-") },
             { nameof(Vector2.Length), SimpleNameTranslator() },
             { nameof(Vector2.LengthSquared), LengthSquared },
+            { nameof(Vector2.Transform), Vector2Transform },
             { nameof(Vector2.Zero), VectorStaticAccessor },
             { nameof(Vector2.One), VectorStaticAccessor },
             { nameof(Vector2.UnitX), VectorStaticAccessor },
             { nameof(Vector2.UnitY), VectorStaticAccessor },
-            { nameof(Vector2.Transform), Vector2Transform }
         };
         ret.Add(typeof(Vector2).FullName!, new DictionaryTypeInvocationTranslator(v2Mappings));
 
@@ -134,12 +135,12 @@ public static class Glsl450KnownFunctions
             { nameof(Vector3.Subtract), BinaryOpTranslator("-") },
             { nameof(Vector3.Length), SimpleNameTranslator() },
             { nameof(Vector3.LengthSquared), LengthSquared },
+            { nameof(Vector3.Transform), Vector3Transform },
             { nameof(Vector3.Zero), VectorStaticAccessor },
             { nameof(Vector3.One), VectorStaticAccessor },
             { nameof(Vector3.UnitX), VectorStaticAccessor },
             { nameof(Vector3.UnitY), VectorStaticAccessor },
             { nameof(Vector3.UnitZ), VectorStaticAccessor },
-            { nameof(Vector3.Transform), Vector3Transform }
         };
         ret.Add(typeof(Vector3).FullName!, new DictionaryTypeInvocationTranslator(v3Mappings));
 
@@ -166,13 +167,13 @@ public static class Glsl450KnownFunctions
             { nameof(Vector4.Subtract), BinaryOpTranslator("-") },
             { nameof(Vector4.Length), SimpleNameTranslator() },
             { nameof(Vector4.LengthSquared), LengthSquared },
+            { nameof(Vector4.Transform), Vector4Transform },
             { nameof(Vector4.Zero), VectorStaticAccessor },
             { nameof(Vector4.One), VectorStaticAccessor },
             { nameof(Vector4.UnitX), VectorStaticAccessor },
             { nameof(Vector4.UnitY), VectorStaticAccessor },
             { nameof(Vector4.UnitZ), VectorStaticAccessor },
             { nameof(Vector4.UnitW), VectorStaticAccessor },
-            { nameof(Vector4.Transform), Vector4Transform }
         };
         ret.Add(typeof(Vector4).FullName!, new DictionaryTypeInvocationTranslator(v4Mappings));
 
@@ -231,7 +232,6 @@ public static class Glsl450KnownFunctions
             { nameof(VectorExtensions.SetComponent), VectorSetComponent },
         };
         ret.Add(typeof(VectorExtensions).FullName!, new DictionaryTypeInvocationTranslator(vectorExtensionMappings));
-
         return ret;
     }
 
@@ -269,7 +269,7 @@ public static class Glsl450KnownFunctions
         throw new ShaderGenerationException($"Reference to unknown function: {type}.{method}");
     }
 
-    private static InvocationTranslator SimpleNameTranslator(string nameTarget = null)
+    private static InvocationTranslator SimpleNameTranslator(string? nameTarget = null)
     {
         return (type, method, parameters) =>
         {

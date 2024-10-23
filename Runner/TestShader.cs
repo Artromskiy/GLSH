@@ -29,6 +29,14 @@ public class MinExample
     public FragmentInput VertexShaderFunc(VertexInput input)
     {
         FragmentInput output;
+
+        //bool4 b = new(true);
+        //b = bool4.Mix(b, b, b);
+        float4x4 model = default;
+        float4x4 view = default;
+        float4x4 projection = default;
+
+        var res = projection * view * model * new float4(input.Position.X, input.Position.Y, input.Position.Z, 0);
         Vector4 worldPosition = Mul(World, new Vector4(input.Position, 1));
         Vector4 viewPosition = Mul(View, worldPosition);
         output.Position = Mul(Projection, viewPosition);

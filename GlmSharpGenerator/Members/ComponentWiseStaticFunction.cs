@@ -14,15 +14,15 @@ namespace GlmSharpGenerator.Members
         /// <summary>
         /// If true, parameter 0 could be scalar
         /// </summary>
-        public bool CanScalar0 { get; set; } = true;
+        public bool CanScalar0 { get; set; } = false;
         /// <summary>
         /// If true, parameter 1 could be scalar
         /// </summary>
-        public bool CanScalar1 { get; set; } = true;
+        public bool CanScalar1 { get; set; } = false;
         /// <summary>
         /// If true, parameter 2 could be scalar
         /// </summary>
-        public bool CanScalar2 { get; set; } = true;
+        public bool CanScalar2 { get; set; } = false;
 
 
         /// <summary>
@@ -201,14 +201,11 @@ namespace GlmSharpGenerator.Members
                     if (arginfo.All(a => a.Scalar))
                         invok = string.Format(CompString, arginfo.Select(a => (object)a.ParaName).ToArray());
                     else invok = Fields.Select(f => string.Format(CompString, arginfo.Select(a => (object)string.Format(a.ParaInvoke, a.ParaName, f)).ToArray())).CommaSeparated();
-
                     var ap = string.IsNullOrEmpty(FirstParameter) ? "" : FirstParameter + ", ";
-
                     yield return string.Format("{0} {1} {2}({3}) => new {1}({4});",
                         MemberPrefix, ReturnType.NameThat, Name,
                         ap + arginfo.Select(a => a.Type.NameThat + " " + a.ParaName).CommaSeparated(),
-                        invok
-                        ).Trim();
+                        invok).Trim();
                 }
             }
         }

@@ -24,9 +24,7 @@ namespace GlmSharpGenerator
             //string testpath = Path.Combine(basePath, "GlmSharpTest");
 
             AbstractType.InitTypes();
-
             // see: https://www.opengl.org/sdk/docs/man4/html/ for functions
-
             foreach (var type in AbstractType.Types.Values)
             {
                 // generate lib code

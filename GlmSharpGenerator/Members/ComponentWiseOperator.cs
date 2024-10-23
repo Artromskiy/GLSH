@@ -14,15 +14,15 @@ namespace GlmSharpGenerator.Members
         /// <summary>
         /// If true, parameter 0 could be scalar
         /// </summary>
-        public bool CanScalar0 { get; set; } = true;
+        public bool CanScalar0 { get; set; } = false;
         /// <summary>
         /// If true, parameter 1 could be scalar
         /// </summary>
-        public bool CanScalar1 { get; set; } = true;
+        public bool CanScalar1 { get; set; } = false;
         /// <summary>
         /// If true, parameter 2 could be scalar
         /// </summary>
-        public bool CanScalar2 { get; set; } = true;
+        public bool CanScalar2 { get; set; } = false;
 
 
         /// <summary>

@@ -134,8 +134,8 @@ namespace GlmSharpGenerator.Types
         {
             members = GenerateMembers().ToArray();
 
-            if (members.Any(m => string.IsNullOrEmpty(m.Comment)))
-                throw new InvalidOperationException("Missing comment");
+            //if (members.Any(m => string.IsNullOrEmpty(m.Comment)))
+            //    throw new InvalidOperationException("Missing comment");
 
             foreach (var member in members)
                 member.OriginalType = this;
@@ -232,7 +232,6 @@ namespace GlmSharpGenerator.Types
                 yield return "using System.Runtime.Serialization;";
                 yield return "using System.Numerics;";
                 yield return "using System.Linq;";
-                yield return "using GLSH.Swizzle;";
                 yield return "";
                 yield return "// ReSharper disable InconsistentNaming";
                 yield return "";
@@ -265,7 +264,6 @@ namespace GlmSharpGenerator.Types
                 yield return "using System.Runtime.Serialization;";
                 yield return "using System.Numerics;";
                 yield return "using System.Linq;";
-                yield return "using GLSH.Swizzle;";
                 yield return "";
                 yield return "// ReSharper disable InconsistentNaming";
                 yield return "";
@@ -297,16 +295,18 @@ namespace GlmSharpGenerator.Types
         {
             get
             {
+
                 var baseclasses = BaseClasses.ToArray();
                 yield return "using System;";
                 yield return "using System.Collections;";
                 yield return "using System.Collections.Generic;";
                 yield return "using System.Globalization;";
                 yield return "using System.Runtime.InteropServices;";
+                yield return "using System.Runtime.CompilerServices;";
+                yield return "using System.Diagnostics.CodeAnalysis;";
                 yield return "using System.Runtime.Serialization;";
                 yield return "using System.Numerics;";
                 yield return "using System.Linq;";
-                yield return "using GLSH.Swizzle;";
                 yield return "";
                 yield return "// ReSharper disable InconsistentNaming";
                 yield return "";
@@ -556,9 +556,9 @@ namespace GlmSharpGenerator.Types
                 for (var comp = 2; comp <= 4; ++comp)
                 {
                     var vect = new VectorType(type, comp);
-                    var swizzler = vect.SwizzleType;
+                    //var swizzler = vect.SwizzleType;
                     Types.Add(vect.Name, vect);
-                    Types.Add(swizzler.Name, swizzler);
+                    //Types.Add(swizzler.Name, swizzler);
                 }
 
             // quat
@@ -573,12 +573,13 @@ namespace GlmSharpGenerator.Types
 
             // matrices
             foreach (var type in BuiltinType.BaseTypes)
-                for (var rows = 2; rows <= 4; ++rows)
-                    for (var cols = 2; cols <= 4; ++cols)
-                    {
-                        var matt = new MatrixType(type, cols, rows);
-                        Types.Add(matt.Name, matt);
-                    }
+                if (type == BuiltinType.TypeFloat || type == BuiltinType.TypeDouble)
+                    for (var rows = 2; rows <= 4; ++rows)
+                        for (var cols = 2; cols <= 4; ++cols)
+                        {
+                            var matt = new MatrixType(type, cols, rows);
+                            Types.Add(matt.Name, matt);
+                        }
 
             // generate types
             foreach (var type in Types.Values)
