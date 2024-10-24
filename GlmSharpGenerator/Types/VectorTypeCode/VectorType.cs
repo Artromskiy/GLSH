@@ -6,6 +6,8 @@ namespace GlmSharpGenerator.Types
 {
     internal partial class VectorType : AbstractType
     {
+        public override string GlslName => BaseName = BaseType.Prefix + "vec" + Components;
+
         public VectorType(BuiltinType type, int comps)
         {
             Components = comps;

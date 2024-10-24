@@ -1,9 +1,6 @@
 ﻿using GlmSharpGenerator.Members;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GlmSharpGenerator.Types
 {
@@ -44,15 +41,23 @@ namespace GlmSharpGenerator.Types
                 yield return new ComponentWiseOperator(Fields, this, "/", this, "lhs", this, "rhs", "{0} / {1}") { CanScalar0 = true, CanScalar1 = true };
             }
 
-            if(BaseType == BuiltinType.TypeInt || BaseType == BuiltinType.TypeUint)
+            if (BaseType == BuiltinType.TypeInt || BaseType == BuiltinType.TypeUint)
             {
                 yield return new ComponentWiseOperator(Fields, this, "~", this, "v", "~{0}");
                 yield return new ComponentWiseOperator(Fields, this, "%", this, "lhs", this, "rhs", "{0} % {1}") { CanScalar0 = true, CanScalar1 = true };
-                yield return new ComponentWiseOperator(Fields, this, "<<", this, "lhs", this, "rhs", "{0} << {1}") { CanScalar1 = true };
-                yield return new ComponentWiseOperator(Fields, this, ">>", this, "lhs", this, "rhs", "{0} >> {1}") { CanScalar1 = true };
                 yield return new ComponentWiseOperator(Fields, this, "^", this, "lhs", this, "rhs", "{0} ^ {1}") { CanScalar0 = true, CanScalar1 = true };
                 yield return new ComponentWiseOperator(Fields, this, "|", this, "lhs", this, "rhs", "{0} | {1}") { CanScalar0 = true, CanScalar1 = true };
                 yield return new ComponentWiseOperator(Fields, this, "&", this, "lhs", this, "rhs", "{0} & {1}") { CanScalar0 = true, CanScalar1 = true };
+            }
+            if (BaseType == BuiltinType.TypeInt)
+            {
+                yield return new ComponentWiseOperator(Fields, this, "<<", this, "lhs", this, "rhs", "{0} << {1}") { CanScalar1 = true };
+                yield return new ComponentWiseOperator(Fields, this, ">>", this, "lhs", this, "rhs", "{0} >> {1}") { CanScalar1 = true };
+            }
+            if (BaseType == BuiltinType.TypeUint)
+            {
+                yield return new ComponentWiseOperator(Fields, this, "<<", this, "lhs", this, "rhs", $"{{0}} << ({BuiltinType.TypeInt.Name}){{1}}") { CanScalar1 = true };
+                yield return new ComponentWiseOperator(Fields, this, ">>", this, "lhs", this, "rhs", $"{{0}} >> ({BuiltinType.TypeInt.Name}){{1}}") { CanScalar1 = true };
             }
         }
     }

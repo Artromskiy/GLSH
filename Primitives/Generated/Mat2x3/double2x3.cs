@@ -1,19 +1,13 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
-using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
-using System.Numerics;
-using System.Linq;
 
 // ReSharper disable InconsistentNaming
 
 namespace GLSH
 {
-    
+
     /// <summary>
     /// A matrix of type double with 2 columns and 3 rows.
     /// </summary>
@@ -24,43 +18,43 @@ namespace GLSH
     {
 
         #region Fields
-        
+
         /// <summary>
         /// Column 0, Rows 0
         /// </summary>
         [DataMember]
-        public double m00;
-        
+        private double m00;
+
         /// <summary>
         /// Column 0, Rows 1
         /// </summary>
         [DataMember]
-        public double m01;
-        
+        private double m01;
+
         /// <summary>
         /// Column 0, Rows 2
         /// </summary>
         [DataMember]
-        public double m02;
-        
+        private double m02;
+
         /// <summary>
         /// Column 1, Rows 0
         /// </summary>
         [DataMember]
-        public double m10;
-        
+        private double m10;
+
         /// <summary>
         /// Column 1, Rows 1
         /// </summary>
         [DataMember]
-        public double m11;
-        
+        private double m11;
+
         /// <summary>
         /// Column 1, Rows 2
         /// </summary>
         [DataMember]
-        public double m12;
-        
+        private double m12;
+
         /// <summary>
         /// Returns the number of Fields (2 x 3 = 6).
         /// </summary>
@@ -71,168 +65,164 @@ namespace GLSH
 
 
         #region Constructors
-        
+
+        /// <summary>
+        /// Constructs diagonal matrix with scalar, non diagonal values are set to zero.
+        /// </summary>
+        public double2x3(double s)
+        {
+            this[0, 0] = 0;
+            this[0, 1] = 0;
+            this[0, 2] = 0;
+            this[1, 0] = 0;
+            this[1, 1] = 0;
+            this[1, 2] = 0;
+        }
+
         /// <summary>
         /// Component-wise constructor
         /// </summary>
         public double2x3(double m00, double m01, double m02, double m10, double m11, double m12)
         {
-            this.m00 = m00;
-            this.m01 = m01;
-            this.m02 = m02;
-            this.m10 = m10;
-            this.m11 = m11;
-            this.m12 = m12;
+            this[0, 0] = m00;
+            this[0, 1] = m01;
+            this[0, 2] = m02;
+            this[1, 0] = m10;
+            this[1, 1] = m11;
+            this[1, 2] = m12;
         }
-        
+
         /// <summary>
-        /// Constructs this matrix from a double2x2. Non-overwritten fields are from an Identity matrix.
+        /// Constructs matrix from a series of column vectors.
+        /// </summary>
+        public double2x3(double3 v0, double3 v1)
+        {
+            this[0] = v0;
+            this[1] = v1;
+        }
+
+        /// <summary>
+        /// Constructs matrix from a double2x2 which will occupie left upper corner. Non-overwritten fields are from an Identity matrix.
         /// </summary>
         public double2x3(double2x2 m)
         {
-            this.m00 = m.m00;
-            this.m01 = m.m01;
-            this.m02 = 0.0;
-            this.m10 = m.m10;
-            this.m11 = m.m11;
-            this.m12 = 0.0;
+            this[0, 0] = m[0, 0];
+            this[0, 1] = m[0, 1];
+            this[0, 2] = m[0, 2];
+            this[1, 0] = m[1, 0];
+            this[1, 1] = m[1, 1];
+            this[1, 2] = m[1, 2];
         }
-        
+
         /// <summary>
-        /// Constructs this matrix from a double3x2. Non-overwritten fields are from an Identity matrix.
+        /// Constructs matrix from a double3x2 which will occupie left upper corner. Non-overwritten fields are from an Identity matrix.
         /// </summary>
         public double2x3(double3x2 m)
         {
-            this.m00 = m.m00;
-            this.m01 = m.m01;
-            this.m02 = 0.0;
-            this.m10 = m.m10;
-            this.m11 = m.m11;
-            this.m12 = 0.0;
+            this[0, 0] = m[0, 0];
+            this[0, 1] = m[0, 1];
+            this[0, 2] = m[0, 2];
+            this[1, 0] = m[1, 0];
+            this[1, 1] = m[1, 1];
+            this[1, 2] = m[1, 2];
         }
-        
+
         /// <summary>
-        /// Constructs this matrix from a double4x2. Non-overwritten fields are from an Identity matrix.
+        /// Constructs matrix from a double4x2 which will occupie left upper corner. Non-overwritten fields are from an Identity matrix.
         /// </summary>
         public double2x3(double4x2 m)
         {
-            this.m00 = m.m00;
-            this.m01 = m.m01;
-            this.m02 = 0.0;
-            this.m10 = m.m10;
-            this.m11 = m.m11;
-            this.m12 = 0.0;
+            this[0, 0] = m[0, 0];
+            this[0, 1] = m[0, 1];
+            this[0, 2] = m[0, 2];
+            this[1, 0] = m[1, 0];
+            this[1, 1] = m[1, 1];
+            this[1, 2] = m[1, 2];
         }
-        
+
         /// <summary>
-        /// Constructs this matrix from a double2x3. Non-overwritten fields are from an Identity matrix.
+        /// Constructs matrix from a double2x3 which will occupie left upper corner. Non-overwritten fields are from an Identity matrix.
         /// </summary>
         public double2x3(double2x3 m)
         {
-            this.m00 = m.m00;
-            this.m01 = m.m01;
-            this.m02 = m.m02;
-            this.m10 = m.m10;
-            this.m11 = m.m11;
-            this.m12 = m.m12;
+            this[0, 0] = m[0, 0];
+            this[0, 1] = m[0, 1];
+            this[0, 2] = m[0, 2];
+            this[1, 0] = m[1, 0];
+            this[1, 1] = m[1, 1];
+            this[1, 2] = m[1, 2];
         }
-        
+
         /// <summary>
-        /// Constructs this matrix from a double3x3. Non-overwritten fields are from an Identity matrix.
+        /// Constructs matrix from a double3x3 which will occupie left upper corner. Non-overwritten fields are from an Identity matrix.
         /// </summary>
         public double2x3(double3x3 m)
         {
-            this.m00 = m.m00;
-            this.m01 = m.m01;
-            this.m02 = m.m02;
-            this.m10 = m.m10;
-            this.m11 = m.m11;
-            this.m12 = m.m12;
+            this[0, 0] = m[0, 0];
+            this[0, 1] = m[0, 1];
+            this[0, 2] = m[0, 2];
+            this[1, 0] = m[1, 0];
+            this[1, 1] = m[1, 1];
+            this[1, 2] = m[1, 2];
         }
-        
+
         /// <summary>
-        /// Constructs this matrix from a double4x3. Non-overwritten fields are from an Identity matrix.
+        /// Constructs matrix from a double4x3 which will occupie left upper corner. Non-overwritten fields are from an Identity matrix.
         /// </summary>
         public double2x3(double4x3 m)
         {
-            this.m00 = m.m00;
-            this.m01 = m.m01;
-            this.m02 = m.m02;
-            this.m10 = m.m10;
-            this.m11 = m.m11;
-            this.m12 = m.m12;
+            this[0, 0] = m[0, 0];
+            this[0, 1] = m[0, 1];
+            this[0, 2] = m[0, 2];
+            this[1, 0] = m[1, 0];
+            this[1, 1] = m[1, 1];
+            this[1, 2] = m[1, 2];
         }
-        
+
         /// <summary>
-        /// Constructs this matrix from a double2x4. Non-overwritten fields are from an Identity matrix.
+        /// Constructs matrix from a double2x4 which will occupie left upper corner. Non-overwritten fields are from an Identity matrix.
         /// </summary>
         public double2x3(double2x4 m)
         {
-            this.m00 = m.m00;
-            this.m01 = m.m01;
-            this.m02 = m.m02;
-            this.m10 = m.m10;
-            this.m11 = m.m11;
-            this.m12 = m.m12;
+            this[0, 0] = m[0, 0];
+            this[0, 1] = m[0, 1];
+            this[0, 2] = m[0, 2];
+            this[1, 0] = m[1, 0];
+            this[1, 1] = m[1, 1];
+            this[1, 2] = m[1, 2];
         }
-        
+
         /// <summary>
-        /// Constructs this matrix from a double3x4. Non-overwritten fields are from an Identity matrix.
+        /// Constructs matrix from a double3x4 which will occupie left upper corner. Non-overwritten fields are from an Identity matrix.
         /// </summary>
         public double2x3(double3x4 m)
         {
-            this.m00 = m.m00;
-            this.m01 = m.m01;
-            this.m02 = m.m02;
-            this.m10 = m.m10;
-            this.m11 = m.m11;
-            this.m12 = m.m12;
+            this[0, 0] = m[0, 0];
+            this[0, 1] = m[0, 1];
+            this[0, 2] = m[0, 2];
+            this[1, 0] = m[1, 0];
+            this[1, 1] = m[1, 1];
+            this[1, 2] = m[1, 2];
         }
-        
+
         /// <summary>
-        /// Constructs this matrix from a double4x4. Non-overwritten fields are from an Identity matrix.
+        /// Constructs matrix from a double4x4 which will occupie left upper corner. Non-overwritten fields are from an Identity matrix.
         /// </summary>
         public double2x3(double4x4 m)
         {
-            this.m00 = m.m00;
-            this.m01 = m.m01;
-            this.m02 = m.m02;
-            this.m10 = m.m10;
-            this.m11 = m.m11;
-            this.m12 = m.m12;
-        }
-        
-        /// <summary>
-        /// Constructs this matrix from a series of column vectors. Non-overwritten fields are from an Identity matrix.
-        /// </summary>
-        public double2x3(double2 c0, double2 c1)
-        {
-            this.m00 = c0.x;
-            this.m01 = c0.y;
-            this.m02 = 0.0;
-            this.m10 = c1.x;
-            this.m11 = c1.y;
-            this.m12 = 0.0;
-        }
-        
-        /// <summary>
-        /// Constructs this matrix from a series of column vectors. Non-overwritten fields are from an Identity matrix.
-        /// </summary>
-        public double2x3(double3 c0, double3 c1)
-        {
-            this.m00 = c0.x;
-            this.m01 = c0.y;
-            this.m02 = c0.z;
-            this.m10 = c1.x;
-            this.m11 = c1.y;
-            this.m12 = c1.z;
+            this[0, 0] = m[0, 0];
+            this[0, 1] = m[0, 1];
+            this[0, 2] = m[0, 2];
+            this[1, 0] = m[1, 0];
+            this[1, 1] = m[1, 1];
+            this[1, 2] = m[1, 2];
         }
 
         #endregion
 
 
         #region Indexer
-        
+
         /// <summary>
         /// Gets/Sets a specific indexed column.
         /// </summary>
@@ -255,7 +245,7 @@ namespace GLSH
                 Unsafe.Add(ref m00, col * 3 + row) = value;
             }
         }
-        
+
         /// <summary>
         /// Gets/Sets a specific indexed component.
         /// </summary>
@@ -279,41 +269,96 @@ namespace GLSH
 
 
         #region Operators
-        
+
         /// <summary>
-        /// Executes a matrix-matrix-multiplication double2x3 * double2x2 -> GlmSharpGenerator.Types.MatrixType.
+        /// Executes a matrix-matrix-multiplication double2x3 * double2x2 -> double2x3.
         /// </summary>
-        public static double2x3 operator*(double2x3 lhs, double2x2 rhs) => new double2x3((lhs.m00 * rhs.m00 + lhs.m10 * rhs.m01), (lhs.m01 * rhs.m00 + lhs.m11 * rhs.m01), (lhs.m02 * rhs.m00 + lhs.m12 * rhs.m01), (lhs.m00 * rhs.m10 + lhs.m10 * rhs.m11), (lhs.m01 * rhs.m10 + lhs.m11 * rhs.m11), (lhs.m02 * rhs.m10 + lhs.m12 * rhs.m11));
-        
+        public static double2x3 operator *(double2x3 lhs, double2x2 rhs) => new double2x3(lhs[0, 0] * rhs[0, 0] + lhs[1, 0] * rhs[0, 1], lhs[0, 1] * rhs[0, 0] + lhs[1, 1] * rhs[0, 1], lhs[0, 2] * rhs[0, 0] + lhs[1, 2] * rhs[0, 1], lhs[0, 0] * rhs[1, 0] + lhs[1, 0] * rhs[1, 1], lhs[0, 1] * rhs[1, 0] + lhs[1, 1] * rhs[1, 1], lhs[0, 2] * rhs[1, 0] + lhs[1, 2] * rhs[1, 1]);
+
         /// <summary>
-        /// Executes a matrix-matrix-multiplication double2x3 * double3x2 -> GlmSharpGenerator.Types.MatrixType.
+        /// Executes a matrix-matrix-multiplication double2x3 * double3x2 -> double3x3.
         /// </summary>
-        public static double3x3 operator*(double2x3 lhs, double3x2 rhs) => new double3x3((lhs.m00 * rhs.m00 + lhs.m10 * rhs.m01), (lhs.m01 * rhs.m00 + lhs.m11 * rhs.m01), (lhs.m02 * rhs.m00 + lhs.m12 * rhs.m01), (lhs.m00 * rhs.m10 + lhs.m10 * rhs.m11), (lhs.m01 * rhs.m10 + lhs.m11 * rhs.m11), (lhs.m02 * rhs.m10 + lhs.m12 * rhs.m11), (lhs.m00 * rhs.m20 + lhs.m10 * rhs.m21), (lhs.m01 * rhs.m20 + lhs.m11 * rhs.m21), (lhs.m02 * rhs.m20 + lhs.m12 * rhs.m21));
-        
+        public static double3x3 operator *(double2x3 lhs, double3x2 rhs) => new double3x3(lhs[0, 0] * rhs[0, 0] + lhs[1, 0] * rhs[0, 1], lhs[0, 1] * rhs[0, 0] + lhs[1, 1] * rhs[0, 1], lhs[0, 2] * rhs[0, 0] + lhs[1, 2] * rhs[0, 1], lhs[0, 0] * rhs[1, 0] + lhs[1, 0] * rhs[1, 1], lhs[0, 1] * rhs[1, 0] + lhs[1, 1] * rhs[1, 1], lhs[0, 2] * rhs[1, 0] + lhs[1, 2] * rhs[1, 1], lhs[0, 0] * rhs[2, 0] + lhs[1, 0] * rhs[2, 1], lhs[0, 1] * rhs[2, 0] + lhs[1, 1] * rhs[2, 1], lhs[0, 2] * rhs[2, 0] + lhs[1, 2] * rhs[2, 1]);
+
         /// <summary>
-        /// Executes a matrix-matrix-multiplication double2x3 * double4x2 -> GlmSharpGenerator.Types.MatrixType.
+        /// Executes a matrix-matrix-multiplication double2x3 * double4x2 -> double4x3.
         /// </summary>
-        public static double4x3 operator*(double2x3 lhs, double4x2 rhs) => new double4x3((lhs.m00 * rhs.m00 + lhs.m10 * rhs.m01), (lhs.m01 * rhs.m00 + lhs.m11 * rhs.m01), (lhs.m02 * rhs.m00 + lhs.m12 * rhs.m01), (lhs.m00 * rhs.m10 + lhs.m10 * rhs.m11), (lhs.m01 * rhs.m10 + lhs.m11 * rhs.m11), (lhs.m02 * rhs.m10 + lhs.m12 * rhs.m11), (lhs.m00 * rhs.m20 + lhs.m10 * rhs.m21), (lhs.m01 * rhs.m20 + lhs.m11 * rhs.m21), (lhs.m02 * rhs.m20 + lhs.m12 * rhs.m21), (lhs.m00 * rhs.m30 + lhs.m10 * rhs.m31), (lhs.m01 * rhs.m30 + lhs.m11 * rhs.m31), (lhs.m02 * rhs.m30 + lhs.m12 * rhs.m31));
-        
+        public static double4x3 operator *(double2x3 lhs, double4x2 rhs) => new double4x3(lhs[0, 0] * rhs[0, 0] + lhs[1, 0] * rhs[0, 1], lhs[0, 1] * rhs[0, 0] + lhs[1, 1] * rhs[0, 1], lhs[0, 2] * rhs[0, 0] + lhs[1, 2] * rhs[0, 1], lhs[0, 0] * rhs[1, 0] + lhs[1, 0] * rhs[1, 1], lhs[0, 1] * rhs[1, 0] + lhs[1, 1] * rhs[1, 1], lhs[0, 2] * rhs[1, 0] + lhs[1, 2] * rhs[1, 1], lhs[0, 0] * rhs[2, 0] + lhs[1, 0] * rhs[2, 1], lhs[0, 1] * rhs[2, 0] + lhs[1, 1] * rhs[2, 1], lhs[0, 2] * rhs[2, 0] + lhs[1, 2] * rhs[2, 1], lhs[0, 0] * rhs[3, 0] + lhs[1, 0] * rhs[3, 1], lhs[0, 1] * rhs[3, 0] + lhs[1, 1] * rhs[3, 1], lhs[0, 2] * rhs[3, 0] + lhs[1, 2] * rhs[3, 1]);
+
         /// <summary>
         /// Executes a matrix-vector-multiplication.
         /// </summary>
-        public static double3 operator*(double2x3 m, double2 v) => new double3((m.m00 * v.x + m.m10 * v.y), (m.m01 * v.x + m.m11 * v.y), (m.m02 * v.x + m.m12 * v.y));
+        public static double3 operator *(double2x3 m, double2 v) => new double3(m[0, 0] * v.x + m[1, 0] * v.y, m[0, 1] * v.x + m[1, 1] * v.y, m[0, 2] * v.x + m[1, 2] * v.y);
+
+        /// <summary>
+        /// Executes a component-wise + (addition).
+        /// </summary>
+        public static double2x3 operator +(double2x3 lhs, double2x3 rhs) => new double2x3(lhs[0, 0] + rhs[0, 0], lhs[0, 1] + rhs[0, 1], lhs[0, 2] + rhs[0, 2], lhs[1, 0] + rhs[1, 0], lhs[1, 1] + rhs[1, 1], lhs[1, 2] + rhs[1, 2]);
+
+        /// <summary>
+        /// Executes a component-wise + (addition) with scalar.
+        /// </summary>
+        public static double2x3 operator +(double s, double2x3 m) => new double2x3(s + m[0, 0], s + m[0, 1], s + m[0, 2], s + m[1, 0], s + m[1, 1], s + m[1, 2]);
+
+        /// <summary>
+        /// Executes a component-wise + (addition) with scalar.
+        /// </summary>
+        public static double2x3 operator +(double2x3 m, double s) => new double2x3(m[0, 0] + s, m[0, 1] + s, m[0, 2] + s, m[1, 0] + s, m[1, 1] + s, m[1, 2] + s);
+
+        /// <summary>
+        /// Executes a component-wise - (subtraction).
+        /// </summary>
+        public static double2x3 operator -(double2x3 lhs, double2x3 rhs) => new double2x3(lhs[0, 0] - rhs[0, 0], lhs[0, 1] - rhs[0, 1], lhs[0, 2] - rhs[0, 2], lhs[1, 0] - rhs[1, 0], lhs[1, 1] - rhs[1, 1], lhs[1, 2] - rhs[1, 2]);
+
+        /// <summary>
+        /// Executes a component-wise - (subtraction) with scalar.
+        /// </summary>
+        public static double2x3 operator -(double s, double2x3 m) => new double2x3(s - m[0, 0], s - m[0, 1], s - m[0, 2], s - m[1, 0], s - m[1, 1], s - m[1, 2]);
+
+        /// <summary>
+        /// Executes a component-wise - (subtraction) with scalar.
+        /// </summary>
+        public static double2x3 operator -(double2x3 m, double s) => new double2x3(m[0, 0] - s, m[0, 1] - s, m[0, 2] - s, m[1, 0] - s, m[1, 1] - s, m[1, 2] - s);
+
+        /// <summary>
+        /// Executes a component-wise / (division).
+        /// </summary>
+        public static double2x3 operator /(double2x3 lhs, double2x3 rhs) => new double2x3(lhs[0, 0] / rhs[0, 0], lhs[0, 1] / rhs[0, 1], lhs[0, 2] / rhs[0, 2], lhs[1, 0] / rhs[1, 0], lhs[1, 1] / rhs[1, 1], lhs[1, 2] / rhs[1, 2]);
+
+        /// <summary>
+        /// Executes a component-wise / (division) with scalar.
+        /// </summary>
+        public static double2x3 operator /(double s, double2x3 m) => new double2x3(s / m[0, 0], s / m[0, 1], s / m[0, 2], s / m[1, 0], s / m[1, 1], s / m[1, 2]);
+
+        /// <summary>
+        /// Executes a component-wise / (division) with scalar.
+        /// </summary>
+        public static double2x3 operator /(double2x3 m, double s) => new double2x3(m[0, 0] / s, m[0, 1] / s, m[0, 2] / s, m[1, 0] / s, m[1, 1] / s, m[1, 2] / s);
+
+        /// <summary>
+        /// Executes a component-wise * (multiplication) with scalar.
+        /// </summary>
+        public static double2x3 operator *(double s, double2x3 m) => new double2x3(s * m[0, 0], s * m[0, 1], s * m[0, 2], s * m[1, 0], s * m[1, 1], s * m[1, 2]);
+
+        /// <summary>
+        /// Executes a component-wise * (multiplication) with scalar.
+        /// </summary>
+        public static double2x3 operator *(double2x3 m, double s) => new double2x3(m[0, 0] * s, m[0, 1] * s, m[0, 2] * s, m[1, 0] * s, m[1, 1] * s, m[1, 2] * s);
 
         #endregion
 
 
         #region Static Functions
-        
+
         /// <summary>
         /// 
         /// </summary>
         public static double2x3 OuterProduct(double3 col, double2 row) => new double2x3(row.x * col.x, row.x * col.y, row.x * col.z, row.y * col.x, row.y * col.y, row.y * col.z);
-        
+
         /// <summary>
         /// 
         /// </summary>
-        public static double3x2 Transpose(double2x3 v) => new double3x2(v.m00, v.m10, v.m01, v.m11, v.m02, v.m12);
+        public static double3x2 Transpose(double2x3 v) => new double3x2(v[0, 0], v[1, 0], v[0, 1], v[1, 1], v[0, 2], v[1, 2]);
 
         #endregion
 

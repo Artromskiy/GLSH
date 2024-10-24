@@ -11,7 +11,7 @@ namespace GlmSharpGenerator.Types
         {
             var colVecType = new VectorType(BaseType, Rows);
             var rowVecType = new VectorType(BaseType, Columns);
-            var quatType = new QuaternionType(BaseType);
+            var quatType = new VectorType(BaseType, 4); // dummy instead quaternion
             var diagonal = Rows == Columns;
 
 
@@ -92,24 +92,6 @@ namespace GlmSharpGenerator.Types
                     Comment = "Predefined identity matrix"
                 };
             }
-
-
-
-
-            if (BaseType.IsComplex)
-            {
-                yield return new StaticProperty("ImaginaryOnes", this)
-                {
-                    Value = Construct(this, "Complex.ImaginaryOne".RepeatTimes(FieldCount)),
-                    Comment = "Predefined all-imaginary-ones matrix"
-                };
-
-                yield return new StaticProperty("ImaginaryIdentity", this)
-                {
-                    Value = Construct(this, Fields.Select(f => IsDiagonal(f) ? "Complex.ImaginaryOne" : ZeroValue)),
-                    Comment = string.Format("Predefined diagonal-imaginary-one matrix")
-                };
-            }
         }
 
         protected IEnumerable<string> BodyLegacy
@@ -125,8 +107,8 @@ namespace GlmSharpGenerator.Types
                     var lhsCols = Columns;
                     var rhsRows = Columns;
                     var rhsColumns = rcols;
-                    var rhsType = GetName(BaseType, rhsColumns, rhsRows) + GenericSuffix;
-                    var resultType = GetName(BaseType, rhsColumns, lhsRows) + GenericSuffix;
+                    var rhsType = GetName(BaseType, rhsColumns, rhsRows);
+                    var resultType = GetName(BaseType, rhsColumns, lhsRows);
                     foreach (var line in $"Executes a matrix-matrix-multiplication {NameThat} * {rhsType} -> {resultType}.".AsComment()) yield return line;
                     yield return string.Format("public static {0} operator*({1} lhs, {2} rhs) => new {0}({3});",
                         resultType, NameThat, rhsType,
@@ -242,14 +224,6 @@ namespace GlmSharpGenerator.Types
                 // Arithmetics
                 var lengthType = BaseType.LengthType;
 
-                if (!BaseType.IsComplex)
-                {
-                    foreach (var line in "Returns the minimal component of this matrix.".AsComment()) yield return line;
-                    yield return $"public {BaseTypeName} MinElement => {NestedBiFuncFor(MathClass + ".Min({0}, {1})", FieldCount - 1, FieldFor)};";
-
-                    foreach (var line in "Returns the maximal component of this matrix.".AsComment()) yield return line;
-                    yield return $"public {BaseTypeName} MaxElement => {NestedBiFuncFor(MathClass + ".Max({0}, {1})", FieldCount - 1, FieldFor)};";
-                }
 
                 foreach (var line in "Returns the euclidean length of this matrix.".AsComment()) yield return line;
                 yield return string.Format("public {0} Length => ({0}){1};", lengthType, SqrtOf(Fields.Select(SqrOf).Aggregated(" + ")));
@@ -358,7 +332,6 @@ namespace GlmSharpGenerator.Types
                 #endregion
                 // comparisons
                 #region Complex Unknown to glsl
-                if (!BaseType.IsComplex)
                 {
                     foreach (var kvp in new Dictionary<string, string>
                         {

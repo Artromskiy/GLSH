@@ -13,7 +13,7 @@ public class Glsl450Backend : GlslBackendBase
 
     protected override string CSharpToShaderTypeCore(string fullType)
     {
-        return GlslKnownTypes.GetMappedName(fullType, true).Replace('.', '_').Replace('+', '_');
+        return GlslKnownTypes.GetMappedName(fullType).Replace('.', '_').Replace('+', '_');
     }
 
     protected override void WriteVersionHeader(ShaderFunction function,

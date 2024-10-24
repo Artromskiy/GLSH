@@ -2,16 +2,19 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GlmSharpGenerator.Types
 {
     internal partial class VectorType
     {
+        /// <summary>
+        /// Refers to GLSL 450 specs.
+        /// 5 Operators and Expressions.
+        /// 5.5 Vector and Scalar Components and Length.
+        /// </summary>
+        /// <returns></returns>
         private IEnumerable<Member> SwizzleProperties()
         {
-
             // inline-swizzle XYZW
             foreach (var swizzleBits in InlineSwizzle())
             {

@@ -35,6 +35,7 @@ namespace GlmSharpGenerator.Types
                 // from -> to
                 var dic = new List<KeyValuePair<BuiltinType, BuiltinType>>
                 {
+                    new KeyValuePair<BuiltinType, BuiltinType>(TypeInt, TypeUint),
                     new KeyValuePair<BuiltinType, BuiltinType>(TypeInt, TypeFloat),
                     new KeyValuePair<BuiltinType, BuiltinType>(TypeInt, TypeDouble),
 
@@ -63,15 +64,6 @@ namespace GlmSharpGenerator.Types
                 }
                 if (GenerateDecimals && GenerateLongs)
                     dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeLong, TypeDecimal));
-
-                if (false)
-                {
-                    dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeInt, TypeComplex));
-                    dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeUint, TypeComplex));
-                    dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeHalf, TypeComplex));
-                    dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeFloat, TypeComplex));
-                    dic.Add(new KeyValuePair<BuiltinType, BuiltinType>(TypeDouble, TypeComplex));
-                }
                 return dic;
             }
         }
@@ -157,17 +149,6 @@ namespace GlmSharpGenerator.Types
             EpsilonFormat = "double.Epsilon",
             TypeConstants = new[] { "MaxValue", "MinValue", "MinusOne" }
         };
-        public static readonly BuiltinType TypeComplex = new BuiltinType
-        {
-            TypeName = "Complex",
-            Prefix = "c",
-            LengthType = "double",
-            OneValueConstant = "Complex.One",
-            ZeroValueConstant = "Complex.Zero",
-            IsComplex = true,
-            AbsOverrideType = "double",
-            AbsOverrideTypePrefix = "d"
-        };
         public static readonly BuiltinType TypeLong = new BuiltinType
         {
             TypeName = "long",
@@ -188,27 +169,13 @@ namespace GlmSharpGenerator.Types
             IsBool = true,
             IsSigned = false
         };
-        public static readonly BuiltinType TypeGeneric = new BuiltinType
-        {
-            TypeName = "T",
-            Prefix = "g",
-            Generic = true,
-            HasArithmetics = false,
-            OneValueConstant = null,
-            ZeroValueConstant = "default(T)",
-            EqualFormat = "EqualityComparer<T>.Default.Equals({0}, {1})",
-            NotEqualFormat = "!EqualityComparer<T>.Default.Equals({0}, {1})",
-            IsSigned = false
-        };
 
         public string TypeName { get; set; }
         public string Prefix { get; set; }
-        public bool Generic { get; set; }
-        public bool IsComplex { get; set; }
         public bool Decimal { get; set; }
 
         public bool HasArithmetics { get; set; } = true;
-        public bool HasComparisons => HasArithmetics && !Generic && !IsComplex;
+        public bool HasComparisons => HasArithmetics;
         public string LengthType { get; set; } = "float";
         public string AbsOverrideType { get; set; }
         public string AbsOverrideTypePrefix { get; set; }
@@ -233,7 +200,7 @@ namespace GlmSharpGenerator.Types
         public override string MathClass => HasOwnFunctions ? Name : "Math";
 
         public override string OneValue => OneValueConstant;
-        public override string ZeroValue => TestMode && Generic ? "null" : ZeroValueConstant;
+        public override string ZeroValue => ZeroValueConstant;
 
         public int HashCodeMultiplier { get; set; } = 397;
 
@@ -283,23 +250,6 @@ namespace GlmSharpGenerator.Types
 
                 if (!string.IsNullOrEmpty(OneValue))
                     yield return OneValue;
-
-                if (IsComplex)
-                {
-                    foreach (var r in TypeDouble.ValuesSmallVals)
-                        foreach (var i in TypeDouble.ValuesSmallVals)
-                            yield return $"new Complex({r}, {i})";
-                    yield break;
-                }
-
-                if (Generic)
-                {
-                    yield return "\"\"";
-                    for (int i = 1; i <= 3; ++i)
-                        for (int l = 1; l <= 3; ++l)
-                            yield return $"\"{TypeInt.RandomSmallVals(l).Aggregated("")}\"";
-                    yield break;
-                }
 
                 if (!HasArithmetics)
                     yield break;

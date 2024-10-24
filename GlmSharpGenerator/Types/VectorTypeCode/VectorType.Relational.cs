@@ -1,9 +1,6 @@
 ﻿using GlmSharpGenerator.Members;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GlmSharpGenerator.Types
 {
@@ -39,13 +36,13 @@ namespace GlmSharpGenerator.Types
                 {
                     Static = true,
                     ParameterString = $"{Name} v",
-                    Code = [$"{string.Join("||", Fields.Select(s=> $"v.{s}"))}"]
+                    Code = [$"{string.Join("||", Fields.Select(s => $"v.{s}"))}"]
                 };
                 yield return new Function(BuiltinType.TypeBool, "All")
                 {
                     Static = true,
                     ParameterString = $"{Name} v",
-                    Code = [$"{string.Join("&&", Fields.Select(s=> $"v.{s}"))}"]
+                    Code = [$"{string.Join("&&", Fields.Select(s => $"v.{s}"))}"]
                 };
                 yield return new ComponentWiseStaticFunction(Fields, boolVType, "Not", this, "v", "!{0}");
             }

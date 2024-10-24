@@ -1,17 +1,10 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
-using System.Numerics;
-using System.Linq;
 
 // ReSharper disable InconsistentNaming
 
 namespace GLSH.Extensions
 {
-    
+
     /// <summary>
     /// A vector of type uint with 3 components.
     /// </summary>
@@ -19,12 +12,12 @@ namespace GLSH.Extensions
     {
 
         #region ExtensionFunctions
-        
+
         /// <summary>
         /// Returns an array with all values
         /// </summary>
         public static uint[] GetValues(this uint3 value) => new[] { value.x, value.y, value.z };
-        
+
         /// <summary>
         /// Returns an enumerator that iterates through all fields.
         /// </summary>

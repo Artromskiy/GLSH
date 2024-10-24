@@ -52,13 +52,11 @@ namespace GlmSharpGenerator.Members
         {
             if (Static)
                 yield break; // nothing for static props
-            if (OriginalType is SwizzleType)
-                yield break; // nothing for swizzling
             if (Setter != null)
                 yield break; // nothing for stuff with setters
 
-            var varname = OriginalType is VectorType ? "v" : OriginalType is QuaternionType ? "q" : "m";
-            yield return new Function(Type, Name + OriginalType.GenericSuffix)
+            var varname = OriginalType is VectorType ? "v" : "m";
+            yield return new Function(Type, Name)
             {
                 Static = true,
                 Comment = Comment,

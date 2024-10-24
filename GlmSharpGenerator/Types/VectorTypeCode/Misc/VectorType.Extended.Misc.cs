@@ -69,29 +69,26 @@ namespace GlmSharpGenerator.Types
             };
 
             // ToString
-            if (!BaseType.Generic)
+            yield return new Function(new AnyType("string"), "ToString")
+            {
+                ParameterString = "string sep, IFormatProvider provider",
+                CodeString = Fields.Select(f => f + ".ToString(provider)").Aggregated(" + sep + "),
+                Comment = "Returns a string representation of this vector using a provided seperator and a format provider for each component."
+            };
+            if (BaseType.HasFormatString)
             {
                 yield return new Function(new AnyType("string"), "ToString")
                 {
-                    ParameterString = "string sep, IFormatProvider provider",
-                    CodeString = Fields.Select(f => f + ".ToString(provider)").Aggregated(" + sep + "),
-                    Comment = "Returns a string representation of this vector using a provided seperator and a format provider for each component."
+                    ParameterString = "string sep, string format",
+                    CodeString = Fields.Select(f => f + ".ToString(format)").Aggregated(" + sep + "),
+                    Comment = "Returns a string representation of this vector using a provided seperator and a format for each component."
                 };
-                if (BaseType.HasFormatString)
+                yield return new Function(new AnyType("string"), "ToString")
                 {
-                    yield return new Function(new AnyType("string"), "ToString")
-                    {
-                        ParameterString = "string sep, string format",
-                        CodeString = Fields.Select(f => f + ".ToString(format)").Aggregated(" + sep + "),
-                        Comment = "Returns a string representation of this vector using a provided seperator and a format for each component."
-                    };
-                    yield return new Function(new AnyType("string"), "ToString")
-                    {
-                        ParameterString = "string sep, string format, IFormatProvider provider",
-                        CodeString = Fields.Select(f => f + ".ToString(format, provider)").Aggregated(" + sep + "),
-                        Comment = "Returns a string representation of this vector using a provided seperator and a format and format provider for each component."
-                    };
-                }
+                    ParameterString = "string sep, string format, IFormatProvider provider",
+                    CodeString = Fields.Select(f => f + ".ToString(format, provider)").Aggregated(" + sep + "),
+                    Comment = "Returns a string representation of this vector using a provided seperator and a format and format provider for each component."
+                };
             }
 
             // Enumerator casts
@@ -125,72 +122,6 @@ namespace GlmSharpGenerator.Types
 
 
 
-            if (BaseType.IsComplex)
-            {
-                yield return new ComponentWiseStaticFunction(Fields, this, "Acos", this, "v", "Complex.Acos({0})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Asin", this, "v", "Complex.Asin({0})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Atan", this, "v", "Complex.Atan({0})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Cos", this, "v", "Complex.Cos({0})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Cosh", this, "v", "Complex.Cosh({0})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Exp", this, "v", "Complex.Exp({0})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Log", this, "v", "Complex.Log({0})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Log2", this, "v", "Complex.Log({0}, 2.0)");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Log10", this, "v", "Complex.Log10({0})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Reciprocal", this, "v", "Complex.Reciprocal({0})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Sin", this, "v", "Complex.Sin({0})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Sinh", this, "v", "Complex.Sinh({0})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Sqrt", this, "v", "Complex.Sqrt({0})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "InverseSqrt", this, "v", "Complex.One / Complex.Sqrt({0})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Tan", this, "v", "Complex.Tan({0})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Tanh", this, "v", "Complex.Tanh({0})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Conjugate", this, "v", "Complex.Conjugate({0})");
-
-                yield return new ComponentWiseStaticFunction(Fields, this, "Pow", this, "lhs", this, "rhs", "Complex.Pow({0}, {1})");
-                yield return new ComponentWiseStaticFunction(Fields, this, "Log", this, "lhs", doubleVType, "rhs", "Complex.Log({0}, {1})");
-
-                yield return new ComponentWiseStaticFunction(Fields, this, "FromPolarCoordinates", doubleVType, "magnitude", doubleVType, "phase", "Complex.FromPolarCoordinates({0}, {1})");
-            }
-
-            if (BaseType.IsComplex)
-            {
-                yield return new StaticProperty("ImaginaryOnes", this)
-                {
-                    Value = Construct(this, "Complex.ImaginaryOne".RepeatTimes(Components)),
-                    Comment = "Predefined all-imaginary-ones vector"
-                };
-
-                for (var c = 0; c < Components; ++c)
-                    yield return new StaticProperty("ImaginaryUnit" + ArgOfUpper(c), this)
-                    {
-                        Value = Construct(this, c.ImpulseString("Complex.ImaginaryOne", ZeroValue, Components)),
-                        Comment = $"Predefined unit-imaginary-{ArgOfUpper(c)} vector"
-                    };
-            }
-
-            // Complex properties
-            if (BaseType.IsComplex)
-            {
-                yield return new Property("Magnitude", doubleVType)
-                {
-                    GetterLine = Construct(doubleVType, Fields.Format("{0}.Magnitude")),
-                    Comment = "Returns a vector containing component-wise magnitudes."
-                };
-                yield return new Property("Phase", doubleVType)
-                {
-                    GetterLine = Construct(doubleVType, Fields.Format("{0}.Phase")),
-                    Comment = "Returns a vector containing component-wise phases."
-                };
-                yield return new Property("Imaginary", doubleVType)
-                {
-                    GetterLine = Construct(doubleVType, Fields.Format("{0}.Imaginary")),
-                    Comment = "Returns a vector containing component-wise imaginary parts."
-                };
-                yield return new Property("Real", doubleVType)
-                {
-                    GetterLine = Construct(doubleVType, Fields.Format("{0}.Real")),
-                    Comment = "Returns a vector containing component-wise real parts."
-                };
-            }
 
             // angle
             if (Components == 2 && BaseType.IsFloatingPoint)

@@ -256,6 +256,7 @@ public static class Glsl450KnownFunctions
         return $"{parameters[0].identifier}[{parameters[1].identifier}] = {parameters[2].identifier}";
     }
 
+    [Obsolete("Lol")]
     public static string TranslateInvocation(string type, string method, InvocationParameterInfo[] parameters)
     {
         if (s_mappings.TryGetValue(type, out var dict))

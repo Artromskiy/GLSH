@@ -51,7 +51,7 @@ namespace GlmSharpGenerator.Members
                 if (Code != null)
                     foreach (var code in Code)
                         yield return code.Indent();
-                if (string.IsNullOrEmpty(ConstructorChain))
+                if (string.IsNullOrEmpty(ConstructorChain) && Code == null)
                 {
                     var it = Initializers.GetEnumerator();
                     foreach (var c in Fields)

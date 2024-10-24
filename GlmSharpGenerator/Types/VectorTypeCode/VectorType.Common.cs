@@ -1,15 +1,14 @@
 ﻿using GlmSharpGenerator.Members;
-using System;
 using System.Collections.Generic;
+using System.Linq;
 namespace GlmSharpGenerator.Types
 {
     internal partial class VectorType
     {
-
         /// <summary>
         /// Refers to GLSL 450 specs.
-        /// 8 Built-in Functions
-        /// 8.3 Common Functions
+        /// 8 Built-in Functions.
+        /// 8.3 Common Functions.
         /// </summary>
         /// <returns></returns>
         private IEnumerable<Member> CommonFunctions()
@@ -28,7 +27,7 @@ namespace GlmSharpGenerator.Types
                 yield return new ComponentWiseStaticFunction(Fields, this, "Floor", this, "v", $"{BaseTypeName}.Floor({{0}})");
                 yield return new ComponentWiseStaticFunction(Fields, this, "Truncate", this, "v", $"{BaseTypeName}.Truncate({{0}})");
                 yield return new ComponentWiseStaticFunction(Fields, this, "Round", this, "v", $"{BaseTypeName}.Round({{0}})");
-				yield return new ComponentWiseStaticFunction(Fields, this, "RoundEven", this, "v", $"{BaseTypeName}.Round({{0}}, MidpointRounding.ToEven)");
+                yield return new ComponentWiseStaticFunction(Fields, this, "RoundEven", this, "v", $"{BaseTypeName}.Round({{0}}, MidpointRounding.ToEven)");
                 yield return new ComponentWiseStaticFunction(Fields, this, "Ceiling", this, "v", $"{BaseTypeName}.Ceiling({{0}})");
                 yield return new ComponentWiseStaticFunction(Fields, this, "Fract", this, "v", $"{{0}} - {BaseTypeName}.Floor({{0}})");
                 yield return new ComponentWiseStaticFunction(Fields, this, "Mod", this, "lhs", this, "rhs", $"{{0}} - {{1}} * {BaseTypeName}.Floor({{0}} / {{1}})") { CanScalar1 = true };
@@ -37,12 +36,18 @@ namespace GlmSharpGenerator.Types
                 yield return new ComponentWiseStaticFunction(Fields, this, "Step", this, "edge", this, "x", $"{{1}} < {{0}} ? 0 : 1") { CanScalar0 = true };
                 yield return new ComponentWiseStaticFunction(Fields, this, "Smoothstep", this, "edge0", this, "edge1", this, "v", $"{BaseTypeName}.Clamp(({{2}} - {{0}}) / ({{1}} - {{0}}), 0, 1).HermiteInterpolationOrder3()") { CanScalar2 = true };
             }
-			if (BaseType == BuiltinType.TypeFloat || BaseType == BuiltinType.TypeDouble || BaseType == BuiltinType.TypeInt || BaseType == BuiltinType.TypeUint)
+            if (BaseType == BuiltinType.TypeFloat || BaseType == BuiltinType.TypeDouble || BaseType == BuiltinType.TypeInt || BaseType == BuiltinType.TypeUint)
             {
                 yield return new ComponentWiseStaticFunction(Fields, this, "Min", this, "lhs", this, "rhs", $"{BaseTypeName}.Min({{0}}, {{1}})") { CanScalar1 = true };
                 yield return new ComponentWiseStaticFunction(Fields, this, "Max", this, "lhs", this, "rhs", $"{BaseTypeName}.Max({{0}}, {{1}})") { CanScalar1 = true };
                 yield return new ComponentWiseStaticFunction(Fields, this, "Clamp", this, "v", this, "min", this, "max", $"{BaseTypeName}.Clamp({{0}}, {{1}}, {{2}})");
-                //TODO add clamp with both min and max scalar
+                yield return new Function(this, "Clamp")
+                {
+                    Comment = $"Returns a int4 from component-wise application of Clamp ({BaseTypeName}.Clamp(v, min, max)).",
+                    Static = true,
+                    Parameters = [$"{Name} v", $"{BaseType.Name} min", $"{BaseType.Name} max"],
+                    Code = [$"{Construct(this, Fields.Select(f => $"{BaseTypeName}.Clamp(v.{f}, min, max)"))}"]
+                };
             }
 
             // weird boolean mix

@@ -42,6 +42,11 @@ namespace GlmSharpGenerator.Types
         /// Base name (e.g. vec, mat, quat)
         /// </summary>
         public string BaseName { get; set; } = "vec";
+
+        /// <summary>
+        /// Name of corresponding type in GLSL
+        /// </summary>
+        public virtual string GlslName { get; }
         /// <summary>
         /// Name of the base type
         /// </summary>
@@ -57,11 +62,7 @@ namespace GlmSharpGenerator.Types
         /// <summary>
         /// Name used for parameter types (for generics has T)
         /// </summary>
-        public string NameThat => Name + GenericSuffix;
-        /// <summary>
-        /// Suffix for generic types
-        /// </summary>
-        public virtual string GenericSuffix => BaseType?.Generic ?? false ? (TestMode ? "<string>" : "<T>") : "";
+        public string NameThat => Name;
         /// <summary>
         /// Reference to base type
         /// </summary>
@@ -70,7 +71,7 @@ namespace GlmSharpGenerator.Types
         /// <summary>
         /// Namespace of this type
         /// </summary>
-        public virtual string Namespace { get; } = "GLSH";
+        public static string Namespace { get; } = "GLSH";
 
         /// <summary>
         /// Additional arg for data contracts
@@ -91,7 +92,7 @@ namespace GlmSharpGenerator.Types
         public string PathOf(string basePath) => string.IsNullOrEmpty(Folder) ? Path.Combine(basePath, Name + ".cs") : Path.Combine(basePath, Folder, Name + ".cs");
         public string GlmPathOf(string basePath) => string.IsNullOrEmpty(Folder) ? Path.Combine(basePath, Name + ".cs") : Path.Combine(basePath, Folder, Name + ".glm.cs");
         public string ExtPathOf(string basePath) => string.IsNullOrEmpty(Folder) ? Path.Combine(basePath, Name + ".cs") : Path.Combine(basePath, Folder, Name + ".ext.cs");
-        public string TestPathOf(string basePath) => string.IsNullOrEmpty(Folder) ? Path.Combine(basePath, Name + ".cs") : Path.Combine(basePath, Folder, Name + ".Test.cs");
+        public static string InfoPathOf(string basePath, string Name) => Path.Combine(basePath, Name + ".cs");
 
         /// <summary>
         /// Comment of this type
@@ -270,7 +271,7 @@ namespace GlmSharpGenerator.Types
                 yield return "namespace " + Namespace + ".Extensions";
                 yield return "{";
                 foreach (var line in TypeComment.AsComment()) yield return line.Indent();
-                yield return "    public static class " + Name + "Extensions" + GenericSuffix + (baseclasses.Length == 0 ? "" : " : " + baseclasses.CommaSeparated());
+                yield return "    public static class " + Name + "Extensions" + (baseclasses.Length == 0 ? "" : " : " + baseclasses.CommaSeparated());
                 yield return "    {";
 
 
@@ -316,7 +317,7 @@ namespace GlmSharpGenerator.Types
                 yield return "    [Serializable]";
                 yield return $"    [DataContract{DataContractArg}]";
                 yield return "    [StructLayout(LayoutKind.Sequential)]";
-                yield return "    public struct " + Name + GenericSuffix + (baseclasses.Length == 0 ? "" : " : " + baseclasses.CommaSeparated());
+                yield return "    public struct " + Name + (baseclasses.Length == 0 ? "" : " : " + baseclasses.CommaSeparated());
                 yield return "    {";
 
                 if (fields.Length > 0)
@@ -472,26 +473,23 @@ namespace GlmSharpGenerator.Types
 
         protected virtual IEnumerable<string> Body { get { yield break; } }
 
-        public string Comparer(string val) => BaseType.Generic ?
-            string.Format("EqualityComparer<T>.Default.Equals({0}, rhs.{0})", val) :
-            string.Format("{0}.Equals(rhs.{0})", val);
+        public string Comparer(string val) => string.Format("{0}.Equals(rhs.{0})", val);
 
         public virtual string ZeroValue => BaseType.ZeroValue;
         public virtual string OneValue => BaseType.OneValue;
 
-        public string HashCodeOf(string val) => BaseType.Generic ? $"EqualityComparer<T>.Default.GetHashCode({val})" : $"{val}.GetHashCode()";
+        public string HashCodeOf(string val) => $"{val}.GetHashCode()";
 
 
-        public string SqrOf(string s) => BaseType.IsComplex ? s + ".LengthSqr()" : s + "*" + s;
-        public string SqrOf(char s) => SqrOf(s.ToString());
+        public string SqrOf(string s) => s + "*" + s;
 
         public string SqrtOf(string s) => BaseType.Decimal ? "(" + s + ").Sqrt()" : $"Math.Sqrt({s})";
         public string SqrtOf(char s) => SqrOf(s.ToString());
 
-        public string DotFormatString => BaseType.IsComplex ? "lhs.{0} * Complex.Conjugate(rhs.{0})" : "lhs.{0} * rhs.{0}";
+        public string DotFormatString => "lhs.{0} * rhs.{0}";
 
-        public string AbsString(string s) => BaseType.IsSigned ? (BaseType.IsComplex ? s + ".Magnitude" : MathClass + $".Abs({s})") : s;
-        public string AbsString(char s) => BaseType.IsSigned ? (BaseType.IsComplex ? s + ".Magnitude" : MathClass + $".Abs({s})") : s.ToString();
+        public string AbsString(string s) => BaseType.IsSigned ? (MathClass + $".Abs({s})") : s;
+        public string AbsString(char s) => BaseType.IsSigned ? (MathClass + $".Abs({s})") : s.ToString();
 
         public string ConstantSuffixFor(string s)
         {
@@ -537,16 +535,6 @@ namespace GlmSharpGenerator.Types
             return s;
         }
 
-        public IEnumerable<string> SwitchIndex(IEnumerable<string> cases)
-        {
-            yield return "switch (index)";
-            yield return "{";
-            foreach (var @case in cases)
-                yield return @case.Indent();
-            yield return "    default: throw new ArgumentOutOfRangeException(\"index\");";
-            yield return "}";
-        }
-
         public static void InitTypes()
         {
             Types.Clear();
@@ -556,30 +544,18 @@ namespace GlmSharpGenerator.Types
                 for (var comp = 2; comp <= 4; ++comp)
                 {
                     var vect = new VectorType(type, comp);
-                    //var swizzler = vect.SwizzleType;
                     Types.Add(vect.Name, vect);
-                    //Types.Add(swizzler.Name, swizzler);
                 }
-
-            // quat
-            if (GenerateQuaternions)
-            {
-                foreach (var type in BuiltinType.BaseTypes)
-                {
-                    var quat = new QuaternionType(type);
-                    Types.Add(quat.Name, quat);
-                }
-            }
 
             // matrices
-            foreach (var type in BuiltinType.BaseTypes)
-                if (type == BuiltinType.TypeFloat || type == BuiltinType.TypeDouble)
-                    for (var rows = 2; rows <= 4; ++rows)
-                        for (var cols = 2; cols <= 4; ++cols)
-                        {
-                            var matt = new MatrixType(type, cols, rows);
-                            Types.Add(matt.Name, matt);
-                        }
+            BuiltinType[] matrixTypes = [BuiltinType.TypeFloat, BuiltinType.TypeDouble];
+            foreach (var type in matrixTypes)
+                for (var rows = 2; rows <= 4; ++rows)
+                    for (var cols = 2; cols <= 4; ++cols)
+                    {
+                        var matt = new MatrixType(type, cols, rows);
+                        Types.Add(matt.Name, matt);
+                    }
 
             // generate types
             foreach (var type in Types.Values)

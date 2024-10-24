@@ -1,9 +1,6 @@
 ﻿using GlmSharpGenerator.Members;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GlmSharpGenerator.Types
 {
@@ -28,14 +25,11 @@ namespace GlmSharpGenerator.Types
                 };
             }
 
+            yield break;
             // explicit casts
             foreach (var oType in BuiltinType.BaseTypes)
             {
                 var otherType = oType;
-                if (otherType.Generic != BaseType.Generic)
-                    continue; // cannot mix generic/non-generic
-                if (BaseType.IsComplex && !otherType.IsComplex)
-                    continue; // cannot "downcast" complex type
 
                 for (var comps = 2; comps <= 4; ++comps)
                 {

@@ -7,6 +7,9 @@ namespace GlmSharpGenerator.Types
 {
     internal partial class MatrixType : AbstractType
     {
+        public override string GlslName => BaseName = $"{BaseType.Prefix}mat{Postfix}";
+        private string Postfix => (Rows == Columns ? Columns.ToString() : $"{Columns}x{Rows}");
+
         public MatrixType(BuiltinType type, int cols, int rows)
         {
             Columns = cols;
@@ -66,9 +69,19 @@ namespace GlmSharpGenerator.Types
 
             return res;
         }
-        private string ClassNameTransposed => BaseType.Name + Rows + "x" + Columns + GenericSuffix;
+        private string ClassNameTransposed => BaseType.Name + Rows + "x" + Columns;
 
         private IEnumerable<string> Fields
+        {
+            get
+            {
+                for (var x = 0; x < Columns; ++x)
+                    for (var y = 0; y < Rows; ++y)
+                        yield return $"[{x}, {y}]";
+            }
+        }
+
+        private IEnumerable<string> FieldsNames
         {
             get
             {
@@ -83,26 +96,26 @@ namespace GlmSharpGenerator.Types
             {
                 for (var y = 0; y < Rows; ++y)
                     for (var x = 0; x < Columns; ++x)
-                        yield return "m" + x + y;
+                        yield return $"[{x}, {y}]";
             }
         }
         private IEnumerable<string> Column(int col)
         {
             for (var y = 0; y < Rows; ++y)
-                yield return "m" + col + y;
+                yield return $"[{col}, {y}]";
         }
         private IEnumerable<string> Column(int col, string parameter)
         {
             for (var y = 0; y < Rows; ++y)
-                yield return parameter + ".m" + col + y;
+                yield return $"{parameter}[{col}, {y}]";
         }
         private IEnumerable<string> Row(int row)
         {
             for (var x = 0; x < Columns; ++x)
-                yield return "m" + x + row;
+                yield return $"[{x}, {row}]";
         }
 
-        private string FieldFor(int f) => $"m{f / Rows}{f % Rows}";
+        private string FieldFor(int f) => $"[{f / Rows}, {f % Rows}]";
 
         private string ArgOf(int c) => "xyzw"[c].ToString();
 
@@ -185,13 +198,14 @@ namespace GlmSharpGenerator.Types
         {
             var colVecType = new VectorType(BaseType, Rows);
             var rowVecType = new VectorType(BaseType, Columns);
-            var quatType = new QuaternionType(BaseType);
+            var quatType = new VectorType(BaseType, 4); // dummy instead quaternion
             var diagonal = Rows == Columns;
 
             // fields
-            foreach (var f in Fields)
+            foreach (var f in FieldsNames)
                 yield return new Field(f, BaseType)
                 {
+                    Visibility = "private",
                     Comment = $"Column {ColOf(f)}, Rows {RowOf(f)}"
                 };
 
@@ -247,7 +261,7 @@ namespace GlmSharpGenerator.Types
                 Static = true,
                 Extension = true,
                 Parameters = ["this " + Name + " value"],
-                Code = Fields.Select(f => $"yield return value.{f};"),
+                Code = Fields.Select(f => $"yield return value{f};"),
                 Comment = "Returns an enumerator that iterates through all fields."
             };
 
@@ -265,7 +279,7 @@ namespace GlmSharpGenerator.Types
                 Static = true,
                 Extension = true,
                 Parameters = ["this " + Name + " value"],
-                CodeString = $"new[] {{ {Fields.CommaSeparated("value")} }}",
+                CodeString = $"new[] {{ {string.Join(", ", Fields.Select(v => $"value{v}"))} }}",
                 Comment = "Creates a 1D array with all values (internal order)"
             };
         }

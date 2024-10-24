@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GLSH;
+﻿using System.Collections.Generic;
 
 namespace GLSH.Compiler.Glsl
 {
-    class GlshToGLSLMappings
+    internal class GlshToGLSLMappings
     {
-        Dictionary<string, InvocationTranslator> builtinMappings = new()
+        private readonly Dictionary<string, InvocationTranslator> builtinMappings = new()
         {
             { nameof(glm.Mix), SimpleNameTranslator }
         };

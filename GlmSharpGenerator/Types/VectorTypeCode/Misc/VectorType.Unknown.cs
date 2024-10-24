@@ -1,9 +1,6 @@
 ﻿using GlmSharpGenerator.Members;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GlmSharpGenerator.Types
 {
@@ -233,19 +230,16 @@ namespace GlmSharpGenerator.Types
             // Aggregated Properties
             if (BaseType.HasArithmetics)
             {
-                if (!BaseType.IsComplex)
+                yield return new Property("MinElement", BaseType)
                 {
-                    yield return new Property("MinElement", BaseType)
-                    {
-                        GetterLine = NestedSymmetricFunction(Fields, MathClass + ".Min({0}, {1})"),
-                        Comment = "Returns the minimal component of this vector."
-                    };
-                    yield return new Property("MaxElement", BaseType)
-                    {
-                        GetterLine = NestedSymmetricFunction(Fields, MathClass + ".Max({0}, {1})"),
-                        Comment = "Returns the maximal component of this vector."
-                    };
-                }
+                    GetterLine = NestedSymmetricFunction(Fields, MathClass + ".Min({0}, {1})"),
+                    Comment = "Returns the minimal component of this vector."
+                };
+                yield return new Property("MaxElement", BaseType)
+                {
+                    GetterLine = NestedSymmetricFunction(Fields, MathClass + ".Max({0}, {1})"),
+                    Comment = "Returns the maximal component of this vector."
+                };
 
                 yield return new Property("Length", lengthType)
                 {
@@ -363,32 +357,29 @@ namespace GlmSharpGenerator.Types
                         Comment = "Calculate the reflection direction for an incident vector (N should be normalized in order to achieve the desired result)."
                     };
 
-                    if (!BaseType.IsComplex)
+                    // refract
+                    yield return new Function(this, "Refract")
                     {
-                        // refract
-                        yield return new Function(this, "Refract")
+                        Static = true,
+                        Parameters = this.TypedArgs("I", "N").SConcat(BaseTypeName + " eta"),
+                        Code = new[]
                         {
-                            Static = true,
-                            Parameters = this.TypedArgs("I", "N").SConcat(BaseTypeName + " eta"),
-                            Code = new[]
-                            {
                                 "var dNI = Dot(N, I);",
                                 "var k = 1 - eta * eta * (1 - dNI * dNI);",
                                 "if (k < 0) return Zero;",
-                                string.Format("return eta * I - (eta * dNI + ({1}){0}) * N;", BaseType.IsComplex ? "Complex.Sqrt(k)" : SqrtOf("k"), BaseTypeName)
+                                string.Format("return eta * I - (eta * dNI + ({1}){0}) * N;", SqrtOf("k"), BaseTypeName)
                             },
-                            Comment = "Calculate the refraction direction for an incident vector (The input parameters I and N should be normalized in order to achieve the desired result)."
-                        };
+                        Comment = "Calculate the refraction direction for an incident vector (The input parameters I and N should be normalized in order to achieve the desired result)."
+                    };
 
-                        // faceforward
-                        yield return new Function(this, "FaceForward")
-                        {
-                            Static = true,
-                            Parameters = this.TypedArgs("N", "I", "Nref"),
-                            CodeString = "Dot(Nref, I) < 0 ? N : -N",
-                            Comment = "Returns a vector pointing in the same direction as another (faceforward orients a vector to point away from a surface as defined by its normal. If dot(Nref, I) is negative faceforward returns N, otherwise it returns -N)."
-                        };
-                    }
+                    // faceforward
+                    yield return new Function(this, "FaceForward")
+                    {
+                        Static = true,
+                        Parameters = this.TypedArgs("N", "I", "Nref"),
+                        CodeString = "Dot(Nref, I) < 0 ? N : -N",
+                        Comment = "Returns a vector pointing in the same direction as another (faceforward orients a vector to point away from a surface as defined by its normal. If dot(Nref, I) is negative faceforward returns N, otherwise it returns -N)."
+                    };
                 }
             }
         }

@@ -163,7 +163,7 @@ namespace GlmSharpGenerator.Members
             var ap2 = string.IsNullOrEmpty(FirstParameter) ? "" : FirstParameter.Split(' ').Last() + ", ";
 
             BuildComment(false);
-            yield return new Function(ReturnType, Name + OriginalType.GenericSuffix)
+            yield return new Function(ReturnType, Name)
             {
                 Static = true,
                 Comment = Comment,
@@ -175,7 +175,7 @@ namespace GlmSharpGenerator.Members
             if (OriginalType is VectorType && ((VectorType)OriginalType).Components == 3 &&
                 CanScalar0 && CanScalar1 && CanScalar2)
             {
-                yield return new Function(ReturnType.BaseType ?? ReturnType, Name + OriginalType.GenericSuffix)
+                yield return new Function(ReturnType.BaseType ?? ReturnType, Name)
                 {
                     Static = true,
                     Comment = Comment,

@@ -11,6 +11,16 @@ namespace GlmSharpGenerator.Members
         public AbstractType OriginalType { get; set; }
 
         /// <summary>
+        /// Is this member has corresponding member in GLSL
+        /// </summary>
+        public bool GlslBuiltIn => !string.IsNullOrEmpty(GlslName);
+
+        /// <summary>
+        /// Name of corresponding member in GLSL
+        /// </summary>
+        public string GlslName { get; set; }
+
+        /// <summary>
         /// Name of the member
         /// </summary>
         public string Name { get; set; }

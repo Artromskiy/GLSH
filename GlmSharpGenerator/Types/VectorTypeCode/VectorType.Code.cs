@@ -19,6 +19,12 @@ namespace GlmSharpGenerator.Types
             foreach (var item in Operators())
                 yield return item;
 
+            foreach (var item in CastFunctions())
+                yield return item;
+
+            foreach (var item in SwizzleProperties())
+                yield return item;
+
             foreach (var item in TrigonometryFunctions())
                 yield return item;
 

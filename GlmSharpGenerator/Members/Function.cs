@@ -49,8 +49,6 @@ namespace GlmSharpGenerator.Members
 
         public override IEnumerable<Member> GlmMembers()
         {
-            if (OriginalType is SwizzleType)
-                yield break; // nothing for swizzling
             if (Visibility != "public")
                 yield break;
             if (this is ExplicitOperator)
@@ -69,7 +67,7 @@ namespace GlmSharpGenerator.Members
                 var ptype = paras[0].Split(' ')[0];
                 if (ptype == OriginalType.NameThat)
                 {
-                    yield return new Function(ReturnType, Name + OriginalType.GenericSuffix)
+                    yield return new Function(ReturnType, Name)
                     {
                         Static = true,
                         Parameters = Parameters,
@@ -81,9 +79,9 @@ namespace GlmSharpGenerator.Members
                 yield break; // nothing for static props
             }
 
-            var varname = OriginalType is VectorType ? "v" : OriginalType is QuaternionType ? "q" : "m";
+            var varname = OriginalType is VectorType ? "v" : "m";
 
-            yield return new Function(ReturnType, Name + OriginalType.GenericSuffix)
+            yield return new Function(ReturnType, Name)
             {
                 Static = true,
                 Comment = Comment,

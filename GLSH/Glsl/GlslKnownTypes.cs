@@ -5,17 +5,19 @@ namespace GLSH.Compiler.Glsl;
 
 internal static class GlslKnownTypes
 {
-    private static readonly Dictionary<string, string> s_knownTypesShared = new()
+    private static readonly Dictionary<string, string> _knownBuiltingTypes = new()
     {
-        { typeof(uint).FullName!, "uint" },
+        { typeof(void).FullName!, "void" },
+        { typeof(bool).FullName!, "bool" },
         { typeof(int).FullName!, "int" },
+        { typeof(uint).FullName!, "uint" },
         { typeof(float).FullName!, "float" },
+        { typeof(double).FullName!, "double" },
+
         { typeof(Vector2).FullName!, "vec2" },
         { typeof(Vector3).FullName!, "vec3" },
         { typeof(Vector4).FullName!, "vec4" },
         { typeof(Matrix4x4).FullName!, "mat4" },
-        { typeof(void).FullName!, "void" },
-        { typeof(bool).FullName!, "bool" },
         { typeof(UInt2).FullName!, "uvec2" },
         { typeof(UInt3).FullName!, "uvec3" },
         { typeof(UInt4).FullName!, "uvec4" },
@@ -24,50 +26,32 @@ internal static class GlslKnownTypes
         { typeof(Int4).FullName!, "ivec4" },
     };
 
-    private static readonly Dictionary<string, string> s_knownTypesGL = new()
+    private static readonly Dictionary<string, string> _knownOpaqueTypes = new()
     {
+        { typeof(SamplerResource).FullName!, "sampler" },
         { typeof(Texture2DResource).FullName!, "sampler2D" },
-        { typeof(Texture2DArrayResource).FullName!, "sampler2DArray" },
+        { typeof(Texture2DResource).FullName!, "texture2D" },
+        { typeof(TextureCubeResource).FullName!, "textureCube" },
         { typeof(TextureCubeResource).FullName!, "samplerCube" },
+        { typeof(DepthTexture2DResource).FullName!, "texture2D" },
+        { typeof(Texture2DArrayResource).FullName!, "sampler2DArray" },
+        { typeof(Texture2DArrayResource).FullName!, "texture2DArray" },
         { typeof(DepthTexture2DResource).FullName!, "sampler2DShadow" },
+        { typeof(SamplerComparisonResource).FullName!, "samplerShadow" },
+        { typeof(DepthTexture2DArrayResource).FullName!, "texture2DArray" },
         { typeof(DepthTexture2DArrayResource).FullName!, "sampler2DArrayShadow" },
+
         { typeof(SamplerResource).FullName!, "SamplerDummy" },
         { typeof(SamplerComparisonResource).FullName!, "SamplerComparisonDummy" },
     };
 
-    private static readonly Dictionary<string, string> s_knownTypesVulkan = new()
+
+    public static string GetMappedName(string name)
     {
-        { typeof(Texture2DResource).FullName!, "texture2D" },
-        { typeof(Texture2DArrayResource).FullName!, "texture2DArray" },
-        { typeof(TextureCubeResource).FullName!, "textureCube" },
-        { typeof(DepthTexture2DResource).FullName!, "texture2D" },
-        { typeof(DepthTexture2DArrayResource).FullName!, "texture2DArray" },
-        { typeof(SamplerResource).FullName!, "sampler" },
-        { typeof(SamplerComparisonResource).FullName!, "samplerShadow" },
-    };
-
-
-    public static string GetMappedName(string name, bool vulkan)
-    {
-        if (s_knownTypesShared.TryGetValue(name, out string mapped))
-        {
-            return mapped;
-        }
-        else if (vulkan)
-        {
-            if (s_knownTypesVulkan.TryGetValue(name, out mapped))
-            {
-                return mapped;
-            }
-        }
-        else
-        {
-            if (s_knownTypesGL.TryGetValue(name, out mapped))
-            {
-                return mapped;
-            }
-        }
-
-        return name;
+        if (!GLSHInfo.knownTypesToGlslTypes.TryGetValue(name, out string? mapped) &&
+            !_knownBuiltingTypes.TryGetValue(name, out mapped) &&
+            !_knownOpaqueTypes.TryGetValue(name, out mapped))
+            return name;
+        return mapped;
     }
 }

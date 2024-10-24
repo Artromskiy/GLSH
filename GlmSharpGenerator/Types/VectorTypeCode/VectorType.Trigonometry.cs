@@ -7,8 +7,8 @@ namespace GlmSharpGenerator.Types
     {
         /// <summary>
         /// Refers to GLSL 450 specs.
-        /// 8 Built-in Functions
-        /// 8.1 Angle and Trigonometry Functions
+        /// 8 Built-in Functions.
+        /// 8.1 Angle and Trigonometry Functions.
         /// </summary>
         /// <returns></returns>
         private IEnumerable<Member> TrigonometryFunctions()
