@@ -30,9 +30,22 @@ public class MinExample
     {
         FragmentInput output;
 
+        TestStruct t = new TestStruct();
+        t.Increment();
+        t.Value += 1;
+        t.vall = t.Value;
+        
         //bool4 b = new(true);
         //b = bool4.Mix(b, b, b);
-        float4x4 model;
+        DoSome();
+        DoInt(GetInt());
+
+        float4 someFloat = new (0f);
+        someFloat += new float4(1);
+        someFloat -= new float4(3);
+        someFloat /= new float4(new float2(1), 3);
+        //someFloat = new(default(float2), 3);
+        someFloat = float4.Abs(someFloat);
 
         Vector4 worldPosition = Mul(World, new Vector4(input.Position, 1));
         Vector4 viewPosition = Mul(View, worldPosition);
@@ -40,6 +53,65 @@ public class MinExample
         output.TextureCoord = input.TextureCoord;
         return output;
     }
+
+    public void DoInt(int val)
+    {
+        DoInt2(val);
+    }
+
+    public int DoInt2(int val)
+    {
+        return GetInt();
+    }
+
+    public int GetInt()
+    {
+        return 0;
+    }
+
+    public void DoSome()
+    {
+        DoInt2(0);
+        GetInt();
+        DoInt(DoInt2(DoInt2(0)));
+    }
+
+
+    private struct TestStruct
+    {
+        public float vall;
+        public float Value
+        {
+            get
+            {
+                return GetValue() + GetValue2();
+            }
+            set
+            {
+                vall = value;
+            }
+        }
+        public void Increment()
+        {
+            vall = Value + GetValue();
+        }
+
+        public TestStruct()
+        {
+            Value = 0;
+            Increment();
+        }
+    }
+
+    private static int GetValue()
+    {
+        return 3 + GetValue2();
+    }
+    private static int GetValue2()
+    {
+        return 3;
+    }
+
 
     [FragmentEntryPoint]
     public Vector4 FragmentShaderFunc(FragmentInput input)

@@ -76,10 +76,6 @@ public static partial class ShaderBuiltins
     // Cbrt TODO add Matrix support
     private const double _third = 1.0 / 3.0;
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float Cbrt(float value) => (float)Math.Pow(Math.Abs(value), _third);
-    public static Vector2 Cbrt(Vector2 value) => new Vector2(Cbrt(value.X), Cbrt(value.Y));
-    public static Vector3 Cbrt(Vector3 value) => new Vector3(Cbrt(value.X), Cbrt(value.Y), Cbrt(value.Z));
-    public static Vector4 Cbrt(Vector4 value) => new Vector4(Cbrt(value.X), Cbrt(value.Y), Cbrt(value.Z), Cbrt(value.W));
 
     // Ceiling
     public static float Ceiling(float value) => (float)Math.Ceiling(value);
@@ -134,15 +130,6 @@ public static partial class ShaderBuiltins
     public static Vector4 Floor(Vector4 value) => new Vector4((float)Math.Floor(value.X), (float)Math.Floor(value.Y), (float)Math.Floor(value.Z), (float)Math.Floor(value.W));
 
 
-    // FMod - See https://stackoverflow.com/questions/7610631/glsl-mod-vs-hlsl-fmod
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float FMod(float a, float b) => a % b;
-    public static Vector2 FMod(Vector2 a, Vector2 b) => new Vector2(FMod(a.X, b.X), FMod(a.Y, b.Y));
-    public static Vector2 FMod(Vector2 a, float b) => new Vector2(FMod(a.X, b), FMod(a.Y, b));
-    public static Vector3 FMod(Vector3 a, Vector3 b) => new Vector3(FMod(a.X, b.X), FMod(a.Y, b.Y), FMod(a.Z, b.Z));
-    public static Vector3 FMod(Vector3 a, float b) => new Vector3(FMod(a.X, b), FMod(a.Y, b), FMod(a.Z, b));
-    public static Vector4 FMod(Vector4 a, Vector4 b) => new Vector4(FMod(a.X, b.X), FMod(a.Y, b.Y), FMod(a.Z, b.Z), FMod(a.W, b.W));
-    public static Vector4 FMod(Vector4 a, float b) => new Vector4(FMod(a.X, b), FMod(a.Y, b), FMod(a.Z, b), FMod(a.W, b));
 
     // Frac TODO Check this really is equivalent
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -181,12 +168,6 @@ public static partial class ShaderBuiltins
     public static Vector2 Log2(Vector2 value) => new Vector2(Log2(value.X), Log2(value.Y));
     public static Vector3 Log2(Vector3 value) => new Vector3(Log2(value.X), Log2(value.Y), Log2(value.Z));
     public static Vector4 Log2(Vector4 value) => new Vector4(Log2(value.X), Log2(value.Y), Log2(value.Z), Log2(value.W));
-
-    // Log10
-    public static float Log10(float value) => (float)Math.Log10(value);
-    public static Vector2 Log10(Vector2 value) => new Vector2((float)Math.Log10(value.X), (float)Math.Log10(value.Y));
-    public static Vector3 Log10(Vector3 value) => new Vector3((float)Math.Log10(value.X), (float)Math.Log10(value.Y), (float)Math.Log10(value.Z));
-    public static Vector4 Log10(Vector4 value) => new Vector4((float)Math.Log10(value.X), (float)Math.Log10(value.Y), (float)Math.Log10(value.Z), (float)Math.Log10(value.W));
 
     // Max
     public static float Max(float a, float b) => Math.Max(a, b);
@@ -249,12 +230,6 @@ public static partial class ShaderBuiltins
     public static Vector3 Rsqrt(Vector3 value) => new Vector3((float)(1.0 / Math.Sqrt(value.X)), (float)(1.0 / Math.Sqrt(value.Y)), (float)(1.0 / Math.Sqrt(value.Z)));
     public static Vector4 Rsqrt(Vector4 value) => new Vector4((float)(1.0 / Math.Sqrt(value.X)), (float)(1.0 / Math.Sqrt(value.Y)), (float)(1.0 / Math.Sqrt(value.Z)), (float)(1.0 / Math.Sqrt(value.W)));
 
-    // Saturate
-    public static float Saturate(float value) => Clamp(value, 0f, 1f);
-    public static Vector2 Saturate(Vector2 value) => new Vector2(Clamp(value.X, 0f, 1f), Clamp(value.Y, 0f, 1f));
-    public static Vector3 Saturate(Vector3 value) => new Vector3(Clamp(value.X, 0f, 1f), Clamp(value.Y, 0f, 1f), Clamp(value.Z, 0f, 1f));
-    public static Vector4 Saturate(Vector4 value) => new Vector4(Clamp(value.X, 0f, 1f), Clamp(value.Y, 0f, 1f), Clamp(value.Z, 0f, 1f), Clamp(value.W, 0f, 1f));
-
     // Sign
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Sign(float value) => value > 0f ? 1f : value < 0f ? -1f : 0f;
@@ -290,7 +265,7 @@ public static partial class ShaderBuiltins
          * return t * t * (3.0 - 2.0 * t);
          * Results are undefined if min ≥ max.
         */
-        float t = Saturate((x - min) / (max - min));
+        float t = Clamp((x - min) / (max - min), 0, 1);
         return t * t * (3f - 2f * t);
     }
     public static Vector2 SmoothStep(Vector2 min, Vector2 max, Vector2 x) => new Vector2(SmoothStep(min.X, max.X, x.X), SmoothStep(min.Y, max.Y, x.Y));

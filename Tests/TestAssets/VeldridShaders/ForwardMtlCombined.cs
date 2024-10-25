@@ -124,9 +124,9 @@ namespace Tests.TestAssets.VeldridShaders
             {
                 PointLightInfo pli = PointLights.PointLights[i];
                 Vector3 lightDir = Vector3.Normalize(pli.Position - input.Position_WorldSpace);
-                float intensity = Saturate(Vector3.Dot(input.Normal, lightDir));
+                float intensity = Clamp(Vector3.Dot(input.Normal, lightDir), 0, 1);
                 float lightDistance = Vector3.Distance(pli.Position, input.Position_WorldSpace);
-                intensity = Saturate(intensity * (1 - lightDistance / pli.Range));
+                intensity = Clamp(intensity * (1 - lightDistance / pli.Range), 0, 1);
 
                 pointDiffuse += intensity * new Vector4(pli.Color, 1) * surfaceColor;
 
@@ -142,8 +142,9 @@ namespace Tests.TestAssets.VeldridShaders
                 }
             }
 
-            pointDiffuse = Saturate(pointDiffuse);
-            pointSpec = Saturate(pointSpec);
+
+            pointDiffuse = Clamp(pointDiffuse, 0, 1);
+            pointSpec = Clamp(pointSpec, 0, 1);
 
             // Directional light calculations
 

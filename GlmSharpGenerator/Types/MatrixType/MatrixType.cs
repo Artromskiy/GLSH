@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Linq;
 
 namespace GlmSharpGenerator.Types
 {
@@ -17,6 +18,13 @@ namespace GlmSharpGenerator.Types
             BaseType = type;
             BaseName = type.Prefix + "mat";
         }
+
+        public override IEnumerable<string> Attributes =>
+        [
+            "Serializable",
+            $"DataContract{DataContractArg}",
+            $"InlineArray({Columns})"
+        ];
 
         private static string GetName(BuiltinType type, int cols, int rows) => type.Name + cols + "x" + rows;
         public int Rows { get; set; }
@@ -37,7 +45,7 @@ namespace GlmSharpGenerator.Types
             var f = new string[s, s];
             for (var x = 0; x < s; ++x)
                 for (var y = 0; y < s; ++y)
-                    f[x, y] = "m" + x + y;
+                    f[x, y] = $"[{x}, {y}]";
             return f;
         }
 
@@ -194,20 +202,21 @@ namespace GlmSharpGenerator.Types
                     yield return "m" + x + y;
         }
 
+        
+
         public override IEnumerable<Member> GenerateMembers()
         {
             var colVecType = new VectorType(BaseType, Rows);
             var rowVecType = new VectorType(BaseType, Columns);
             var quatType = new VectorType(BaseType, 4); // dummy instead quaternion
             var diagonal = Rows == Columns;
-
+            
             // fields
-            foreach (var f in FieldsNames)
-                yield return new Field(f, BaseType)
-                {
-                    Visibility = "private",
-                    Comment = $"Column {ColOf(f)}, Rows {RowOf(f)}"
-                };
+            yield return new Field("_buffer", colVecType)
+            {
+                Visibility = "private",
+                Comment = $"First column of matrix"
+            };
 
             foreach (var item in Constructors())
                 yield return item;
@@ -225,6 +234,7 @@ namespace GlmSharpGenerator.Types
                 DefaultValue = FieldCount.ToString(),
             };
 
+            var vecType = new VectorType(BaseType, Rows);
             yield return new Indexer(BaseType)
             {
                 ParameterString = "int col, int row",
@@ -232,17 +242,17 @@ namespace GlmSharpGenerator.Types
                           "    throw new ArgumentOutOfRangeException(nameof(col));",
                           $"if ((uint)row >= {Rows})",
                           "    throw new ArgumentOutOfRangeException(nameof(row));",
-                          $"return Unsafe.Add(ref m00, col * {Rows} + row);"],
+                          $"return Unsafe.Add(ref Unsafe.As<{vecType.Name}, {BaseTypeName}>(ref _buffer), col * {Rows} + row);"],
                 Setter = [$"if ((uint)col >= {Columns})",
                           "    throw new ArgumentOutOfRangeException(nameof(col));",
                           $"if ((uint)row >= {Rows})",
                           "    throw new ArgumentOutOfRangeException(nameof(row));",
-                          $"Unsafe.Add(ref m00, col * {Rows} + row) = value;"],
+                          $"Unsafe.Add(ref Unsafe.As<{vecType.Name}, {BaseTypeName}>(ref _buffer), col * {Rows} + row) = value;"],
                 Comment = "Gets/Sets a specific indexed column."
             };
 
 
-            var indexerVector = new VectorType(BaseType, Rows);
+            /*
             yield return new Indexer(indexerVector)
             {
                 ParameterString = "int col",
@@ -254,7 +264,7 @@ namespace GlmSharpGenerator.Types
                           $"MemoryMarshal.Cast<{Name}, {indexerVector.Name}>(new Span<{Name}>(ref this))[col] = value;"],
                 Comment = "Gets/Sets a specific indexed component."
             };
-
+            */
             // Extensions
             yield return new Function(new AnyType($"IEnumerator<{BaseTypeName}>"), "GetEnumerator")
             {

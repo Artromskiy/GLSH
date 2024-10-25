@@ -13,10 +13,10 @@ internal partial class ShaderSyntaxWalker : CSharpSyntaxWalker
 {
     private readonly Compilation _compilation;
     private readonly LanguageBackend _backend;
-    private readonly ShaderSetInfo _shaderSet;
+    private readonly PipelineInfo _shaderSet;
 
 
-    public ShaderSyntaxWalker(Compilation compilation, LanguageBackend backend, ShaderSetInfo ss)
+    public ShaderSyntaxWalker(Compilation compilation, LanguageBackend backend, PipelineInfo ss)
         : base(SyntaxWalkerDepth.Token)
     {
         _compilation = compilation;
@@ -52,11 +52,11 @@ internal partial class ShaderSyntaxWalker : CSharpSyntaxWalker
         var resourceName = node.Declaration.Variables[0].Identifier.Text;
         TypeInfo typeInfo = GetModel(node).GetTypeInfo(node.Declaration.Type);
         string fullTypeName = GetModel(node).GetFullTypeName(node.Declaration.Type);
-        TypeReference valueType = new(fullTypeName, typeInfo.Type);
-        ShaderResourceKind kind = ClassifyResourceKind(fullTypeName);
-        bool genericKind = kind.IsGenericResource();
+        TypeReference typeReference = new(fullTypeName, typeInfo.Type);
+        ShaderResourceKind resourceKind = ClassifyResourceKind(fullTypeName);
+        bool genericKind = resourceKind.IsGenericResource();
 
-        valueType = genericKind ? ParseGenericElementType(node.Declaration.Type) : valueType;
+        typeReference = genericKind ? ParseGenericElementType(node.Declaration.Type) : typeReference;
 
         ShaderGenerationException.ThrowIf(!AttributeHelper.TryGetAttribute<LayoutAttribute>(node, GetModel(node), out var syntax),
             "All resources must specify set and binding");
@@ -65,8 +65,8 @@ internal partial class ShaderSyntaxWalker : CSharpSyntaxWalker
         int set = attributeData.set;
         int binding = attributeData.binding;
 
-        ResourceDefinition rd = new(resourceName, set, binding, valueType, kind);
-        if (kind == ShaderResourceKind.Uniform)
+        ResourceDefinition rd = new(resourceName, set, binding, typeReference, resourceKind);
+        if (resourceKind == ShaderResourceKind.Uniform)
             ValidateUniformType(typeInfo);
 
         _backend.AddResource(_shaderSet.name, rd);
@@ -82,44 +82,4 @@ internal partial class ShaderSyntaxWalker : CSharpSyntaxWalker
         string fullName = GetModel(fieldType).GetFullTypeName(type);
         return new TypeReference(fullName, GetModel(fieldType).GetTypeInfo(type).Type);
     }
-
-    /*
-    public override void VisitPropertyDeclaration(PropertyDeclarationSyntax node)
-    {
-        ShaderGenerationException.ThrowIf(HasAccessors(node),
-            "Resource may not specify getters and setters.");
-
-        string resourceName = node.Identifier.Text;
-        TypeInfo typeInfo = GetModel(node).GetTypeInfo(node.Type);
-        string fullTypeName = GetModel(node).GetFullTypeName(node.Type);
-        TypeReference valueType = new(fullTypeName, typeInfo.Type);
-        ShaderResourceKind kind = ClassifyResourceKind(fullTypeName);
-        bool genericKind = kind.IsGenericResource();
-        valueType = genericKind ? ParseGenericElementType(node) : valueType;
-        ShaderGenerationException.ThrowIf(!AttributeHelper.TryGetAttribute<LayoutAttribute>(node, GetModel(node), out var syntax),
-            "All resources must specify set and binding");
-        var attributeData = syntax.CreateAttributeOfType<LayoutAttribute>(GetModel(node));
-        int set = attributeData.set;
-        int binding = attributeData.binding;
-
-        ResourceDefinition rd = new(resourceName, set, binding, valueType, kind);
-        if (kind == ShaderResourceKind.Uniform)
-            ValidateUniformType(typeInfo);
-
-        foreach (LanguageBackend b in _backends)
-            b.AddResource(_shaderSet.name, rd);
-    }
-    */
-    /*
-    private bool HasAccessors(PropertyDeclarationSyntax node)
-    {
-        if (node.AccessorList == null)
-            return false;
-        foreach (var item in node.AccessorList.Accessors)
-            if (item.Body != null)
-                return true;
-
-        return false;
-    }
-    */
 }

@@ -1,13 +1,19 @@
 using System;
-using System.Runtime.CompilerServices;
+using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
+using System.Numerics;
+using System.Linq;
 
 // ReSharper disable InconsistentNaming
 
 namespace GLSH
 {
-
+    
     /// <summary>
     /// A vector of type bool with 2 components.
     /// </summary>
@@ -18,30 +24,27 @@ namespace GLSH
     {
 
         #region Fields
-
+        
         /// <summary>
         /// x-component
         /// </summary>
-        [DataMember]
         public bool x;
-
+        
         /// <summary>
         /// y-component
         /// </summary>
-        [DataMember]
         public bool y;
-
+        
         /// <summary>
         /// Returns the number of components (2).
         /// </summary>
-        [DataMember]
         public const int Count = 2;
 
         #endregion
 
 
         #region Constructors
-
+        
         /// <summary>
         /// Component-wise constructor
         /// </summary>
@@ -50,7 +53,7 @@ namespace GLSH
             this.x = x;
             this.y = y;
         }
-
+        
         /// <summary>
         /// all-same-value constructor
         /// </summary>
@@ -59,7 +62,7 @@ namespace GLSH
             this.x = v;
             this.y = v;
         }
-
+        
         /// <summary>
         /// from-vector constructor
         /// </summary>
@@ -68,7 +71,7 @@ namespace GLSH
             this.x = v.x;
             this.y = v.y;
         }
-
+        
         /// <summary>
         /// from-vector constructor (additional fields are truncated)
         /// </summary>
@@ -77,7 +80,7 @@ namespace GLSH
             this.x = v.x;
             this.y = v.y;
         }
-
+        
         /// <summary>
         /// from-vector constructor (additional fields are truncated)
         /// </summary>
@@ -91,7 +94,7 @@ namespace GLSH
 
 
         #region Indexer
-
+        
         /// <summary>
         /// Gets/Sets a specific indexed component (a bit slower than direct access).
         /// </summary>
@@ -115,7 +118,7 @@ namespace GLSH
 
 
         #region Properties
-
+        
         /// <summary>
         /// Gets or sets the specified subset of components.
         /// </summary>
@@ -131,7 +134,7 @@ namespace GLSH
                 y = value.y;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified subset of components.
         /// </summary>
@@ -147,7 +150,7 @@ namespace GLSH
                 y = value.y;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified RGBA component.
         /// </summary>
@@ -162,7 +165,7 @@ namespace GLSH
                 x = value;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified RGBA component.
         /// </summary>
@@ -182,27 +185,27 @@ namespace GLSH
 
 
         #region Operators
-
+        
         /// <summary>
         /// 
         /// </summary>
-        public static bool operator ==(bool2 lhs, bool2 rhs) => lhs.x == rhs.x && lhs.y == rhs.y;
-
+        public static bool operator==(bool2 lhs, bool2 rhs) => lhs.x == rhs.x&&lhs.y == rhs.y;
+        
         /// <summary>
         /// 
         /// </summary>
-        public static bool operator !=(bool2 lhs, bool2 rhs) => lhs.x != rhs.x || lhs.y != rhs.y;
+        public static bool operator!=(bool2 lhs, bool2 rhs) => lhs.x != rhs.x||lhs.y != rhs.y;
 
         #endregion
 
 
         #region Functions
-
+        
         /// <summary>
         /// Returns a string representation of this vector using ', ' as a seperator.
         /// </summary>
         public override string ToString() => ToString(", ");
-
+        
         /// <summary>
         /// Returns a string representation of this vector using a provided seperator.
         /// </summary>
@@ -212,37 +215,37 @@ namespace GLSH
 
 
         #region Static Functions
-
+        
         /// <summary>
         /// 
         /// </summary>
-        public static bool Any(bool2 v) => v.x || v.y;
-
+        public static bool Any(bool2 v) => v.x||v.y;
+        
         /// <summary>
         /// 
         /// </summary>
-        public static bool All(bool2 v) => v.x && v.y;
+        public static bool All(bool2 v) => v.x&&v.y;
 
         #endregion
 
 
         #region Component-Wise Static Functions
-
+        
         /// <summary>
         /// Returns a bool2 from component-wise application of Equal (lhs == rhs).
         /// </summary>
         public static bool2 Equal(bool2 lhs, bool2 rhs) => new bool2(lhs.x == rhs.x, lhs.y == rhs.y);
-
+        
         /// <summary>
         /// Returns a bool2 from component-wise application of NotEqual (lhs != rhs).
         /// </summary>
         public static bool2 NotEqual(bool2 lhs, bool2 rhs) => new bool2(lhs.x != rhs.x, lhs.y != rhs.y);
-
+        
         /// <summary>
         /// Returns a bool2 from component-wise application of Not (!v).
         /// </summary>
         public static bool2 Not(bool2 v) => new bool2(!v.x, !v.y);
-
+        
         /// <summary>
         /// Returns a bool2 from component-wise application of Mix (a ? y : x).
         /// </summary>

@@ -1,6 +1,7 @@
 using GLSH.Compiler.Internal;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
@@ -11,228 +12,244 @@ namespace GLSH.Compiler.Glsl;
 [Obsolete("Rewrite this hell")]
 public static class Glsl450KnownFunctions
 {
+
+    #region Mappings
+    private static readonly Dictionary<string, InvocationTranslator> builtinMappings = new()
+    {
+        { nameof(ShaderBuiltins.Abs), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Acos), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Acosh), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Asin), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Asinh), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Atan), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Atanh), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Ceiling), SimpleNameTranslator("ceil") },
+        { nameof(ShaderBuiltins.Clamp), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Cos), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Cosh), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Degrees), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Exp), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Exp2), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Floor), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Frac), SimpleNameTranslator("fract") },
+        { nameof(ShaderBuiltins.Lerp), SimpleNameTranslator("mix") },
+        { nameof(ShaderBuiltins.Log), Log },
+        { nameof(ShaderBuiltins.Log2), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Max), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Min), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Mod), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Mul), MatrixMul },
+        { nameof(ShaderBuiltins.Pow), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Radians), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Round), Round },
+        { nameof(ShaderBuiltins.Rsqrt), SimpleNameTranslator("inversesqrt") },
+        { nameof(ShaderBuiltins.Sign), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Sin), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Sinh), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.SmoothStep), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Sqrt), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Step), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Tan), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Tanh), SimpleNameTranslator() },
+        { nameof(ShaderBuiltins.Truncate), SimpleNameTranslator("trunc") },
+
+        { nameof(ShaderBuiltins.Store), Store },
+        { nameof(ShaderBuiltins.Load), Load },
+        { nameof(ShaderBuiltins.InterlockedAdd), InterlockedAdd },
+        { nameof(ShaderBuiltins.Discard), Discard },
+        { nameof(ShaderBuiltins.ClipToTextureCoordinates), ClipToTextureCoordinates },
+        { nameof(ShaderBuiltins.Sample), Sample },
+        { nameof(ShaderBuiltins.SampleComparisonLevelZero), SampleComparisonLevelZero },
+        { nameof(ShaderBuiltins.SampleGrad), SampleGrad },
+        { nameof(ShaderBuiltins.Ddx), SimpleNameTranslator("dFdx") },
+        { nameof(ShaderBuiltins.DdxFine), SimpleNameTranslator("dFdxFine") },
+        { nameof(ShaderBuiltins.Ddy), SimpleNameTranslator("dFdy") },
+        { nameof(ShaderBuiltins.DdyFine), SimpleNameTranslator("dFdyFine") },
+        { nameof(ShaderBuiltins.DispatchThreadID), DispatchThreadID },
+        { nameof(ShaderBuiltins.GroupThreadID), GroupThreadID },
+        { nameof(ShaderBuiltins.InstanceID), InstanceID },
+        { nameof(ShaderBuiltins.IsFrontFace), IsFrontFace },
+        { nameof(ShaderBuiltins.VertexID), VertexID }
+    };
+
+    private static readonly Dictionary<string, InvocationTranslator> v2Mappings = new()
+    {
+        { ".ctor", VectorCtor },
+        { nameof(Vector2.Abs), SimpleNameTranslator() },
+        { nameof(Vector2.Add), BinaryOpTranslator("+") },
+        { nameof(Vector2.Clamp), SimpleNameTranslator() },
+        // Doesn't exist! { nameof(Vector2.Cos), SimpleNameTranslator("cos") },
+        { nameof(Vector2.Distance), SimpleNameTranslator("distance") },
+        { nameof(Vector2.DistanceSquared), DistanceSquared },
+        { nameof(Vector2.Divide), BinaryOpTranslator("/") },
+        { nameof(Vector2.Dot), SimpleNameTranslator() },
+        { nameof(Vector2.Lerp), SimpleNameTranslator("mix") },
+        { nameof(Vector2.Max), SimpleNameTranslator() },
+        { nameof(Vector2.Min), SimpleNameTranslator() },
+        { nameof(Vector2.Multiply), BinaryOpTranslator("*") },
+        { nameof(Vector2.Negate), Negate },
+        { nameof(Vector2.Normalize), SimpleNameTranslator() },
+        { nameof(Vector2.Reflect), SimpleNameTranslator() },
+        // Doesn't exist! { nameof(Vector2.Sin), SimpleNameTranslator("sin") },
+        { nameof(Vector2.SquareRoot), SimpleNameTranslator("sqrt") },
+        { nameof(Vector2.Subtract), BinaryOpTranslator("-") },
+        { nameof(Vector2.Length), SimpleNameTranslator() },
+        { nameof(Vector2.LengthSquared), LengthSquared },
+        { nameof(Vector2.Transform), Vector2Transform },
+        { nameof(Vector2.Zero), VectorStaticAccessor },
+        { nameof(Vector2.One), VectorStaticAccessor },
+        { nameof(Vector2.UnitX), VectorStaticAccessor },
+        { nameof(Vector2.UnitY), VectorStaticAccessor },
+    };
+
+    private static readonly Dictionary<string, InvocationTranslator> v3Mappings = new()
+    {
+        { ".ctor", VectorCtor },
+        { nameof(Vector3.Abs), SimpleNameTranslator() },
+        { nameof(Vector3.Add), BinaryOpTranslator("+") },
+        { nameof(Vector3.Clamp), SimpleNameTranslator() },
+        // Doesn't exist! { nameof(Vector3.Cos), SimpleNameTranslator("cos") },
+        { nameof(Vector3.Cross), SimpleNameTranslator() },
+        { nameof(Vector3.Distance), SimpleNameTranslator() },
+        { nameof(Vector3.DistanceSquared), DistanceSquared },
+        { nameof(Vector3.Divide), BinaryOpTranslator("/") },
+        { nameof(Vector3.Dot), SimpleNameTranslator() },
+        { nameof(Vector3.Lerp), SimpleNameTranslator("mix") },
+        { nameof(Vector3.Max), SimpleNameTranslator() },
+        { nameof(Vector3.Min), SimpleNameTranslator() },
+        { nameof(Vector3.Multiply), BinaryOpTranslator("*") },
+        { nameof(Vector3.Negate), Negate },
+        { nameof(Vector3.Normalize), SimpleNameTranslator() },
+        { nameof(Vector3.Reflect), SimpleNameTranslator() },
+        // Doesn't exist! { nameof(Vector3.Sin), SimpleNameTranslator("sin") },
+        { nameof(Vector3.SquareRoot), SimpleNameTranslator("sqrt") },
+        { nameof(Vector3.Subtract), BinaryOpTranslator("-") },
+        { nameof(Vector3.Length), SimpleNameTranslator() },
+        { nameof(Vector3.LengthSquared), LengthSquared },
+        { nameof(Vector3.Transform), Vector3Transform },
+        { nameof(Vector3.Zero), VectorStaticAccessor },
+        { nameof(Vector3.One), VectorStaticAccessor },
+        { nameof(Vector3.UnitX), VectorStaticAccessor },
+        { nameof(Vector3.UnitY), VectorStaticAccessor },
+        { nameof(Vector3.UnitZ), VectorStaticAccessor },
+    };
+
+    private static readonly Dictionary<string, InvocationTranslator> v4Mappings = new()
+    {
+        { ".ctor", VectorCtor },
+        { nameof(Vector4.Abs), SimpleNameTranslator() },
+        { nameof(Vector4.Add), BinaryOpTranslator("+") },
+        { nameof(Vector4.Clamp), SimpleNameTranslator() },
+        // Doesn't exist! { nameof(Vector4.Cos), SimpleNameTranslator("cos") },
+        { nameof(Vector4.Distance), SimpleNameTranslator() },
+        { nameof(Vector4.DistanceSquared), DistanceSquared },
+        { nameof(Vector4.Divide), BinaryOpTranslator("/") },
+        { nameof(Vector4.Dot), SimpleNameTranslator() },
+        { nameof(Vector4.Lerp), SimpleNameTranslator("mix") },
+        { nameof(Vector4.Max), SimpleNameTranslator() },
+        { nameof(Vector4.Min), SimpleNameTranslator() },
+        { nameof(Vector4.Multiply), BinaryOpTranslator("*") },
+        { nameof(Vector4.Negate), Negate },
+        { nameof(Vector4.Normalize), SimpleNameTranslator() },
+        // Doesn't exist! { nameof(Vector4.Reflect), SimpleNameTranslator("reflect") },
+        // Doesn't exist! { nameof(Vector4.Sin), SimpleNameTranslator("sin") },
+        { nameof(Vector4.SquareRoot), SimpleNameTranslator("sqrt") },
+        { nameof(Vector4.Subtract), BinaryOpTranslator("-") },
+        { nameof(Vector4.Length), SimpleNameTranslator() },
+        { nameof(Vector4.LengthSquared), LengthSquared },
+        { nameof(Vector4.Transform), Vector4Transform },
+        { nameof(Vector4.Zero), VectorStaticAccessor },
+        { nameof(Vector4.One), VectorStaticAccessor },
+        { nameof(Vector4.UnitX), VectorStaticAccessor },
+        { nameof(Vector4.UnitY), VectorStaticAccessor },
+        { nameof(Vector4.UnitZ), VectorStaticAccessor },
+        { nameof(Vector4.UnitW), VectorStaticAccessor },
+    };
+
+    private static readonly Dictionary<string, InvocationTranslator> u2Mappings = new()
+    {
+        { ".ctor", VectorCtor },
+    };
+
+    private static readonly Dictionary<string, InvocationTranslator> m4x4Mappings = new()
+    {
+        { ".ctor", MatrixCtor }
+    };
+
+    private static readonly Dictionary<string, InvocationTranslator> mathfMappings = new()
+    {
+        // TODO Note cannot use nameof as MathF isn't included in this project...
+        { "Abs", SimpleNameTranslator() },
+        { "Acos", SimpleNameTranslator() },
+        { "Acosh", SimpleNameTranslator() },
+        { "Asin", SimpleNameTranslator() },
+        { "Asinh", SimpleNameTranslator() },
+        { "Atan", SimpleNameTranslator() },
+        { "Atan2", SimpleNameTranslator("atan") }, // Note atan supports both (x) and (y,x)
+        { "Atanh", SimpleNameTranslator() },
+        { "Ceiling", SimpleNameTranslator("ceil") },
+        { "Cos", SimpleNameTranslator() },
+        { "Cosh", SimpleNameTranslator() },
+        { "Exp", SimpleNameTranslator() },
+        { "Floor", SimpleNameTranslator() },
+        // TODO IEEERemainder(Single, Single) - see https://stackoverflow.com/questions/1971645/is-math-ieeeremainderx-y-equivalent-to-xy
+        // How close is it to frac()?
+        { "Log", Log },
+        { "Max", SimpleNameTranslator() },
+        { "Min", SimpleNameTranslator() },
+        { "Pow", SimpleNameTranslator() },
+        { "Round", Round },
+        { "Sin", SimpleNameTranslator() },
+        { "Sinh", SimpleNameTranslator() },
+        { "Sqrt", SimpleNameTranslator() },
+        { "Tan", SimpleNameTranslator() },
+        { "Tanh", SimpleNameTranslator() },
+        { "Truncate", SimpleNameTranslator() }
+    };
+
+    private static readonly Dictionary<string, InvocationTranslator> vectorExtensionMappings = new()
+    {
+        { nameof(VectorExtensions.GetComponent), VectorGetComponent },
+        { nameof(VectorExtensions.SetComponent), VectorSetComponent },
+    };
+    #endregion
+
     private static readonly Dictionary<string, TypeInvocationTranslator> s_mappings = GetMappings();
 
     private static Dictionary<string, TypeInvocationTranslator> GetMappings()
     {
         Dictionary<string, TypeInvocationTranslator> ret = [];
-
-        Dictionary<string, InvocationTranslator> builtinMappings = new()
-        {
-            { nameof(ShaderBuiltins.Abs), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Acos), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Acosh), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Asin), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Asinh), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Atan), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Atanh), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Cbrt), CubeRoot },
-            { nameof(ShaderBuiltins.Ceiling), SimpleNameTranslator("ceil") },
-            { nameof(ShaderBuiltins.Clamp), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.ClipToTextureCoordinates), ClipToTextureCoordinates },
-            { nameof(ShaderBuiltins.Cos), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Cosh), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Degrees), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Discard), Discard },
-            { nameof(ShaderBuiltins.Exp), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Exp2), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Floor), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.FMod), FMod },
-            { nameof(ShaderBuiltins.Frac), SimpleNameTranslator("fract") },
-            { nameof(ShaderBuiltins.InterlockedAdd), InterlockedAdd },
-            { nameof(ShaderBuiltins.Lerp), SimpleNameTranslator("mix") },
-            { nameof(ShaderBuiltins.Load), Load },
-            { nameof(ShaderBuiltins.Log), Log },
-            { nameof(ShaderBuiltins.Log2), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Log10), Log10 },
-            { nameof(ShaderBuiltins.Max), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Min), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Mod), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Mul), MatrixMul },
-            { nameof(ShaderBuiltins.Pow), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Radians), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Round), Round },
-            { nameof(ShaderBuiltins.Rsqrt), SimpleNameTranslator("inversesqrt") },
-            { nameof(ShaderBuiltins.Sample), Sample },
-            { nameof(ShaderBuiltins.SampleComparisonLevelZero), SampleComparisonLevelZero },
-            { nameof(ShaderBuiltins.SampleGrad), SampleGrad },
-            { nameof(ShaderBuiltins.Saturate), Saturate },
-            { nameof(ShaderBuiltins.Sign), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Sin), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Sinh), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.SmoothStep), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Sqrt), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Step), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Store), Store },
-            { nameof(ShaderBuiltins.Tan), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Tanh), SimpleNameTranslator() },
-            { nameof(ShaderBuiltins.Truncate), SimpleNameTranslator("trunc") },
-
-            { nameof(ShaderBuiltins.Ddx), SimpleNameTranslator("dFdx") },
-            { nameof(ShaderBuiltins.DdxFine), SimpleNameTranslator("dFdxFine") },
-            { nameof(ShaderBuiltins.Ddy), SimpleNameTranslator("dFdy") },
-            { nameof(ShaderBuiltins.DdyFine), SimpleNameTranslator("dFdyFine") },
-            { nameof(ShaderBuiltins.DispatchThreadID), DispatchThreadID },
-            { nameof(ShaderBuiltins.GroupThreadID), GroupThreadID },
-            { nameof(ShaderBuiltins.InstanceID), InstanceID },
-            { nameof(ShaderBuiltins.IsFrontFace), IsFrontFace },
-            { nameof(ShaderBuiltins.VertexID), VertexID }
-        };
         ret.Add(typeof(ShaderBuiltins).FullName!, new DictionaryTypeInvocationTranslator(builtinMappings));
-
-        Dictionary<string, InvocationTranslator> v2Mappings = new()
-        {
-            { ".ctor", VectorCtor },
-            { nameof(Vector2.Abs), SimpleNameTranslator() },
-            { nameof(Vector2.Add), BinaryOpTranslator("+") },
-            { nameof(Vector2.Clamp), SimpleNameTranslator() },
-            // Doesn't exist! { nameof(Vector2.Cos), SimpleNameTranslator("cos") },
-            { nameof(Vector2.Distance), SimpleNameTranslator("distance") },
-            { nameof(Vector2.DistanceSquared), DistanceSquared },
-            { nameof(Vector2.Divide), BinaryOpTranslator("/") },
-            { nameof(Vector2.Dot), SimpleNameTranslator() },
-            { nameof(Vector2.Lerp), SimpleNameTranslator("mix") },
-            { nameof(Vector2.Max), SimpleNameTranslator() },
-            { nameof(Vector2.Min), SimpleNameTranslator() },
-            { nameof(Vector2.Multiply), BinaryOpTranslator("*") },
-            { nameof(Vector2.Negate), Negate },
-            { nameof(Vector2.Normalize), SimpleNameTranslator() },
-            { nameof(Vector2.Reflect), SimpleNameTranslator() },
-            // Doesn't exist! { nameof(Vector2.Sin), SimpleNameTranslator("sin") },
-            { nameof(Vector2.SquareRoot), SimpleNameTranslator("sqrt") },
-            { nameof(Vector2.Subtract), BinaryOpTranslator("-") },
-            { nameof(Vector2.Length), SimpleNameTranslator() },
-            { nameof(Vector2.LengthSquared), LengthSquared },
-            { nameof(Vector2.Transform), Vector2Transform },
-            { nameof(Vector2.Zero), VectorStaticAccessor },
-            { nameof(Vector2.One), VectorStaticAccessor },
-            { nameof(Vector2.UnitX), VectorStaticAccessor },
-            { nameof(Vector2.UnitY), VectorStaticAccessor },
-        };
         ret.Add(typeof(Vector2).FullName!, new DictionaryTypeInvocationTranslator(v2Mappings));
-
-        Dictionary<string, InvocationTranslator> v3Mappings = new()
-        {
-            { ".ctor", VectorCtor },
-            { nameof(Vector3.Abs), SimpleNameTranslator() },
-            { nameof(Vector3.Add), BinaryOpTranslator("+") },
-            { nameof(Vector3.Clamp), SimpleNameTranslator() },
-            // Doesn't exist! { nameof(Vector3.Cos), SimpleNameTranslator("cos") },
-            { nameof(Vector3.Cross), SimpleNameTranslator() },
-            { nameof(Vector3.Distance), SimpleNameTranslator() },
-            { nameof(Vector3.DistanceSquared), DistanceSquared },
-            { nameof(Vector3.Divide), BinaryOpTranslator("/") },
-            { nameof(Vector3.Dot), SimpleNameTranslator() },
-            { nameof(Vector3.Lerp), SimpleNameTranslator("mix") },
-            { nameof(Vector3.Max), SimpleNameTranslator() },
-            { nameof(Vector3.Min), SimpleNameTranslator() },
-            { nameof(Vector3.Multiply), BinaryOpTranslator("*") },
-            { nameof(Vector3.Negate), Negate },
-            { nameof(Vector3.Normalize), SimpleNameTranslator() },
-            { nameof(Vector3.Reflect), SimpleNameTranslator() },
-            // Doesn't exist! { nameof(Vector3.Sin), SimpleNameTranslator("sin") },
-            { nameof(Vector3.SquareRoot), SimpleNameTranslator("sqrt") },
-            { nameof(Vector3.Subtract), BinaryOpTranslator("-") },
-            { nameof(Vector3.Length), SimpleNameTranslator() },
-            { nameof(Vector3.LengthSquared), LengthSquared },
-            { nameof(Vector3.Transform), Vector3Transform },
-            { nameof(Vector3.Zero), VectorStaticAccessor },
-            { nameof(Vector3.One), VectorStaticAccessor },
-            { nameof(Vector3.UnitX), VectorStaticAccessor },
-            { nameof(Vector3.UnitY), VectorStaticAccessor },
-            { nameof(Vector3.UnitZ), VectorStaticAccessor },
-        };
         ret.Add(typeof(Vector3).FullName!, new DictionaryTypeInvocationTranslator(v3Mappings));
-
-        Dictionary<string, InvocationTranslator> v4Mappings = new()
-        {
-            { ".ctor", VectorCtor },
-            { nameof(Vector4.Abs), SimpleNameTranslator() },
-            { nameof(Vector4.Add), BinaryOpTranslator("+") },
-            { nameof(Vector4.Clamp), SimpleNameTranslator() },
-            // Doesn't exist! { nameof(Vector4.Cos), SimpleNameTranslator("cos") },
-            { nameof(Vector4.Distance), SimpleNameTranslator() },
-            { nameof(Vector4.DistanceSquared), DistanceSquared },
-            { nameof(Vector4.Divide), BinaryOpTranslator("/") },
-            { nameof(Vector4.Dot), SimpleNameTranslator() },
-            { nameof(Vector4.Lerp), SimpleNameTranslator("mix") },
-            { nameof(Vector4.Max), SimpleNameTranslator() },
-            { nameof(Vector4.Min), SimpleNameTranslator() },
-            { nameof(Vector4.Multiply), BinaryOpTranslator("*") },
-            { nameof(Vector4.Negate), Negate },
-            { nameof(Vector4.Normalize), SimpleNameTranslator() },
-            // Doesn't exist! { nameof(Vector4.Reflect), SimpleNameTranslator("reflect") },
-            // Doesn't exist! { nameof(Vector4.Sin), SimpleNameTranslator("sin") },
-            { nameof(Vector4.SquareRoot), SimpleNameTranslator("sqrt") },
-            { nameof(Vector4.Subtract), BinaryOpTranslator("-") },
-            { nameof(Vector4.Length), SimpleNameTranslator() },
-            { nameof(Vector4.LengthSquared), LengthSquared },
-            { nameof(Vector4.Transform), Vector4Transform },
-            { nameof(Vector4.Zero), VectorStaticAccessor },
-            { nameof(Vector4.One), VectorStaticAccessor },
-            { nameof(Vector4.UnitX), VectorStaticAccessor },
-            { nameof(Vector4.UnitY), VectorStaticAccessor },
-            { nameof(Vector4.UnitZ), VectorStaticAccessor },
-            { nameof(Vector4.UnitW), VectorStaticAccessor },
-        };
         ret.Add(typeof(Vector4).FullName!, new DictionaryTypeInvocationTranslator(v4Mappings));
-
-        Dictionary<string, InvocationTranslator> u2Mappings = new()
-        {
-            { ".ctor", VectorCtor },
-        };
         ret.Add(typeof(UInt2).FullName!, new DictionaryTypeInvocationTranslator(u2Mappings));
         ret.Add(typeof(Int2).FullName!, new DictionaryTypeInvocationTranslator(u2Mappings));
-
-        Dictionary<string, InvocationTranslator> m4x4Mappings = new()
-        {
-            { ".ctor", MatrixCtor }
-        };
         ret.Add(typeof(Matrix4x4).FullName!, new DictionaryTypeInvocationTranslator(m4x4Mappings));
-
-        Dictionary<string, InvocationTranslator> mathfMappings = new()
-        {
-            // TODO Note cannot use nameof as MathF isn't included in this project...
-            { "Abs", SimpleNameTranslator() },
-            { "Acos", SimpleNameTranslator() },
-            { "Acosh", SimpleNameTranslator() },
-            { "Asin", SimpleNameTranslator() },
-            { "Asinh", SimpleNameTranslator() },
-            { "Atan", SimpleNameTranslator() },
-            { "Atan2", SimpleNameTranslator("atan") }, // Note atan supports both (x) and (y,x)
-            { "Atanh", SimpleNameTranslator() },
-            { "Cbrt", CubeRoot }, // We can calculate the 1/3rd power, which might not give exactly the same result?
-            { "Ceiling", SimpleNameTranslator("ceil") },
-            { "Cos", SimpleNameTranslator() },
-            { "Cosh", SimpleNameTranslator() },
-            { "Exp", SimpleNameTranslator() },
-            { "Floor", SimpleNameTranslator() },
-            // TODO IEEERemainder(Single, Single) - see https://stackoverflow.com/questions/1971645/is-math-ieeeremainderx-y-equivalent-to-xy
-            // How close is it to frac()?
-            { "Log", Log },
-            { "Log10", Log10 },
-            { "Max", SimpleNameTranslator() },
-            { "Min", SimpleNameTranslator() },
-            { "Pow", SimpleNameTranslator() },
-            { "Round", Round },
-            { "Sin", SimpleNameTranslator() },
-            { "Sinh", SimpleNameTranslator() },
-            { "Sqrt", SimpleNameTranslator() },
-            { "Tan", SimpleNameTranslator() },
-            { "Tanh", SimpleNameTranslator() },
-            { "Truncate", SimpleNameTranslator() }
-        };
         ret.Add(typeof(MathF).FullName!, new DictionaryTypeInvocationTranslator(mathfMappings));
-
         ret.Add(typeof(ShaderSwizzle).FullName!, new SwizzleTranslator());
-
-        Dictionary<string, InvocationTranslator> vectorExtensionMappings = new()
-        {
-            { nameof(VectorExtensions.GetComponent), VectorGetComponent },
-            { nameof(VectorExtensions.SetComponent), VectorSetComponent },
-        };
         ret.Add(typeof(VectorExtensions).FullName!, new DictionaryTypeInvocationTranslator(vectorExtensionMappings));
         return ret;
+    }
+
+    [Obsolete("Lol")]
+    public static string TranslateMethodInvocation(string type, string method, InvocationParameterInfo[] parameters)
+    {
+        if (GLSHInfo.knownFunctionsGlobal.TryGetValue(type, out var methodTable))
+        {
+            if (methodTable.TryGetValue(method, out var backendFunctionName))
+                return $"{backendFunctionName}({InvocationParameterInfo.FormatParameters(parameters)})";
+
+            if (method == ".ctor")
+                return BuiltinTypeCtor(type, parameters);
+            else
+                throw new ShaderGenerationException($"Unable to find suitable invocation for method {method} on type {type}");
+        }
+
+        if (s_mappings.TryGetValue(type, out var dict) && dict.GetTranslator(method, parameters, out var mappedValue))
+            return mappedValue(type, method, parameters);
+
+        throw new ShaderGenerationException($"Reference to unknown function: {type}.{method}");
     }
 
     private static string MatrixCtor(string typeName, string methodName, InvocationParameterInfo[] p)
@@ -254,20 +271,6 @@ public static class Glsl450KnownFunctions
     private static string VectorSetComponent(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
         return $"{parameters[0].identifier}[{parameters[1].identifier}] = {parameters[2].identifier}";
-    }
-
-    [Obsolete("Lol")]
-    public static string TranslateInvocation(string type, string method, InvocationParameterInfo[] parameters)
-    {
-        if (s_mappings.TryGetValue(type, out var dict))
-        {
-            if (dict.GetTranslator(method, parameters, out var mappedValue))
-            {
-                return mappedValue(type, method, parameters);
-            }
-        }
-
-        throw new ShaderGenerationException($"Reference to unknown function: {type}.{method}");
     }
 
     private static InvocationTranslator SimpleNameTranslator(string? nameTarget = null)
@@ -399,18 +402,6 @@ public static class Glsl450KnownFunctions
         return $"discard";
     }
 
-    private static string Saturate(string typeName, string methodName, InvocationParameterInfo[] parameters)
-    {
-        if (parameters.Length == 1)
-        {
-            return $"clamp({parameters[0].identifier}, 0, 1)";
-        }
-        else
-        {
-            throw new ShaderGenerationException("Unhandled number of arguments to ShaderBuiltins.Discard.");
-        }
-    }
-
     private static string ClipToTextureCoordinates(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
         string target = parameters[0].identifier;
@@ -446,10 +437,17 @@ public static class Glsl450KnownFunctions
     {
         return $"atomicAdd({parameters[0].identifier}[{parameters[1].identifier}], {parameters[2].identifier})";
     }
+    private static string BuiltinTypeCtor(string typeName, InvocationParameterInfo[] parameters)
+    {
+        bool foundName = GLSHInfo.knownTypesToGlslTypes.TryGetValue(typeName, out var backendTypeName);
+        ShaderGenerationException.ThrowIf(!foundName, "BuiltinTypeCtor translator was called on an invalid type: {0}", typeName);
+        string paramList = parameters.Length == 0 ? "0" : string.Join(", ", parameters.Select(p => p.identifier));
+        return $"{backendTypeName}({paramList})";
+    }
 
     private static string VectorCtor(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
-        GetVectorTypeInfo(typeName, out string shaderType, out int elementCount);
+        GetVectorTypeInfo(typeName, out string backendTypeName, out int elementCount);
         string paramList;
         if (parameters.Length == 0)
         {
@@ -476,20 +474,20 @@ public static class Glsl450KnownFunctions
             paramList = sb.ToString();
         }
 
-        return $"{shaderType}({paramList})";
+        return $"{backendTypeName}({paramList})";
     }
 
     private static string VectorStaticAccessor(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
         Debug.Assert(parameters.Length == 0);
-        GetVectorTypeInfo(typeName, out string shaderType, out int elementCount);
+        GetVectorTypeInfo(typeName, out string backendTypeName, out int elementCount);
         if (methodName == "Zero")
         {
-            return $"{shaderType}({string.Join(", ", Enumerable.Repeat("0", elementCount))})";
+            return $"{backendTypeName}({string.Join(", ", Enumerable.Repeat("0", elementCount))})";
         }
         else if (methodName == "One")
         {
-            return $"{shaderType}({string.Join(", ", Enumerable.Repeat("1", elementCount))})";
+            return $"{backendTypeName}({string.Join(", ", Enumerable.Repeat("1", elementCount))})";
         }
         else if (methodName == "UnitX")
         {
@@ -497,7 +495,7 @@ public static class Glsl450KnownFunctions
             if (elementCount == 2) { paramList = "1, 0"; }
             else if (elementCount == 3) { paramList = "1, 0, 0"; }
             else { paramList = "1, 0, 0, 0"; }
-            return $"{shaderType}({paramList})";
+            return $"{backendTypeName}({paramList})";
         }
         else if (methodName == "UnitY")
         {
@@ -505,18 +503,18 @@ public static class Glsl450KnownFunctions
             if (elementCount == 2) { paramList = "0, 1"; }
             else if (elementCount == 3) { paramList = "0, 1, 0"; }
             else { paramList = "0, 1, 0, 0"; }
-            return $"{shaderType}({paramList})";
+            return $"{backendTypeName}({paramList})";
         }
         else if (methodName == "UnitZ")
         {
             string paramList;
             if (elementCount == 3) { paramList = "0, 0, 1"; }
             else { paramList = "0, 0, 1, 0"; }
-            return $"{shaderType}({paramList})";
+            return $"{backendTypeName}({paramList})";
         }
         else if (methodName == "UnitW")
         {
-            return $"{shaderType}(0, 0, 0, 1)";
+            return $"{backendTypeName}(0, 0, 0, 1)";
         }
         else
         {
@@ -554,28 +552,14 @@ public static class Glsl450KnownFunctions
         return $"{parameters[1].identifier} * {vecParam}";
     }
 
-    private static void GetVectorTypeInfo(string name, out string shaderType, out int elementCount)
+    private static void GetVectorTypeInfo(string name, out string backendTypeName, out int elementCount)
     {
-        if (name == typeof(Vector2).FullName!) { shaderType = "vec2"; elementCount = 2; }
-        else if (name == typeof(Vector3).FullName!) { shaderType = "vec3"; elementCount = 3; }
-        else if (name == typeof(Vector4).FullName!) { shaderType = "vec4"; elementCount = 4; }
-        else if (name == typeof(Int2).FullName!) { shaderType = "ivec2"; elementCount = 2; }
-        else if (name == typeof(UInt2).FullName!) { shaderType = "uvec2"; elementCount = 2; }
+        if (name == typeof(Vector2).FullName!) { backendTypeName = "vec2"; elementCount = 2; }
+        else if (name == typeof(Vector3).FullName!) { backendTypeName = "vec3"; elementCount = 3; }
+        else if (name == typeof(Vector4).FullName!) { backendTypeName = "vec4"; elementCount = 4; }
+        else if (name == typeof(Int2).FullName!) { backendTypeName = "ivec2"; elementCount = 2; }
+        else if (name == typeof(UInt2).FullName!) { backendTypeName = "uvec2"; elementCount = 2; }
         else { throw new ShaderGenerationException("VectorCtor translator was called on an invalid type: " + name); }
-    }
-
-    private static string CubeRoot(string typeName, string methodName, InvocationParameterInfo[] parameters)
-    {
-        string pType = parameters[0].fullTypeName;
-        if (pType == typeof(float).FullName! || pType == "float") // TODO Why are we getting float?
-        {
-            return $"pow({parameters[0].identifier}, 0.333333333333333)";
-        }
-
-        GetVectorTypeInfo(pType, out string shaderType, out int elementCount);
-        // TODO All backends but Vulkan return NaN for Cbrt of a -ve number...
-        return
-            $"pow({parameters[0].identifier}, {shaderType}({string.Join(",", Enumerable.Range(0, elementCount).Select(i => "0.333333333333333"))}))";
     }
 
     private static string Log(string typeName, string methodName, InvocationParameterInfo[] parameters)
@@ -603,12 +587,6 @@ public static class Glsl450KnownFunctions
         return $"(log({parameters[0].identifier})/log({parameters[1].identifier}))";
     }
 
-    private static string Log10(string typeName, string methodName, InvocationParameterInfo[] parameters)
-    {
-        // Divide by Log(10) = 2.30258509299405 as OpenGL doesn't suppport log10 natively
-        return $"(log({parameters[0].identifier})/2.30258509299405)";
-    }
-
     private static string Round(string typeName, string methodName, InvocationParameterInfo[] parameters)
     {
         // TODO Should we use RoundEven here for safety??
@@ -622,49 +600,5 @@ public static class Glsl450KnownFunctions
         // Round(Single, Int32, MidpointRounding)
         // Round(Single, MidpointRounding)
         throw new NotImplementedException();
-    }
-
-    private static string FMod(string typeName, string methodName, InvocationParameterInfo[] parameters)
-    {
-        // D3D & Vulkan return Max when max < min, but OpenGL returns Min, so we need
-        // to correct by returning Max when max < min.
-        bool isFloat = parameters[1].fullTypeName == typeof(float).FullName! || parameters[1].fullTypeName == "float";
-        string p0 = $"{parameters[0].identifier}`";
-        string p1 = $"{parameters[1].identifier}{(isFloat ? string.Empty : "`")}";
-        return AddCheck(parameters[0].fullTypeName,
-            $"({p0}-{p1}*trunc({p0}/{p1}))");
-    }
-
-    private static readonly string[] _vectorAccessors = { "x", "y", "z", "w" };
-
-    private static readonly HashSet<string> _oneDimensionalTypes =
-        new(new[]
-            {
-                typeof(float).FullName!,
-                "float",
-                typeof(int).FullName!,
-                "int",
-                typeof(uint).FullName!,
-                "uint"
-            },
-            StringComparer.InvariantCultureIgnoreCase);
-
-    /// <summary>
-    /// Implements a check for each element of a vector.
-    /// </summary>
-    /// <param name="typeName">Name of the type.</param>
-    /// <param name="check">The check.</param>
-    /// <returns></returns>
-    private static string AddCheck(string typeName, string check)
-    {
-        if (_oneDimensionalTypes.Contains(typeName))
-        {
-            // The check can stay as it is, strip the '`' characters.
-            return check.Replace("`", string.Empty);
-        }
-
-        GetVectorTypeInfo(typeName, out string shaderType, out int elementCount);
-        return
-            $"{shaderType}({string.Join(",", _vectorAccessors.Take(elementCount).Select(a => check.Replace("`", "." + a)))})";
     }
 }

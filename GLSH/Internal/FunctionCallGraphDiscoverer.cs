@@ -19,8 +19,8 @@ internal class FunctionCallGraphDiscoverer
     {
         Compilation = compilation;
         bool foundDecl = GetDeclaration(rootMethod, out var declaration);
-        _rootNode = new CallGraphNode(rootMethod, declaration);
         Debug.Assert(foundDecl);
+        _rootNode = new CallGraphNode(rootMethod, declaration);
         _nodesByName.Add(rootMethod, _rootNode);
     }
 
@@ -91,7 +91,8 @@ internal class FunctionCallGraphDiscoverer
     {
         decl = null;
         bool isConstructor = name.methodName == ".ctor";
-        INamedTypeSymbol symb = Compilation.GetTypeByMetadataName(name.containingTypeName);
+        INamedTypeSymbol symb = Compilation.GetTypeByMetadataName(name.containingTypeName)!;
+
         foreach (SyntaxReference synRef in symb.DeclaringSyntaxReferences)
         {
             SyntaxNode node = synRef.GetSyntax();
@@ -183,6 +184,7 @@ internal class FunctionCallGraphDiscoverer
 
         public TypeAndMethodName[] GetChildren() => [.. _children];
     }
+
 }
 
 internal class CallGraphNode

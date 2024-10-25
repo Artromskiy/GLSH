@@ -20,6 +20,7 @@ namespace GlmSharpGenerator.Types
 
             yield return new Function(BaseType, "Length")
             {
+                GlslName = "length",
                 Static = true,
                 Parameters = this.TypedArgs("v"),
                 CodeString = Sqrt(Fields.Select(f => Sqr(f, "v")).Aggregated(" + ")),
@@ -27,6 +28,7 @@ namespace GlmSharpGenerator.Types
             };
             yield return new Function(BaseType, "Distance")
             {
+                GlslName = "distance",
                 Static = true,
                 Parameters = this.LhsRhs(),
                 CodeString = $"{Name}.Length(lhs - rhs)",
@@ -34,6 +36,7 @@ namespace GlmSharpGenerator.Types
             };
             yield return new Function(BaseType, "Dot")
             {
+                GlslName = "dot",
                 Static = true,
                 Parameters = this.LhsRhs(),
                 CodeString = Fields.Format(DotFormatString).Aggregated(" + "),
@@ -42,6 +45,7 @@ namespace GlmSharpGenerator.Types
             if (Components == 3)
                 yield return new Function(this, "Cross")
                 {
+                    GlslName = "cross",
                     Static = true,
                     Parameters = this.LhsRhs(),
                     CodeString = Construct(this, "lhs.y * rhs.z - lhs.z * rhs.y, lhs.z * rhs.x - lhs.x * rhs.z, lhs.x * rhs.y - lhs.y * rhs.x"),
@@ -49,6 +53,7 @@ namespace GlmSharpGenerator.Types
                 };
             yield return new Function(this, "Normalize")
             {
+                GlslName = "normalize",
                 Static = true,
                 Parameters = this.TypedArgs("v"),
                 CodeString = $"v / {Name}.Length(v)",
@@ -56,6 +61,7 @@ namespace GlmSharpGenerator.Types
             };
             yield return new Function(this, "FaceForward")
             {
+                GlslName = "faceforward",
                 Static = true,
                 Parameters = this.TypedArgs("N", "I", "Nref"),
                 CodeString = $"{Name}.Dot(Nref, I) < 0 ? N : -N",
@@ -63,6 +69,7 @@ namespace GlmSharpGenerator.Types
             };
             yield return new Function(this, "Reflect")
             {
+                GlslName = "reflect",
                 Static = true,
                 Parameters = this.TypedArgs("I", "N"),
                 CodeString = $"I - 2 * {Name}.Dot(N, I) * N",
@@ -70,6 +77,7 @@ namespace GlmSharpGenerator.Types
             };
             yield return new Function(this, "Refract")
             {
+                GlslName = "refract",
                 Static = true,
                 Parameters = this.TypedArgs("I", "N").SConcat(BaseTypeName + " eta"),
                 Code = new[]
@@ -82,6 +90,7 @@ namespace GlmSharpGenerator.Types
                 Comment = "Calculate the refraction direction for an incident vector (The input parameters I and N should be normalized in order to achieve the desired result)."
             };
         }
+
         private string Sqrt(string s) => $"{BaseTypeName}.Sqrt({s})";
 
         public static string Sqr(string s, string variable) => $"{variable}.{s}*{variable}.{s}";

@@ -46,9 +46,7 @@ public static class TypeSizeCache
     public static AlignmentInfo Get(ITypeSymbol symbol)
     {
         Debug.Assert(symbol.Kind != SymbolKind.ArrayType);
-        return s_cachedSizes.TryGetValue(symbol, out AlignmentInfo alignmentInfo)
-            ? alignmentInfo
-            : Analyze(symbol);
+        return s_cachedSizes.TryGetValue(symbol, out AlignmentInfo alignmentInfo) ? alignmentInfo : Analyze(symbol);
     }
 
     private static AlignmentInfo Analyze(ITypeSymbol typeSymbol)
@@ -60,9 +58,7 @@ public static class TypeSizeCache
         string symbolFullName = typeSymbol.GetFullMetadataName();
 
         // Get any specific shader alignment
-        int? specificShaderAlignment = s_shaderAlignments.TryGetValue(symbolFullName, out int sa)
-            ? sa
-            : null;
+        int? specificShaderAlignment = s_shaderAlignments.TryGetValue(symbolFullName, out int sa)? sa: null;
 
         // Check if this in our list of known sizes
         if (s_knownSizes.TryGetValue(symbolFullName, out int knownSize))

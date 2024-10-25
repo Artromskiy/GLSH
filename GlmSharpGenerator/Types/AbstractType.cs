@@ -39,6 +39,16 @@ namespace GlmSharpGenerator.Types
         public virtual string MathClass => BaseType?.MathClass;
 
         /// <summary>
+        /// Additional Attributes for type
+        /// </summary>
+        public virtual IEnumerable<string> Attributes =>
+        [
+            "Serializable",
+            $"DataContract{DataContractArg}",
+            "StructLayout(LayoutKind.Sequential)"
+        ];
+
+        /// <summary>
         /// Base name (e.g. vec, mat, quat)
         /// </summary>
         public string BaseName { get; set; } = "vec";
@@ -107,7 +117,7 @@ namespace GlmSharpGenerator.Types
         /// <summary>
         /// All members
         /// </summary>
-        private Member[] members;
+        public Member[] members;
         private Field[] fields;
         private Constructor[] constructors;
         private Property[] properties;
@@ -314,9 +324,8 @@ namespace GlmSharpGenerator.Types
                 yield return "namespace " + Namespace;
                 yield return "{";
                 foreach (var line in TypeComment.AsComment()) yield return line.Indent();
-                yield return "    [Serializable]";
-                yield return $"    [DataContract{DataContractArg}]";
-                yield return "    [StructLayout(LayoutKind.Sequential)]";
+                foreach (var item in Attributes)
+                    yield return $"[{item}]".Indent();
                 yield return "    public struct " + Name + (baseclasses.Length == 0 ? "" : " : " + baseclasses.CommaSeparated());
                 yield return "    {";
 

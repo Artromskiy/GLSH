@@ -44,7 +44,7 @@ namespace GlmSharpGenerator.Members
         {
             Name = name;
             Type = type;
-            Attributes = new[] { "DataMember" };
+            //Attributes = new[] { "DataMember" };
         }
     }
 }

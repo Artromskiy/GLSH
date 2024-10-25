@@ -321,7 +321,6 @@ public abstract class GlslBackendBase : LanguageBackend
                 break;
             case ShaderResourceKind.Texture2DMS:
                 WriteTexture2DMS(sb, rd);
-                function.UsesTexture2DMS = true;
                 break;
             case ShaderResourceKind.Sampler:
                 WriteSampler(sb, rd);

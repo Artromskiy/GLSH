@@ -1,6 +1,5 @@
 ﻿using GlmSharpGenerator.Members;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace GlmSharpGenerator.Types
 {
@@ -35,7 +34,7 @@ namespace GlmSharpGenerator.Types
             if (Rows != Columns)
                 yield break;
 
-
+            /*
             yield return new Function(this, "Inverse")
             {
                 GlslName = "inverse",
@@ -44,6 +43,8 @@ namespace GlmSharpGenerator.Types
                 Parameters = this.TypedArgs("v"),
                 CodeString = $"{Name}.Adjugate(v) / {Name}.Determinant(v)",
             };
+            */
+
             yield return new Function(BaseType, "Determinant")
             {
                 GlslName = "determinant",
@@ -52,6 +53,7 @@ namespace GlmSharpGenerator.Types
                 CodeString = HelperDet(ConvertArg(HelperFieldsOf(Rows), "v")),
             };
 
+            /*
             yield return new Function(this, "Divide")
             {
                 Static = true,
@@ -60,8 +62,11 @@ namespace GlmSharpGenerator.Types
                 Parameters = [$"{Name} A", $"{Name} B"],
                 Code = [$"A * {Name}.Inverse(B)"]
             };
+            */
+
+            /*
             var adjugateFields = FieldsTransposed.Select(f => HelperDet(HelperSubmatrix(HelperFieldsOf(Rows), ColOf(f), RowOf(f)), ColOf(f) + RowOf(f))).CommaSeparated();
-            adjugateFields = adjugateFields.Replace("m", "v.m");
+            adjugateFields = adjugateFields.Replace("m", "v");
             yield return new Function(this, "Adjugate")
             {
                 Visibility = "private",
@@ -69,6 +74,7 @@ namespace GlmSharpGenerator.Types
                 Parameters = this.TypedArgs("v"),
                 CodeString = $"new {Name}({adjugateFields})",
             };
+            */
         }
 
         private static IEnumerable<string> OutProduct(VectorType col, VectorType row, string colP, string rowP)
@@ -88,7 +94,7 @@ namespace GlmSharpGenerator.Types
         {
             for (int i = 0; i < parameters.GetLength(0); i++)
                 for (int j = 0; j < parameters.GetLength(1); j++)
-                    parameters[i, j] = arg + "." + parameters[i, j];
+                    parameters[i, j] = $"{arg}{parameters[i, j]}";
             return parameters;
         }
     }

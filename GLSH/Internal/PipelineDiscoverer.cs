@@ -12,9 +12,9 @@ namespace GLSH.Compiler.Internal;
 internal class PipelineDiscoverer : CSharpSyntaxWalker
 {
     private readonly HashSet<string> _discoveredNames = [];
-    private readonly List<ShaderSetInfo> _shaderSets = [];
+    private readonly List<PipelineInfo> _discoveredPipelines = [];
     private readonly Compilation _compilation;
-    public ShaderSetInfo[] ShaderSets => [.. _shaderSets];
+    public PipelineInfo[] PipelineInfos => [.. _discoveredPipelines];
 
     private const int AttributeLength = 9;
 
@@ -31,7 +31,7 @@ internal class PipelineDiscoverer : CSharpSyntaxWalker
     public override void VisitClassDeclaration(ClassDeclarationSyntax node) => VisitTypeDeclaratin(node);
     public override void VisitStructDeclaration(StructDeclarationSyntax node) => VisitTypeDeclaratin(node);
 
-    [Obsolete("Rewrite this hell")]
+
     private void VisitTypeDeclaratin(TypeDeclarationSyntax node)
     {
         var model = GetOrCreateSemanticModel(node.SyntaxTree);
@@ -44,7 +44,7 @@ internal class PipelineDiscoverer : CSharpSyntaxWalker
         if (isGraphicsPipeline && isComputePipeline)
         {
             var typeName = model.GetTypeInfo(node).Type?.GetFullMetadataName();
-            throw new ShaderGenerationException($"{typeName} contains more than one method marked with {typeof(VertexEntryPointAttribute).FullName}. Multiple entry points are not supported.");
+            throw new ShaderGenerationException($"{typeName} is marked with {nameof(GraphicsPipelineAttribute)} and {nameof(ComputePipelineAttribute)} at the same time. This is not supported.");
         }
         if (isGraphicsPipeline)
         {
@@ -58,51 +58,42 @@ internal class PipelineDiscoverer : CSharpSyntaxWalker
         }
     }
 
-
-    [Obsolete("Rewrite this hell")]
     private void ValidateGraphicsPipeline(TypeDeclarationSyntax classDeclarationSyntax, GraphicsPipelineAttribute data)
     {
         string? pipelineName = data.name;
         var model = GetOrCreateSemanticModel(classDeclarationSyntax.SyntaxTree);
 
-        var vertEntryPoints = classDeclarationSyntax.Members.OfType<MethodDeclarationSyntax>().Select(methodSyntax =>
-        {
-            AttributeHelper.TryGetAttribute<VertexEntryPointAttribute>(methodSyntax, model, out var attributeSyntax);
-            return (methodSyntax, attributeSyntax);
-        }).Where(s => s.attributeSyntax is not null).ToArray();
+        var vertEntryPoints = GetEntryPoints<VertexEntryPointAttribute>(classDeclarationSyntax, model);
 
-        var fragEntryPoints = classDeclarationSyntax.Members.OfType<MethodDeclarationSyntax>().Select(methodSyntax =>
-        {
-            AttributeHelper.TryGetAttribute<FragmentEntryPointAttribute>(methodSyntax, model, out var attributeSyntax);
-            return (methodSyntax, attributeSyntax);
-        }).Where(s => s.attributeSyntax is not null).ToArray();
+        var fragEntryPoints = GetEntryPoints<FragmentEntryPointAttribute>(classDeclarationSyntax, model);
 
-        if (vertEntryPoints.Length > 1 || fragEntryPoints.Length > 1 || fragEntryPoints.Length + vertEntryPoints.Length == 0)
+        if (vertEntryPoints.Length != 1 || fragEntryPoints.Length != 1)
         {
             var typeName = model.GetTypeInfo(classDeclarationSyntax).Type?.GetFullMetadataName();
             if (vertEntryPoints.Length > 1)
-                throw new ShaderGenerationException($"{typeName} contains more than one method marked with {typeof(VertexEntryPointAttribute).FullName}. Multiple entry points are not supported.");
+                throw new ShaderGenerationException($"{typeName} contains more than one method marked with {nameof(VertexEntryPointAttribute)}. Multiple entry points are not supported.");
             if (fragEntryPoints.Length > 1)
-                throw new ShaderGenerationException($"{typeName} contains more than one method marked with {typeof(FragmentEntryPointAttribute).FullName}. Multiple entry points are not supported.");
-            if (fragEntryPoints.Length + vertEntryPoints.Length == 0)
-                throw new ShaderGenerationException($"{typeName} must specify at least one shader name.");
+                throw new ShaderGenerationException($"{typeName} contains more than one method marked with {nameof(FragmentEntryPointAttribute)}. Multiple entry points are not supported.");
+            else
+                throw new ShaderGenerationException($"{typeName} must specify entry points with {nameof(VertexEntryPointAttribute)} and {nameof(FragmentEntryPointAttribute)}.");
         }
+
+        string? vertexEntryPointFullName = model.GetDeclaredSymbol(vertEntryPoints[0].methodSyntax)?.GetFullMetadataName();
+        string? fragmentEntryPointFullName = model.GetDeclaredSymbol(fragEntryPoints[0].methodSyntax)?.GetFullMetadataName();
+
         TypeAndMethodName? vsName = null;
         TypeAndMethodName? fsName = null;
 
-        string? vertexEntryPointFullName = model.GetDeclaredSymbol(vertEntryPoints.FirstOrDefault().methodSyntax)?.GetFullMetadataName();
-        string? fragmentEntryPintFullName = model.GetDeclaredSymbol(fragEntryPoints.FirstOrDefault().methodSyntax)?.GetFullMetadataName();
+        ShaderGenerationException.ThrowIf(vertexEntryPointFullName == null || !TypeAndMethodName.TryCreate(vertexEntryPointFullName, out vsName),
+            "{0} has an incomplete or invalid vertex shader name.", nameof(GraphicsPipelineAttribute));
 
-        if (vertexEntryPointFullName != null && !TypeAndMethodName.Get(vertexEntryPointFullName, out vsName))
-            throw new ShaderGenerationException("ShaderSetAttribute has an incomplete or invalid vertex shader name.");
-
-        if (fragmentEntryPintFullName != null && !TypeAndMethodName.Get(fragmentEntryPintFullName, out fsName))
-            throw new ShaderGenerationException("ShaderSetAttribute has an incomplete or invalid fragment shader name.");
+        ShaderGenerationException.ThrowIf(fragmentEntryPointFullName == null || !TypeAndMethodName.TryCreate(fragmentEntryPointFullName, out fsName),
+            "{0} has an incomplete or invalid fragment shader name.", nameof(GraphicsPipelineAttribute));
 
         if (!_discoveredNames.Add(pipelineName))
-            throw new ShaderGenerationException("Multiple shader sets with the same name were defined: " + pipelineName);
+            throw new ShaderGenerationException("Multiple pipelines with the same name were defined: " + pipelineName);
 
-        _shaderSets.Add(new(pipelineName, vsName, fsName));
+        _discoveredPipelines.Add(new(pipelineName, vsName, fsName));
     }
 
     private void ValidateComputePipeline(TypeDeclarationSyntax classDeclarationSyntax, ComputePipelineAttribute data)
@@ -110,7 +101,15 @@ internal class PipelineDiscoverer : CSharpSyntaxWalker
         throw new NotImplementedException();
     }
 
+    private static (MethodDeclarationSyntax methodSyntax, AttributeSyntax? attributeSyntax)[] GetEntryPoints<T>(TypeDeclarationSyntax classDeclarationSyntax, SemanticModel model) where T : Attribute
+    {
+        return classDeclarationSyntax.Members.OfType<MethodDeclarationSyntax>().Select(methodSyntax =>
+        {
+            AttributeHelper.TryGetAttribute<T>(methodSyntax, model, out var attributeSyntax);
+            return (methodSyntax, attributeSyntax);
+        }).Where(s => s.attributeSyntax is not null).ToArray();
 
+    }
 
     private SemanticModel GetOrCreateSemanticModel(SyntaxTree tree)
     {

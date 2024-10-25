@@ -1,13 +1,19 @@
 using System;
-using System.Runtime.CompilerServices;
+using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
+using System.Numerics;
+using System.Linq;
 
 // ReSharper disable InconsistentNaming
 
 namespace GLSH
 {
-
+    
     /// <summary>
     /// A vector of type bool with 3 components.
     /// </summary>
@@ -18,36 +24,32 @@ namespace GLSH
     {
 
         #region Fields
-
+        
         /// <summary>
         /// x-component
         /// </summary>
-        [DataMember]
         public bool x;
-
+        
         /// <summary>
         /// y-component
         /// </summary>
-        [DataMember]
         public bool y;
-
+        
         /// <summary>
         /// z-component
         /// </summary>
-        [DataMember]
         public bool z;
-
+        
         /// <summary>
         /// Returns the number of components (3).
         /// </summary>
-        [DataMember]
         public const int Count = 3;
 
         #endregion
 
 
         #region Constructors
-
+        
         /// <summary>
         /// Component-wise constructor
         /// </summary>
@@ -57,7 +59,7 @@ namespace GLSH
             this.y = y;
             this.z = z;
         }
-
+        
         /// <summary>
         /// all-same-value constructor
         /// </summary>
@@ -67,7 +69,7 @@ namespace GLSH
             this.y = v;
             this.z = v;
         }
-
+        
         /// <summary>
         /// from-vector constructor (empty fields are zero/false)
         /// </summary>
@@ -77,7 +79,7 @@ namespace GLSH
             this.y = v.y;
             this.z = false;
         }
-
+        
         /// <summary>
         /// from-vector-and-value constructor
         /// </summary>
@@ -87,7 +89,7 @@ namespace GLSH
             this.y = v.y;
             this.z = z;
         }
-
+        
         /// <summary>
         /// from-vector constructor
         /// </summary>
@@ -97,7 +99,7 @@ namespace GLSH
             this.y = v.y;
             this.z = v.z;
         }
-
+        
         /// <summary>
         /// from-vector constructor (additional fields are truncated)
         /// </summary>
@@ -112,7 +114,7 @@ namespace GLSH
 
 
         #region Indexer
-
+        
         /// <summary>
         /// Gets/Sets a specific indexed component (a bit slower than direct access).
         /// </summary>
@@ -136,7 +138,7 @@ namespace GLSH
 
 
         #region Properties
-
+        
         /// <summary>
         /// Gets or sets the specified subset of components.
         /// </summary>
@@ -152,7 +154,7 @@ namespace GLSH
                 y = value.y;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified subset of components.
         /// </summary>
@@ -168,7 +170,7 @@ namespace GLSH
                 z = value.y;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified subset of components.
         /// </summary>
@@ -184,7 +186,7 @@ namespace GLSH
                 z = value.y;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified subset of components.
         /// </summary>
@@ -201,7 +203,7 @@ namespace GLSH
                 z = value.z;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified subset of components.
         /// </summary>
@@ -217,7 +219,7 @@ namespace GLSH
                 y = value.y;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified subset of components.
         /// </summary>
@@ -233,7 +235,7 @@ namespace GLSH
                 z = value.y;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified subset of components.
         /// </summary>
@@ -249,7 +251,7 @@ namespace GLSH
                 z = value.y;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified subset of components.
         /// </summary>
@@ -266,7 +268,7 @@ namespace GLSH
                 z = value.z;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified RGBA component.
         /// </summary>
@@ -281,7 +283,7 @@ namespace GLSH
                 x = value;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified RGBA component.
         /// </summary>
@@ -296,7 +298,7 @@ namespace GLSH
                 y = value;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified RGBA component.
         /// </summary>
@@ -316,27 +318,27 @@ namespace GLSH
 
 
         #region Operators
-
+        
         /// <summary>
         /// 
         /// </summary>
-        public static bool operator ==(bool3 lhs, bool3 rhs) => lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
-
+        public static bool operator==(bool3 lhs, bool3 rhs) => lhs.x == rhs.x&&lhs.y == rhs.y&&lhs.z == rhs.z;
+        
         /// <summary>
         /// 
         /// </summary>
-        public static bool operator !=(bool3 lhs, bool3 rhs) => lhs.x != rhs.x || lhs.y != rhs.y || lhs.z != rhs.z;
+        public static bool operator!=(bool3 lhs, bool3 rhs) => lhs.x != rhs.x||lhs.y != rhs.y||lhs.z != rhs.z;
 
         #endregion
 
 
         #region Functions
-
+        
         /// <summary>
         /// Returns a string representation of this vector using ', ' as a seperator.
         /// </summary>
         public override string ToString() => ToString(", ");
-
+        
         /// <summary>
         /// Returns a string representation of this vector using a provided seperator.
         /// </summary>
@@ -346,37 +348,37 @@ namespace GLSH
 
 
         #region Static Functions
-
+        
         /// <summary>
         /// 
         /// </summary>
-        public static bool Any(bool3 v) => v.x || v.y || v.z;
-
+        public static bool Any(bool3 v) => v.x||v.y||v.z;
+        
         /// <summary>
         /// 
         /// </summary>
-        public static bool All(bool3 v) => v.x && v.y && v.z;
+        public static bool All(bool3 v) => v.x&&v.y&&v.z;
 
         #endregion
 
 
         #region Component-Wise Static Functions
-
+        
         /// <summary>
         /// Returns a bool3 from component-wise application of Equal (lhs == rhs).
         /// </summary>
         public static bool3 Equal(bool3 lhs, bool3 rhs) => new bool3(lhs.x == rhs.x, lhs.y == rhs.y, lhs.z == rhs.z);
-
+        
         /// <summary>
         /// Returns a bool3 from component-wise application of NotEqual (lhs != rhs).
         /// </summary>
         public static bool3 NotEqual(bool3 lhs, bool3 rhs) => new bool3(lhs.x != rhs.x, lhs.y != rhs.y, lhs.z != rhs.z);
-
+        
         /// <summary>
         /// Returns a bool3 from component-wise application of Not (!v).
         /// </summary>
         public static bool3 Not(bool3 v) => new bool3(!v.x, !v.y, !v.z);
-
+        
         /// <summary>
         /// Returns a bool3 from component-wise application of Mix (a ? y : x).
         /// </summary>

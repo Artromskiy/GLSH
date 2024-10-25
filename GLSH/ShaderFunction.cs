@@ -10,15 +10,6 @@ public class ShaderFunction
     public readonly ShaderFunctionType type;
     public readonly UInt3 computeGroupCounts;
     public bool IsEntryPoint => type != ShaderFunctionType.Normal;
-    public bool UsesVertexID { get; internal set; }
-    public bool UsesInstanceID { get; internal set; }
-    public bool UsesDispatchThreadID { get; internal set; }
-    public bool UsesGroupThreadID { get; internal set; }
-    public bool UsesFrontFace { get; internal set; }
-    public bool UsesTexture2DMS { get; internal set; }
-    public bool UsesStructuredBuffer { get; internal set; }
-    public bool UsesRWTexture2D { get; internal set; }
-    public bool UsesInterlockedAdd { get; internal set; }
 
     public ShaderFunction(
         string declaringType,

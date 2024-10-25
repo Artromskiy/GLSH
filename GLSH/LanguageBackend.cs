@@ -129,24 +129,16 @@ public abstract class LanguageBackend
         return result;
     }
 
-    [Obsolete("Rewrite this hell")]
     internal string CSharpToShaderType(TypeReference typeReference)
     {
         ArgumentNullException.ThrowIfNull(typeReference);
-
-        string? typeNameString;
-        if (typeReference.isEnum)
-            typeNameString = typeReference.enumTypeName!;
-        else
-            typeNameString = typeReference.name.Trim(); // why we Trim?
-
-        return CSharpToShaderTypeCore(typeNameString);
+        string? typeNameString = typeReference.isEnum? typeReference.enumTypeName: typeReference.name;
+        return CSharpToShaderType(typeNameString);
     }
 
-    internal string CSharpToShaderType(string fullType)
+    internal string CSharpToShaderType(string? fullType)
     {
         ArgumentNullException.ThrowIfNull(fullType);
-
         return CSharpToShaderTypeCore(fullType);
     }
 
@@ -159,6 +151,7 @@ public abstract class LanguageBackend
             ctx.AddStructure(sd);
     }
 
+    [Obsolete("WTF?")]
     internal virtual bool IsIndexerAccess(SymbolInfo member)
     {
         return member.Symbol.ContainingType.GetFullMetadataName() == typeof(Matrix4x4).FullName! &&

@@ -42,6 +42,7 @@ internal static class Program
             var output = shaderGenResult.GetOutput();
             var fragment = output[0].fragmentShaderCode;
             var vertex = output[0].vertexShaderCode;
+            Debug.Assert(false);
         }
         catch (Exception e) when (!Debugger.IsAttached)
         {

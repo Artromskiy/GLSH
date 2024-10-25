@@ -1,13 +1,19 @@
 using System;
-using System.Runtime.CompilerServices;
+using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
+using System.Numerics;
+using System.Linq;
 
 // ReSharper disable InconsistentNaming
 
 namespace GLSH
 {
-
+    
     /// <summary>
     /// A vector of type int with 2 components.
     /// </summary>
@@ -18,30 +24,27 @@ namespace GLSH
     {
 
         #region Fields
-
+        
         /// <summary>
         /// x-component
         /// </summary>
-        [DataMember]
         public int x;
-
+        
         /// <summary>
         /// y-component
         /// </summary>
-        [DataMember]
         public int y;
-
+        
         /// <summary>
         /// Returns the number of components (2).
         /// </summary>
-        [DataMember]
         public const int Count = 2;
 
         #endregion
 
 
         #region Constructors
-
+        
         /// <summary>
         /// Component-wise constructor
         /// </summary>
@@ -50,7 +53,7 @@ namespace GLSH
             this.x = x;
             this.y = y;
         }
-
+        
         /// <summary>
         /// all-same-value constructor
         /// </summary>
@@ -59,7 +62,7 @@ namespace GLSH
             this.x = v;
             this.y = v;
         }
-
+        
         /// <summary>
         /// from-vector constructor
         /// </summary>
@@ -68,7 +71,7 @@ namespace GLSH
             this.x = v.x;
             this.y = v.y;
         }
-
+        
         /// <summary>
         /// from-vector constructor (additional fields are truncated)
         /// </summary>
@@ -77,7 +80,7 @@ namespace GLSH
             this.x = v.x;
             this.y = v.y;
         }
-
+        
         /// <summary>
         /// from-vector constructor (additional fields are truncated)
         /// </summary>
@@ -91,27 +94,27 @@ namespace GLSH
 
 
         #region Implicit Operators
-
+        
         /// <summary>
         /// Implicitly converts this to a uint2.
         /// </summary>
         public static implicit operator uint2(int2 v) => new uint2((uint)v.x, (uint)v.y);
-
+        
         /// <summary>
         /// Implicitly converts this to a float2.
         /// </summary>
-        public static implicit operator float2(int2 v) => new float2(v.x, v.y);
-
+        public static implicit operator float2(int2 v) => new float2((float)v.x, (float)v.y);
+        
         /// <summary>
         /// Implicitly converts this to a double2.
         /// </summary>
-        public static implicit operator double2(int2 v) => new double2(v.x, v.y);
+        public static implicit operator double2(int2 v) => new double2((double)v.x, (double)v.y);
 
         #endregion
 
 
         #region Indexer
-
+        
         /// <summary>
         /// Gets/Sets a specific indexed component (a bit slower than direct access).
         /// </summary>
@@ -135,7 +138,7 @@ namespace GLSH
 
 
         #region Properties
-
+        
         /// <summary>
         /// Gets or sets the specified subset of components.
         /// </summary>
@@ -151,7 +154,7 @@ namespace GLSH
                 y = value.y;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified subset of components.
         /// </summary>
@@ -167,7 +170,7 @@ namespace GLSH
                 y = value.y;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified RGBA component.
         /// </summary>
@@ -182,7 +185,7 @@ namespace GLSH
                 x = value;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the specified RGBA component.
         /// </summary>
@@ -202,27 +205,27 @@ namespace GLSH
 
 
         #region Operators
-
+        
         /// <summary>
         /// 
         /// </summary>
-        public static bool operator ==(int2 lhs, int2 rhs) => lhs.x == rhs.x && lhs.y == rhs.y;
-
+        public static bool operator==(int2 lhs, int2 rhs) => lhs.x == rhs.x&&lhs.y == rhs.y;
+        
         /// <summary>
         /// 
         /// </summary>
-        public static bool operator !=(int2 lhs, int2 rhs) => lhs.x != rhs.x || lhs.y != rhs.y;
+        public static bool operator!=(int2 lhs, int2 rhs) => lhs.x != rhs.x||lhs.y != rhs.y;
 
         #endregion
 
 
         #region Functions
-
+        
         /// <summary>
         /// Returns a string representation of this vector using ', ' as a seperator.
         /// </summary>
         public override string ToString() => ToString(", ");
-
+        
         /// <summary>
         /// Returns a string representation of this vector using a provided seperator.
         /// </summary>
@@ -232,9 +235,9 @@ namespace GLSH
 
 
         #region Static Functions
-
+        
         /// <summary>
-        /// Returns a int4 from component-wise application of Clamp (int.Clamp(v, min, max)).
+        /// Returns a int2 from component-wise application of Clamp (int.Clamp(v, min, max)).
         /// </summary>
         public static int2 Clamp(int2 v, int min, int max) => new int2(int.Clamp(v.x, min, max), int.Clamp(v.y, min, max));
 
@@ -242,77 +245,77 @@ namespace GLSH
 
 
         #region Component-Wise Static Functions
-
-        /// <summary>
-        /// Returns a bool2 from component-wise application of GreaterThan (lhs &gt; rhs).
-        /// </summary>
-        public static bool2 GreaterThan(int2 lhs, int2 rhs) => new bool2(lhs.x > rhs.x, lhs.y > rhs.y);
-
-        /// <summary>
-        /// Returns a bool2 from component-wise application of GreaterThanEqual (lhs &gt;= rhs).
-        /// </summary>
-        public static bool2 GreaterThanEqual(int2 lhs, int2 rhs) => new bool2(lhs.x >= rhs.x, lhs.y >= rhs.y);
-
+        
         /// <summary>
         /// Returns a bool2 from component-wise application of LesserThan (lhs &lt; rhs).
         /// </summary>
         public static bool2 LesserThan(int2 lhs, int2 rhs) => new bool2(lhs.x < rhs.x, lhs.y < rhs.y);
-
+        
         /// <summary>
         /// Returns a bool2 from component-wise application of LesserThanEqual (lhs &lt;= rhs).
         /// </summary>
         public static bool2 LesserThanEqual(int2 lhs, int2 rhs) => new bool2(lhs.x <= rhs.x, lhs.y <= rhs.y);
-
+        
+        /// <summary>
+        /// Returns a bool2 from component-wise application of GreaterThan (lhs &gt; rhs).
+        /// </summary>
+        public static bool2 GreaterThan(int2 lhs, int2 rhs) => new bool2(lhs.x > rhs.x, lhs.y > rhs.y);
+        
+        /// <summary>
+        /// Returns a bool2 from component-wise application of GreaterThanEqual (lhs &gt;= rhs).
+        /// </summary>
+        public static bool2 GreaterThanEqual(int2 lhs, int2 rhs) => new bool2(lhs.x >= rhs.x, lhs.y >= rhs.y);
+        
         /// <summary>
         /// Returns a bool2 from component-wise application of Equal (lhs == rhs).
         /// </summary>
         public static bool2 Equal(int2 lhs, int2 rhs) => new bool2(lhs.x == rhs.x, lhs.y == rhs.y);
-
+        
         /// <summary>
         /// Returns a bool2 from component-wise application of NotEqual (lhs != rhs).
         /// </summary>
         public static bool2 NotEqual(int2 lhs, int2 rhs) => new bool2(lhs.x != rhs.x, lhs.y != rhs.y);
-
+        
         /// <summary>
         /// Returns a int2 from component-wise application of Abs (int.Abs(v)).
         /// </summary>
         public static int2 Abs(int2 v) => new int2(int.Abs(v.x), int.Abs(v.y));
-
+        
         /// <summary>
         /// Returns a int2 from component-wise application of Sign (int.Sign(v)).
         /// </summary>
         public static int2 Sign(int2 v) => new int2(int.Sign(v.x), int.Sign(v.y));
-
+        
         /// <summary>
         /// Returns a int2 from component-wise application of Min (int.Min(lhs, rhs)).
         /// </summary>
         public static int2 Min(int2 lhs, int2 rhs) => new int2(int.Min(lhs.x, rhs.x), int.Min(lhs.y, rhs.y));
-
+        
         /// <summary>
         /// Returns a int2 from component-wise application of Min (int.Min(lhs, rhs)).
         /// </summary>
         public static int2 Min(int2 lhs, int rhs) => new int2(int.Min(lhs.x, rhs), int.Min(lhs.y, rhs));
-
+        
         /// <summary>
         /// Returns a int2 from component-wise application of Max (int.Max(lhs, rhs)).
         /// </summary>
         public static int2 Max(int2 lhs, int2 rhs) => new int2(int.Max(lhs.x, rhs.x), int.Max(lhs.y, rhs.y));
-
+        
         /// <summary>
         /// Returns a int2 from component-wise application of Max (int.Max(lhs, rhs)).
         /// </summary>
         public static int2 Max(int2 lhs, int rhs) => new int2(int.Max(lhs.x, rhs), int.Max(lhs.y, rhs));
-
+        
         /// <summary>
         /// Returns a int2 from component-wise application of Clamp (int.Clamp(v, min, max)).
         /// </summary>
         public static int2 Clamp(int2 v, int2 min, int2 max) => new int2(int.Clamp(v.x, min.x, max.x), int.Clamp(v.y, min.y, max.y));
-
+        
         /// <summary>
         /// Returns a int2 from component-wise application of Mix (a ? y : x).
         /// </summary>
         public static int2 Mix(int2 x, int2 y, bool2 a) => new int2(a.x ? y.x : x.x, a.y ? y.y : x.y);
-
+        
         /// <summary>
         /// Returns a float2 from component-wise application of IntBitsToFloat (Unsafe.As&lt;int, float&gt;(ref v)).
         /// </summary>
@@ -322,156 +325,156 @@ namespace GLSH
 
 
         #region Component-Wise Operator Overloads
-
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator- (-v).
         /// </summary>
-        public static int2 operator -(int2 v) => new int2(-v.x, -v.y);
-
+        public static int2 operator-(int2 v) => new int2(-v.x, -v.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator+ (lhs + rhs).
         /// </summary>
-        public static int2 operator +(int2 lhs, int2 rhs) => new int2(lhs.x + rhs.x, lhs.y + rhs.y);
-
+        public static int2 operator+(int2 lhs, int2 rhs) => new int2(lhs.x + rhs.x, lhs.y + rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator+ (lhs + rhs).
         /// </summary>
-        public static int2 operator +(int2 lhs, int rhs) => new int2(lhs.x + rhs, lhs.y + rhs);
-
+        public static int2 operator+(int2 lhs, int rhs) => new int2(lhs.x + rhs, lhs.y + rhs);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator+ (lhs + rhs).
         /// </summary>
-        public static int2 operator +(int lhs, int2 rhs) => new int2(lhs + rhs.x, lhs + rhs.y);
-
+        public static int2 operator+(int lhs, int2 rhs) => new int2(lhs + rhs.x, lhs + rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator- (lhs - rhs).
         /// </summary>
-        public static int2 operator -(int2 lhs, int2 rhs) => new int2(lhs.x - rhs.x, lhs.y - rhs.y);
-
+        public static int2 operator-(int2 lhs, int2 rhs) => new int2(lhs.x - rhs.x, lhs.y - rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator- (lhs - rhs).
         /// </summary>
-        public static int2 operator -(int2 lhs, int rhs) => new int2(lhs.x - rhs, lhs.y - rhs);
-
+        public static int2 operator-(int2 lhs, int rhs) => new int2(lhs.x - rhs, lhs.y - rhs);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator- (lhs - rhs).
         /// </summary>
-        public static int2 operator -(int lhs, int2 rhs) => new int2(lhs - rhs.x, lhs - rhs.y);
-
+        public static int2 operator-(int lhs, int2 rhs) => new int2(lhs - rhs.x, lhs - rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator* (lhs * rhs).
         /// </summary>
-        public static int2 operator *(int2 lhs, int2 rhs) => new int2(lhs.x * rhs.x, lhs.y * rhs.y);
-
+        public static int2 operator*(int2 lhs, int2 rhs) => new int2(lhs.x * rhs.x, lhs.y * rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator* (lhs * rhs).
         /// </summary>
-        public static int2 operator *(int2 lhs, int rhs) => new int2(lhs.x * rhs, lhs.y * rhs);
-
+        public static int2 operator*(int2 lhs, int rhs) => new int2(lhs.x * rhs, lhs.y * rhs);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator* (lhs * rhs).
         /// </summary>
-        public static int2 operator *(int lhs, int2 rhs) => new int2(lhs * rhs.x, lhs * rhs.y);
-
+        public static int2 operator*(int lhs, int2 rhs) => new int2(lhs * rhs.x, lhs * rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator/ (lhs / rhs).
         /// </summary>
-        public static int2 operator /(int2 lhs, int2 rhs) => new int2(lhs.x / rhs.x, lhs.y / rhs.y);
-
+        public static int2 operator/(int2 lhs, int2 rhs) => new int2(lhs.x / rhs.x, lhs.y / rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator/ (lhs / rhs).
         /// </summary>
-        public static int2 operator /(int2 lhs, int rhs) => new int2(lhs.x / rhs, lhs.y / rhs);
-
+        public static int2 operator/(int2 lhs, int rhs) => new int2(lhs.x / rhs, lhs.y / rhs);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator/ (lhs / rhs).
         /// </summary>
-        public static int2 operator /(int lhs, int2 rhs) => new int2(lhs / rhs.x, lhs / rhs.y);
-
+        public static int2 operator/(int lhs, int2 rhs) => new int2(lhs / rhs.x, lhs / rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator~ (~v).
         /// </summary>
-        public static int2 operator ~(int2 v) => new int2(~v.x, ~v.y);
-
+        public static int2 operator~(int2 v) => new int2(~v.x, ~v.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator% (lhs % rhs).
         /// </summary>
-        public static int2 operator %(int2 lhs, int2 rhs) => new int2(lhs.x % rhs.x, lhs.y % rhs.y);
-
+        public static int2 operator%(int2 lhs, int2 rhs) => new int2(lhs.x % rhs.x, lhs.y % rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator% (lhs % rhs).
         /// </summary>
-        public static int2 operator %(int2 lhs, int rhs) => new int2(lhs.x % rhs, lhs.y % rhs);
-
+        public static int2 operator%(int2 lhs, int rhs) => new int2(lhs.x % rhs, lhs.y % rhs);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator% (lhs % rhs).
         /// </summary>
-        public static int2 operator %(int lhs, int2 rhs) => new int2(lhs % rhs.x, lhs % rhs.y);
-
+        public static int2 operator%(int lhs, int2 rhs) => new int2(lhs % rhs.x, lhs % rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator^ (lhs ^ rhs).
         /// </summary>
-        public static int2 operator ^(int2 lhs, int2 rhs) => new int2(lhs.x ^ rhs.x, lhs.y ^ rhs.y);
-
+        public static int2 operator^(int2 lhs, int2 rhs) => new int2(lhs.x ^ rhs.x, lhs.y ^ rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator^ (lhs ^ rhs).
         /// </summary>
-        public static int2 operator ^(int2 lhs, int rhs) => new int2(lhs.x ^ rhs, lhs.y ^ rhs);
-
+        public static int2 operator^(int2 lhs, int rhs) => new int2(lhs.x ^ rhs, lhs.y ^ rhs);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator^ (lhs ^ rhs).
         /// </summary>
-        public static int2 operator ^(int lhs, int2 rhs) => new int2(lhs ^ rhs.x, lhs ^ rhs.y);
-
+        public static int2 operator^(int lhs, int2 rhs) => new int2(lhs ^ rhs.x, lhs ^ rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator| (lhs | rhs).
         /// </summary>
-        public static int2 operator |(int2 lhs, int2 rhs) => new int2(lhs.x | rhs.x, lhs.y | rhs.y);
-
+        public static int2 operator|(int2 lhs, int2 rhs) => new int2(lhs.x | rhs.x, lhs.y | rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator| (lhs | rhs).
         /// </summary>
-        public static int2 operator |(int2 lhs, int rhs) => new int2(lhs.x | rhs, lhs.y | rhs);
-
+        public static int2 operator|(int2 lhs, int rhs) => new int2(lhs.x | rhs, lhs.y | rhs);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator| (lhs | rhs).
         /// </summary>
-        public static int2 operator |(int lhs, int2 rhs) => new int2(lhs | rhs.x, lhs | rhs.y);
-
+        public static int2 operator|(int lhs, int2 rhs) => new int2(lhs | rhs.x, lhs | rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator&amp; (lhs &amp; rhs).
         /// </summary>
-        public static int2 operator &(int2 lhs, int2 rhs) => new int2(lhs.x & rhs.x, lhs.y & rhs.y);
-
+        public static int2 operator&(int2 lhs, int2 rhs) => new int2(lhs.x & rhs.x, lhs.y & rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator&amp; (lhs &amp; rhs).
         /// </summary>
-        public static int2 operator &(int2 lhs, int rhs) => new int2(lhs.x & rhs, lhs.y & rhs);
-
+        public static int2 operator&(int2 lhs, int rhs) => new int2(lhs.x & rhs, lhs.y & rhs);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator&amp; (lhs &amp; rhs).
         /// </summary>
-        public static int2 operator &(int lhs, int2 rhs) => new int2(lhs & rhs.x, lhs & rhs.y);
-
+        public static int2 operator&(int lhs, int2 rhs) => new int2(lhs & rhs.x, lhs & rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator&lt;&lt; (lhs &lt;&lt; rhs).
         /// </summary>
-        public static int2 operator <<(int2 lhs, int2 rhs) => new int2(lhs.x << rhs.x, lhs.y << rhs.y);
-
+        public static int2 operator<<(int2 lhs, int2 rhs) => new int2(lhs.x << rhs.x, lhs.y << rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator&lt;&lt; (lhs &lt;&lt; rhs).
         /// </summary>
-        public static int2 operator <<(int2 lhs, int rhs) => new int2(lhs.x << rhs, lhs.y << rhs);
-
+        public static int2 operator<<(int2 lhs, int rhs) => new int2(lhs.x << rhs, lhs.y << rhs);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator&gt;&gt; (lhs &gt;&gt; rhs).
         /// </summary>
-        public static int2 operator >>(int2 lhs, int2 rhs) => new int2(lhs.x >> rhs.x, lhs.y >> rhs.y);
-
+        public static int2 operator>>(int2 lhs, int2 rhs) => new int2(lhs.x >> rhs.x, lhs.y >> rhs.y);
+        
         /// <summary>
         /// Returns a int2 from component-wise application of operator&gt;&gt; (lhs &gt;&gt; rhs).
         /// </summary>
-        public static int2 operator >>(int2 lhs, int rhs) => new int2(lhs.x >> rhs, lhs.y >> rhs);
+        public static int2 operator>>(int2 lhs, int rhs) => new int2(lhs.x >> rhs, lhs.y >> rhs);
 
         #endregion
 

@@ -3,7 +3,7 @@ using System;
 
 namespace GLSH.Compiler;
 
-public class ShaderFunctionAndMethodDeclarationSyntax : IEquatable<ShaderFunctionAndMethodDeclarationSyntax>
+public sealed class ShaderFunctionAndMethodDeclarationSyntax : IEquatable<ShaderFunctionAndMethodDeclarationSyntax>
 {
     public readonly ShaderFunction function;
     public readonly BaseMethodDeclarationSyntax methodDeclaration;
@@ -22,8 +22,8 @@ public class ShaderFunctionAndMethodDeclarationSyntax : IEquatable<ShaderFunctio
     public bool Equals(ShaderFunctionAndMethodDeclarationSyntax? other)
     {
         return other is not null &&
-            function.declaringType == other.function.declaringType &&
-            function.name == other.function.name;
+            other.function.declaringType == function.declaringType &&
+            other.function.name == function.name;
     }
 
     public override bool Equals(object? obj) => Equals(obj as ShaderFunctionAndMethodDeclarationSyntax);

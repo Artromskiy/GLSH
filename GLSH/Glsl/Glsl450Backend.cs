@@ -119,7 +119,7 @@ public class Glsl450Backend : GlslBackendBase
 
     protected override string FormatInvocationCore(string setName, string type, string method, InvocationParameterInfo[] parameterInfos)
     {
-        return Glsl450KnownFunctions.TranslateInvocation(type, method, parameterInfos);
+        return Glsl450KnownFunctions.TranslateMethodInvocation(type, method, parameterInfos);
     }
 
     private string FormatLayoutStr(ResourceDefinition rd, string? storageSpec = null)

@@ -80,10 +80,10 @@ namespace Tests.TestAssets
             r4 = Pow(VH.V4, new Vector4(10, 12, 14, 16));
 
             // Saturate
-            r = Saturate(f);
-            r2 = Saturate(VH.V2);
-            r3 = Saturate(VH.V3);
-            r4 = Saturate(VH.V4);
+            r = Clamp(f, 0, 1);
+            r2 = Clamp(VH.V2, 0, 1);
+            r3 = Clamp(VH.V3, 0, 1);
+            r4 = Clamp(VH.V4, 0, 1);
 
             // Sin
             r = Sin(f);

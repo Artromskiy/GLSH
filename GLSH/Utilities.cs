@@ -86,12 +86,8 @@ internal static class Utilities
 
     private static bool IsRootNamespace(ISymbol symbol) => symbol is INamespaceSymbol s && s.IsGlobalNamespace;
 
-    public static string? GetFunctionContainingTypeName(
-        SyntaxNode node,
-        SemanticModel model)
-    {
-        return model.GetDeclaredSymbol(node)?.ContainingSymbol.GetFullMetadataName();
-    }
+    public static string GetFunctionContainingTypeName(SyntaxNode node, SemanticModel model) =>
+        model.GetDeclaredSymbol(node)!.ContainingSymbol.GetFullMetadataName();
 
     /// <summary>
     /// Gets the full namespace + name for the given SymbolInfo.
@@ -103,18 +99,12 @@ internal static class Utilities
     }
 
     [Obsolete("Rewrite this hell")]
-    internal static ShaderFunctionAndMethodDeclarationSyntax GetShaderFunction(
-        BaseMethodDeclarationSyntax node,
-        Compilation compilation,
-        bool generateOrderedFunctionList)
+    internal static ShaderFunctionAndMethodDeclarationSyntax GetShaderFunction(BaseMethodDeclarationSyntax node, Compilation compilation, bool generateOrderedFunctionList)
     {
         SemanticModel semanticModel = compilation.GetSemanticModel(node.SyntaxTree);
         string functionName;
         TypeReference returnTypeReference;
         UInt3 computeGroupCounts = new();
-        bool isVertexShader;
-        bool isFragmentShader;
-        bool isComputeShader;
 
         if (node is MethodDeclarationSyntax mds)
         {
@@ -124,7 +114,7 @@ internal static class Utilities
         else if (node is ConstructorDeclarationSyntax cds)
         {
             functionName = ".ctor";
-            ITypeSymbol typeSymbol = semanticModel.GetDeclaredSymbol(cds).ContainingType;
+            ITypeSymbol typeSymbol = semanticModel.GetDeclaredSymbol(cds)!.ContainingType;
             returnTypeReference = new(GetFullTypeName(typeSymbol), typeSymbol);
         }
         else
@@ -132,54 +122,39 @@ internal static class Utilities
             throw new ArgumentOutOfRangeException(nameof(node), "Unsupported BaseMethodDeclarationSyntax type.");
         }
 
-        isVertexShader = AttributeHelper.TryGetAttribute<VertexEntryPointAttribute>(node, semanticModel, out _);
-        isFragmentShader = AttributeHelper.TryGetAttribute<FragmentEntryPointAttribute>(node, semanticModel, out _);
-        isComputeShader = AttributeHelper.TryGetAttribute<ComputeEntryPointAttribute>(node, semanticModel, out var computeEntryAttributeSyntax);
-        if (isComputeShader)
+        ShaderFunctionType type;
+
+        if (AttributeHelper.TryGetAttribute<VertexEntryPointAttribute>(node, semanticModel, out _))
+            type = ShaderFunctionType.VertexEntryPoint;
+        else if (AttributeHelper.TryGetAttribute<FragmentEntryPointAttribute>(node, semanticModel, out _))
+            type = ShaderFunctionType.FragmentEntryPoint;
+        else if (AttributeHelper.TryGetAttribute<ComputeEntryPointAttribute>(node, semanticModel, out var computeEntryAttributeSyntax))
         {
-            Debug.Assert(computeEntryAttributeSyntax != null);
             var data = computeEntryAttributeSyntax.CreateAttributeOfType<ComputeEntryPointAttribute>(semanticModel);
             computeGroupCounts.X = data.localSizeX;
             computeGroupCounts.Y = data.localSizeY;
             computeGroupCounts.Z = data.localSizeZ;
-        }
-
-        ShaderFunctionType type;
-        if (isVertexShader)
-            type = ShaderFunctionType.VertexEntryPoint;
-        else if (isFragmentShader)
-            type = ShaderFunctionType.FragmentEntryPoint;
-        else if (isComputeShader)
             type = ShaderFunctionType.ComputeEntryPoint;
+        }
         else
             type = ShaderFunctionType.Normal;
 
         string nestedTypePrefix = GetFunctionContainingTypeName(node, semanticModel);
 
         List<ParameterDefinition> parameters = [];
+
         foreach (ParameterSyntax ps in node.ParameterList.Parameters)
             parameters.Add(ParameterDefinition.GetParameterDefinition(compilation, ps));
 
-        ShaderFunction sf = new(
-            nestedTypePrefix,
-            functionName,
-            returnTypeReference,
-            [.. parameters],
-            type,
-            computeGroupCounts);
+        ShaderFunction sf = new(nestedTypePrefix, functionName, returnTypeReference, [.. parameters], type, computeGroupCounts);
 
-        ShaderFunctionAndMethodDeclarationSyntax[] orderedFunctionList;
+        ShaderFunctionAndMethodDeclarationSyntax[] orderedFunctionList = [];
+
         if (type != ShaderFunctionType.Normal && generateOrderedFunctionList)
         {
-            FunctionCallGraphDiscoverer fcgd = new(
-                compilation,
-                new TypeAndMethodName(sf.declaringType, sf.name));
+            FunctionCallGraphDiscoverer fcgd = new(compilation, new(sf.declaringType, sf.name));
             fcgd.GenerateFullGraph();
             orderedFunctionList = fcgd.GetOrderedCallList();
-        }
-        else
-        {
-            orderedFunctionList = [];
         }
 
         return new ShaderFunctionAndMethodDeclarationSyntax(sf, node, orderedFunctionList);

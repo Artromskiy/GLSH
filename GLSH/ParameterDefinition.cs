@@ -11,12 +11,12 @@ public class ParameterDefinition
     public readonly ParameterDirection direction;
     public readonly bool isStruct;
 
-    public ParameterDefinition(string name, TypeReference type, ParameterDirection direction, IParameterSymbol symbol)
+    public ParameterDefinition(string name, TypeReference type, ParameterDirection direction, bool isStruct)
     {
         this.name = name;
         this.type = type;
         this.direction = direction;
-        isStruct = symbol.Type.TypeKind == TypeKind.Struct;
+        this.isStruct = isStruct;
     }
 
     [Obsolete("Rewrite this hell")]
@@ -33,7 +33,7 @@ public class ParameterDefinition
         else if (refKind == RefKind.Ref)
             direction = ParameterDirection.InOut;
         TypeReference typeRef = new(fullType, semanticModel.GetTypeInfo(ps.Type).Type);
-        return new ParameterDefinition(name, typeRef, direction, declaredSymbol);
+        return new ParameterDefinition(name, typeRef, direction, declaredSymbol.Type.TypeKind == TypeKind.Struct);
     }
 }
 

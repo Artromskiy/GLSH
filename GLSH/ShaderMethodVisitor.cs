@@ -84,95 +84,22 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return sb.ToString();
     }
 
-    /// <summary>
-    /// Declares any "discard"ed variables - i.e. MyFunc(out _) - for this block and all nested blocks.
-    /// </summary>
-    [Obsolete("Rewrite this hell")]
-    private string DeclareDiscardedVariables(BlockSyntax block)
-    {
-        StringBuilder sb = new();
-
-        SemanticModel semanticModel = GetModel(block);
-
-        IEnumerable<IDiscardSymbol> discardedVariables = block
-            .DescendantNodes()
-            .Where(x => x.IsKind(SyntaxKind.IdentifierName))
-            .Select(x => semanticModel.GetSymbolInfo(x).Symbol)
-            .Where(x => x.Kind == SymbolKind.Discard)
-            .OfType<IDiscardSymbol>();
-
-        List<ISymbol> alreadyWrittenTypes = [];
-
-        foreach (IDiscardSymbol discardedVariable in discardedVariables)
-        {
-            if (alreadyWrittenTypes.Contains(discardedVariable.Type))
-                continue;
-
-            sb.Append("    ");
-            sb.Append(GetDiscardedVariableType(discardedVariable));
-            sb.Append(' ');
-            sb.Append(GetDiscardedVariableName(discardedVariable));
-            sb.AppendLine(";");
-
-            alreadyWrittenTypes.Add(discardedVariable.Type);
-        }
-
-        return sb.ToString();
-    }
-
-    /// <summary>
-    /// Check for any inline "out" variable declarations in this statement - i.e. MyFunc(out var result) - 
-    /// and declare those variables now.
-    /// </summary>
-    [Obsolete("Rewrite this hell")]
-    private string DeclareInlineOutVariables(StatementSyntax statement)
-    {
-        StringBuilder sb = new();
-
-        var declarationExpressionNodes = statement.
-            DescendantNodes(x => !x.IsKind(SyntaxKind.Block)). // Don't descend into child blocks
-            Where(x => x.IsKind(SyntaxKind.DeclarationExpression)).
-            OfType<DeclarationExpressionSyntax>();
-
-        foreach (DeclarationExpressionSyntax declarationExpressionNode in declarationExpressionNodes)
-        {
-            if (declarationExpressionNode.Designation is not SingleVariableDesignationSyntax svds)
-                throw new NotImplementedException($"{declarationExpressionNode.Designation.GetType()} designations are not implemented.");
-
-            string varType = _compilation.GetSemanticModel(declarationExpressionNode.Type.SyntaxTree).GetFullTypeName(declarationExpressionNode.Type);
-            string mappedType = _backend.CSharpToShaderType(varType);
-            string identifier = _backend.CorrectIdentifier(svds.Identifier.Text);
-
-            sb.AppendLine($"    {mappedType} {identifier};");
-        }
-
-        return sb.ToString();
-    }
 
     [Obsolete("Rewrite this hell")]
     public override string VisitArrowExpressionClause(ArrowExpressionClauseSyntax node)
     {
-        string? expressionResult = Visit(node.Expression);
-        if (string.IsNullOrEmpty(expressionResult))
-            throw new NotImplementedException($"{node.Expression.GetType()} expressions are not implemented.");
+        string? expressionResult = Visit(node);
 
-        bool voidReturn = _shaderFunction.returnType.name == typeof(void).FullName!;
-        string returnSymbol = voidReturn ? "return " : string.Empty;
+        ShaderGenerationException.ThrowIf(string.IsNullOrEmpty(expressionResult),
+            "{0} expressions are not implemented.", node.Expression.GetType());
+
+        string returnSymbol = _shaderFunction.returnType.name == typeof(void).FullName! ? "return " : string.Empty;
         return
         $$"""
         {
             {{returnSymbol}}{{expressionResult}};
         }
         """;
-    }
-
-    protected virtual string GetFunctionDeclStr()
-    {
-        string returnType = _backend.CSharpToShaderType(_shaderFunction.returnType.name);
-        string fullDeclType = _backend.CSharpToShaderType(_shaderFunction.declaringType);
-        string shaderFunctionName = _shaderFunction.name.Replace(".", "0_");
-        string funcName = _shaderFunction.IsEntryPoint ? shaderFunctionName : $"{fullDeclType}_{shaderFunctionName}";
-        return $"{returnType} {funcName}({GetParameterDeclList()})";
     }
 
     [Obsolete("TODO: Can't return empty string here because of validation check in VisitBlock")]
@@ -198,23 +125,18 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return $"{leftExpr} {token} {assignedValue}";
     }
 
+
     [Obsolete("Rewrite this hell")]
     public override string VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
     {
         SymbolInfo exprSymbol = GetModel(node).GetSymbolInfo(node.Expression);
         if (exprSymbol.Symbol.Kind != SymbolKind.NamedType)
         {
-            // Other accesses
             bool isIndexerAccess = _backend.IsIndexerAccess(GetModel(node).GetSymbolInfo(node.Name));
-            // string expr = Visit(node.Expression);
-            // string name = Visit(node.Name);
-            // Visit(node.Expression); // why the hell we even do it?
-            // Visit(node.Name);
-
-            if (!isIndexerAccess)
-                return $"{Visit(node.Expression)}{node.OperatorToken.ToFullString()}{Visit(node.Name)}";
-            else
+            if (isIndexerAccess)
                 return $"{Visit(node.Expression)}{Visit(node.Name)}";
+            else
+                return $"{Visit(node.Expression)}{node.OperatorToken.ToFullString()}{Visit(node.Name)}";
         }
 
         SymbolInfo symbolInfo = GetModel(node).GetSymbolInfo(node);
@@ -243,12 +165,9 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
     }
 
-    public override string VisitExpressionStatement(ExpressionStatementSyntax node) =>
-        $"{Visit(node.Expression)};";
+    public override string VisitExpressionStatement(ExpressionStatementSyntax node) => $"{Visit(node.Expression)};";
 
-    public override string VisitReturnStatement(ReturnStatementSyntax node) =>
-        $"return {Visit(node.Expression)};";
-
+    public override string VisitReturnStatement(ReturnStatementSyntax node) => $"return {Visit(node.Expression)};";
 
     [Obsolete("Rewrite this hell")]
     public override string VisitInvocationExpression(InvocationExpressionSyntax node)
@@ -260,8 +179,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
             Debug.Assert(symbolInfo.Symbol != null);
             string type = symbolInfo.Symbol.ContainingType.ToDisplayString();
             string method = symbolInfo.Symbol.Name;
-            if (type == typeof(ShaderBuiltins).FullName)
-                ProcessBuiltInMethodInvocation(method, node);
+            ValidateFunctionUsage(method);
             return _backend.FormatInvocation(_setName, type, method, parameterInfos);
         }
 
@@ -283,6 +201,8 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
         string containingType = ims.ContainingType.GetFullMetadataName();
         string methodName = ims.MetadataName;
+        ValidateFunctionUsage(methodName);
+
         List<InvocationParameterInfo> pis = [];
         if (ims.IsExtensionMethod)
         {
@@ -304,29 +224,11 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
             pis.Add(new InvocationParameterInfo(containingType, identifier));
         }
 
-        if (containingType == typeof(ShaderBuiltins).FullName)
-            ProcessBuiltInMethodInvocation(methodName, node);
 
         pis.AddRange(GetParameterInfos(node.ArgumentList));
         return _backend.FormatInvocation(_setName, containingType, methodName, [.. pis]);
     }
 
-    private void ProcessBuiltInMethodInvocation(string name, InvocationExpressionSyntax node)
-    {
-        switch (name)
-        {
-            case nameof(ShaderBuiltins.Ddx):
-            case nameof(ShaderBuiltins.Ddy):
-            case nameof(ShaderBuiltins.SampleComparisonLevelZero):
-                if (_shaderFunction.type == ShaderFunctionType.VertexEntryPoint || _shaderFunction.type == ShaderFunctionType.ComputeEntryPoint)
-                    throw new ShaderGenerationException($"{name} can only be used within Fragment shaders.");
-                break;
-
-            case nameof(ShaderBuiltins.InterlockedAdd):
-                _shaderFunction.UsesInterlockedAdd = true;
-                break;
-        }
-    }
 
     public override string VisitBinaryExpression(BinaryExpressionSyntax node)
     {
@@ -369,18 +271,28 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return _backend.FormatInvocation(_setName, fullName, ".ctor", parameters);
     }
 
-    private string GetDiscardedVariableType(ISymbol symbol)
+    public override string? VisitImplicitObjectCreationExpression(ImplicitObjectCreationExpressionSyntax node)
     {
-        Debug.Assert(symbol.Kind == SymbolKind.Discard);
-        string varType = Utilities.GetFullTypeName(((IDiscardSymbol)symbol).Type);
-        return _backend.CSharpToShaderType(varType);
+        var operation = GetModel(node).GetOperation(node);
+        Debug.Assert(operation != null);
+        ShaderGenerationException.ThrowIfNull(operation.Type, "Unable to get symbol");
+        string fullName = operation.Type.GetFullMetadataName();
+        InvocationParameterInfo[] parameters = GetParameterInfos(node.ArgumentList);
+        return _backend.FormatInvocation(_setName, fullName, ".ctor", parameters);
     }
 
-    private string GetDiscardedVariableName(ISymbol symbol)
+    public override string? VisitRangeExpression(RangeExpressionSyntax node)
     {
-        string mappedType = GetDiscardedVariableType(symbol);
-        return _backend.CorrectIdentifier($"_shadergen_discard_{mappedType}");
+        throw new NotImplementedException("Range expressions are not supported");
     }
+
+    public override string? VisitDefaultExpression(DefaultExpressionSyntax node)
+    {
+        // We should call default constructor, to do this, we need to create glsl method returning defaultType for each C# type, which uses default initialization (yeah, constructor chain)
+        throw new NotImplementedException("Default variable creation is not supported");
+        return base.VisitDefaultExpression(node);
+    }
+
 
     [Obsolete("Rewrite this hell")]
     public override string VisitIdentifierName(IdentifierNameSyntax node)
@@ -391,8 +303,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
             return GetDiscardedVariableName(symbol);
 
         string containingTypeName = symbol.ContainingType.GetFullMetadataName();
-        if (containingTypeName == typeof(ShaderBuiltins).FullName)
-            TryRecognizeBuiltInVariable(symbolInfo);
+        ValidateFunctionUsage(symbolInfo.Symbol.Name);
 
         if (symbol is IFieldSymbol fs && fs.HasConstantValue)
             return string.Format(CultureInfo.InvariantCulture, "{0}", fs.ConstantValue);
@@ -404,14 +315,6 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
             if (referencedResource != null)
             {
                 _resourcesUsed.Add(referencedResource);
-                var resKind = referencedResource.resourceKind;
-                _shaderFunction.UsesTexture2DMS |= resKind == ShaderResourceKind.Texture2DMS;
-                _shaderFunction.UsesRWTexture2D |= resKind == ShaderResourceKind.RWTexture2D;
-
-                _shaderFunction.UsesStructuredBuffer |=
-                    resKind == ShaderResourceKind.StructuredBuffer ||
-                    resKind == ShaderResourceKind.RWStructuredBuffer ||
-                    resKind == ShaderResourceKind.AtomicBuffer;
             }
 
             return _backend.CorrectFieldAccess(symbolInfo);
@@ -424,31 +327,6 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         string mapped = _backend.CSharpToShaderIdentifierName(symbolInfo);
         return _backend.CorrectIdentifier(mapped);
     }
-
-    private void TryRecognizeBuiltInVariable(SymbolInfo symbolInfo)
-    {
-        Debug.Assert(symbolInfo.Symbol != null);
-        string name = symbolInfo.Symbol.Name;
-
-        ShaderGenerationException.ThrowIf(GetTypeByFunctionName(name) != _shaderFunction.type,
-            "{0} can only be used within {1}", name, _shaderFunction.type);
-
-        _shaderFunction.UsesVertexID |= name == nameof(ShaderBuiltins.VertexID);
-        _shaderFunction.UsesInstanceID |= name == nameof(ShaderBuiltins.InstanceID);
-        _shaderFunction.UsesDispatchThreadID |= name == nameof(ShaderBuiltins.DispatchThreadID);
-        _shaderFunction.UsesGroupThreadID |= name == nameof(ShaderBuiltins.GroupThreadID);
-        _shaderFunction.UsesFrontFace |= name == nameof(ShaderBuiltins.IsFrontFace);
-    }
-
-    private static ShaderFunctionType GetTypeByFunctionName(string name) => name switch
-    {
-        nameof(ShaderBuiltins.VertexID) => ShaderFunctionType.VertexEntryPoint,
-        nameof(ShaderBuiltins.InstanceID) => ShaderFunctionType.VertexEntryPoint,
-        nameof(ShaderBuiltins.IsFrontFace) => ShaderFunctionType.FragmentEntryPoint,
-        nameof(ShaderBuiltins.DispatchThreadID) => ShaderFunctionType.ComputeEntryPoint,
-        nameof(ShaderBuiltins.GroupThreadID) => ShaderFunctionType.ComputeEntryPoint,
-        _ => ShaderFunctionType.Normal
-    };
 
     public override string VisitLiteralExpression(LiteralExpressionSyntax node)
     {
@@ -503,24 +381,17 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         return sb.ToString();
     }
 
-    public override string VisitCaseSwitchLabel(CaseSwitchLabelSyntax node) =>
-        $"case {Visit(node.Value)}:";
+    public override string VisitCaseSwitchLabel(CaseSwitchLabelSyntax node) => $"case {Visit(node.Value)}:";
 
-    public override string VisitDefaultSwitchLabel(DefaultSwitchLabelSyntax node) =>
-        "default:";
+    public override string VisitDefaultSwitchLabel(DefaultSwitchLabelSyntax node) => "default:";
 
-    public override string VisitBreakStatement(BreakStatementSyntax node) =>
-        "break;";
+    public override string VisitBreakStatement(BreakStatementSyntax node) => "break;";
 
-    public override string VisitPrefixUnaryExpression(PrefixUnaryExpressionSyntax node) =>
-        node.OperatorToken.ToFullString() + Visit(node.Operand);
+    public override string VisitPrefixUnaryExpression(PrefixUnaryExpressionSyntax node) => node.OperatorToken.ToFullString() + Visit(node.Operand);
 
-    public override string VisitPostfixUnaryExpression(PostfixUnaryExpressionSyntax node) =>
-        Visit(node.Operand) + node.OperatorToken.ToFullString();
+    public override string VisitPostfixUnaryExpression(PostfixUnaryExpressionSyntax node) => Visit(node.Operand) + node.OperatorToken.ToFullString();
 
-    public override string VisitElementAccessExpression(ElementAccessExpressionSyntax node) =>
-        Visit(node.Expression) + Visit(node.ArgumentList);
-
+    public override string VisitElementAccessExpression(ElementAccessExpressionSyntax node) => Visit(node.Expression) + Visit(node.ArgumentList);
 
     public override string VisitVariableDeclaration(VariableDeclarationSyntax node)
     {
@@ -555,7 +426,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
     public override string VisitCastExpression(CastExpressionSyntax node)
     {
-        string varType = _compilation.GetSemanticModel(node.Type.SyntaxTree).GetFullTypeName(node.Type);
+        string varType = GetModel(node.Type).GetFullTypeName(node.Type);
         string mappedType = _backend.CSharpToShaderType(varType);
 
         return _backend.CorrectCastExpression(mappedType, Visit(node.Expression));
@@ -596,10 +467,9 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         """;
     }
 
-    protected string GetParameterDeclList() =>
-        string.Join(", ", _shaderFunction.parameters.Select(FormatParameter));
+    private string GetParameterDeclList() => string.Join(", ", _shaderFunction.parameters.Select(FormatParameter));
 
-    protected virtual string FormatParameter(ParameterDefinition pd) =>
+    private string FormatParameter(ParameterDefinition pd) =>
         $"{_backend.ParameterDirection(pd.direction)} {_backend.CSharpToShaderType(pd.type)} {_backend.CorrectIdentifier(pd.name)}";
 
     private InvocationParameterInfo[] GetParameterInfos(ArgumentListSyntax? argumentList) =>
@@ -611,4 +481,115 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         ShaderGenerationException.ThrowIfNull(typeInfo.Type, "Unable to get symbol");
         return new InvocationParameterInfo(typeInfo.Type.ToDisplayString(), Visit(argSyntax.Expression));
     }
+
+    private void ValidateFunctionUsage(string? functionName)
+    {
+        Debug.Assert(functionName != null);
+        var functionType = GetTypeByFunctionName(functionName);
+        bool canUseFunction = functionType == ShaderFunctionType.Normal || functionType == _shaderFunction.type;
+        ShaderGenerationException.ThrowIf(!canUseFunction, "{0} can only be used within Fragment shaders.", functionName);
+    }
+
+    private static ShaderFunctionType GetTypeByFunctionName(string name) => name switch
+    {
+        nameof(ShaderBuiltins.VertexID) => ShaderFunctionType.VertexEntryPoint,
+        nameof(ShaderBuiltins.InstanceID) => ShaderFunctionType.VertexEntryPoint,
+        nameof(ShaderBuiltins.IsFrontFace) => ShaderFunctionType.FragmentEntryPoint,
+        nameof(ShaderBuiltins.DispatchThreadID) => ShaderFunctionType.ComputeEntryPoint,
+        nameof(ShaderBuiltins.GroupThreadID) => ShaderFunctionType.ComputeEntryPoint,
+        nameof(ShaderBuiltins.Ddx) => ShaderFunctionType.FragmentEntryPoint,
+        nameof(ShaderBuiltins.Ddy) => ShaderFunctionType.FragmentEntryPoint,
+        nameof(ShaderBuiltins.SampleComparisonLevelZero) => ShaderFunctionType.FragmentEntryPoint,
+
+        _ => ShaderFunctionType.Normal
+    };
+
+    private string GetDiscardedVariableType(ISymbol symbol)
+    {
+        Debug.Assert(symbol.Kind == SymbolKind.Discard);
+        string varType = Utilities.GetFullTypeName(((IDiscardSymbol)symbol).Type);
+        return _backend.CSharpToShaderType(varType);
+    }
+
+    private string GetDiscardedVariableName(ISymbol symbol)
+    {
+        string mappedType = GetDiscardedVariableType(symbol);
+        return _backend.CorrectIdentifier($"_shadergen_discard_{mappedType}");
+    }
+
+    /// <summary>
+    /// Check for any inline "out" variable declarations in this statement - i.e. MyFunc(out var result) - 
+    /// and declare those variables now.
+    /// </summary>
+    [Obsolete("Rewrite this hell")]
+    private string DeclareInlineOutVariables(StatementSyntax statement)
+    {
+        StringBuilder sb = new();
+
+        var declarationExpressionNodes = statement.
+            DescendantNodes(x => !x.IsKind(SyntaxKind.Block)). // Don't descend into child blocks
+            Where(x => x.IsKind(SyntaxKind.DeclarationExpression)).
+            OfType<DeclarationExpressionSyntax>();
+
+        foreach (DeclarationExpressionSyntax declarationExpressionNode in declarationExpressionNodes)
+        {
+            if (declarationExpressionNode.Designation is not SingleVariableDesignationSyntax svds)
+                throw new NotImplementedException($"{declarationExpressionNode.Designation.GetType()} designations are not implemented.");
+
+            string varType = GetModel(declarationExpressionNode.Type).GetFullTypeName(declarationExpressionNode.Type);
+            string mappedType = _backend.CSharpToShaderType(varType);
+            string identifier = _backend.CorrectIdentifier(svds.Identifier.Text);
+
+            sb.AppendLine($"    {mappedType} {identifier};");
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Declares any "discard"ed variables - i.e. MyFunc(out _) - for this block and all nested blocks.
+    /// </summary>
+    [Obsolete("Rewrite this hell")]
+    private string DeclareDiscardedVariables(BlockSyntax block)
+    {
+        StringBuilder sb = new();
+
+        SemanticModel semanticModel = GetModel(block);
+
+        IEnumerable<IDiscardSymbol> discardedVariables = block
+            .DescendantNodes()
+            .Where(x => x.IsKind(SyntaxKind.IdentifierName))
+            .Select(x => semanticModel.GetSymbolInfo(x).Symbol)
+            .Where(x => x.Kind == SymbolKind.Discard)
+            .OfType<IDiscardSymbol>();
+
+        List<ISymbol> alreadyWrittenTypes = [];
+
+        foreach (IDiscardSymbol discardedVariable in discardedVariables)
+        {
+            if (alreadyWrittenTypes.Contains(discardedVariable.Type))
+                continue;
+
+            sb.Append("    ");
+            sb.Append(GetDiscardedVariableType(discardedVariable));
+            sb.Append(' ');
+            sb.Append(GetDiscardedVariableName(discardedVariable));
+            sb.AppendLine(";");
+
+            alreadyWrittenTypes.Add(discardedVariable.Type);
+        }
+
+        return sb.ToString();
+    }
+
+
+    protected virtual string GetFunctionDeclStr()
+    {
+        string returnType = _backend.CSharpToShaderType(_shaderFunction.returnType.name);
+        string fullDeclType = _backend.CSharpToShaderType(_shaderFunction.declaringType);
+        string shaderFunctionName = _shaderFunction.name.Replace(".", "0_");
+        string funcName = _shaderFunction.IsEntryPoint ? shaderFunctionName : $"{fullDeclType}_{shaderFunctionName}";
+        return $"{returnType} {funcName}({GetParameterDeclList()})";
+    }
+
 }

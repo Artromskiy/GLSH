@@ -96,7 +96,7 @@ internal partial class ShaderSyntaxWalker
     [Obsolete("Need to rewrite typeInfo.Type.ToDisplayString")]
     private static void ValidateUniformType(TypeInfo typeInfo)
     {
-        string name = typeInfo.Type.ToDisplayString();
+        string name = typeInfo.Type.GetFullMetadataName();
         bool validRefType =
             name == typeof(Texture2DResource).FullName! ||
             name == typeof(Texture2DArrayResource).FullName! ||
@@ -105,10 +105,8 @@ internal partial class ShaderSyntaxWalker
             name == typeof(SamplerResource).FullName! ||
             name == typeof(SamplerComparisonResource).FullName!;
 
-        if (!validRefType && typeInfo.Type.IsReferenceType)
-        {
-            throw new ShaderGenerationException("Shader resource fields must be simple blittable structures.");
-        }
+        ShaderGenerationException.ThrowIf(!validRefType && typeInfo.Type.IsReferenceType,
+            "Shader resource fields must be simple blittable structures.");
     }
 
     [Obsolete("Rewrite this hell")]

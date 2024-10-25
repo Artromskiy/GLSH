@@ -29,20 +29,12 @@ internal static class GlslKnownTypes
     private static readonly Dictionary<string, string> _knownOpaqueTypes = new()
     {
         { typeof(SamplerResource).FullName!, "sampler" },
-        { typeof(Texture2DResource).FullName!, "sampler2D" },
         { typeof(Texture2DResource).FullName!, "texture2D" },
         { typeof(TextureCubeResource).FullName!, "textureCube" },
-        { typeof(TextureCubeResource).FullName!, "samplerCube" },
         { typeof(DepthTexture2DResource).FullName!, "texture2D" },
-        { typeof(Texture2DArrayResource).FullName!, "sampler2DArray" },
         { typeof(Texture2DArrayResource).FullName!, "texture2DArray" },
-        { typeof(DepthTexture2DResource).FullName!, "sampler2DShadow" },
         { typeof(SamplerComparisonResource).FullName!, "samplerShadow" },
         { typeof(DepthTexture2DArrayResource).FullName!, "texture2DArray" },
-        { typeof(DepthTexture2DArrayResource).FullName!, "sampler2DArrayShadow" },
-
-        { typeof(SamplerResource).FullName!, "SamplerDummy" },
-        { typeof(SamplerComparisonResource).FullName!, "SamplerComparisonDummy" },
     };
 
 
