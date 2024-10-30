@@ -8,7 +8,7 @@ public class ShaderFunction
     public readonly int colorOutputCount; // TODO: This always returns 0.
     public readonly ParameterDefinition[] parameters;
     public readonly ShaderFunctionType type;
-    public readonly UInt3 computeGroupCounts;
+    public readonly uint3 computeGroupCounts;
     public bool IsEntryPoint => type != ShaderFunctionType.Normal;
 
     public ShaderFunction(
@@ -17,7 +17,7 @@ public class ShaderFunction
         TypeReference returnType,
         ParameterDefinition[] parameters,
         ShaderFunctionType type,
-        UInt3 computeGroupCounts)
+        uint3 computeGroupCounts)
     {
         this.declaringType = declaringType;
         this.name = name;

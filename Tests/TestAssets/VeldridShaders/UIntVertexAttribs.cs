@@ -12,7 +12,7 @@ namespace Tests.TestAssets.VeldridShaders
             [Layout(location: 0)]
             public Vector2 Position;
             [Layout(location: 1)]
-            public UInt4 Color_Int;
+            public uint4 Color_Int;
         }
 
         public struct FragmentInput
@@ -39,7 +39,7 @@ namespace Tests.TestAssets.VeldridShaders
         {
             FragmentInput output;
             output.Position = new Vector4(input.Position, 0, 1);
-            output.Color = new Vector4(input.Color_Int.X, input.Color_Int.Y, input.Color_Int.Z, input.Color_Int.W) / InfoBuffer.ColorNormalizationFactor;
+            output.Color = new Vector4(input.Color_Int.x, input.Color_Int.y, input.Color_Int.z, input.Color_Int.w) / InfoBuffer.ColorNormalizationFactor;
             return output;
         }
 

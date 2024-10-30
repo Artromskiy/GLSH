@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
@@ -11,15 +12,14 @@ namespace GLSH.Compiler.Internal;
 
 internal class PipelineDiscoverer : CSharpSyntaxWalker
 {
+    private readonly Compilation _compilation;
+
     private readonly HashSet<string> _discoveredNames = [];
     private readonly List<PipelineInfo> _discoveredPipelines = [];
-    private readonly Compilation _compilation;
     public PipelineInfo[] PipelineInfos => [.. _discoveredPipelines];
 
     private const int AttributeLength = 9;
 
-    private static readonly string GraphicsPipelineName = nameof(GraphicsPipelineAttribute)[..^AttributeLength];
-    private static readonly string ComputePipelineName = nameof(ComputePipelineAttribute)[..^AttributeLength];
 
     private readonly Dictionary<SyntaxTree, SemanticModel> _cachedSemanticModels = [];
 
@@ -48,11 +48,13 @@ internal class PipelineDiscoverer : CSharpSyntaxWalker
         }
         if (isGraphicsPipeline)
         {
+            Debug.Assert(graphicsPipelineAttributeSyntax != null);
             var graphicsPipelineAttribute = graphicsPipelineAttributeSyntax.CreateAttributeOfType<GraphicsPipelineAttribute>(model);
             ValidateGraphicsPipeline(node, graphicsPipelineAttribute);
         }
         if (isComputePipeline)
         {
+            Debug.Assert(computePipelineAttributeSyntax != null);
             var computePipelineAttribute = computePipelineAttributeSyntax.CreateAttributeOfType<ComputePipelineAttribute>(model);
             ValidateComputePipeline(node, computePipelineAttribute);
         }
@@ -61,11 +63,14 @@ internal class PipelineDiscoverer : CSharpSyntaxWalker
     private void ValidateGraphicsPipeline(TypeDeclarationSyntax classDeclarationSyntax, GraphicsPipelineAttribute data)
     {
         string? pipelineName = data.name;
+
+        if (_discoveredNames.Contains(pipelineName))
+            throw new ShaderGenerationException("Multiple pipelines with the same name were defined: " + pipelineName);
+
         var model = GetOrCreateSemanticModel(classDeclarationSyntax.SyntaxTree);
 
-        var vertEntryPoints = GetEntryPoints<VertexEntryPointAttribute>(classDeclarationSyntax, model);
-
-        var fragEntryPoints = GetEntryPoints<FragmentEntryPointAttribute>(classDeclarationSyntax, model);
+        var vertEntryPoints = GetMarkedMethods<VertexEntryPointAttribute>(classDeclarationSyntax, model);
+        var fragEntryPoints = GetMarkedMethods<FragmentEntryPointAttribute>(classDeclarationSyntax, model);
 
         if (vertEntryPoints.Length != 1 || fragEntryPoints.Length != 1)
         {
@@ -78,22 +83,17 @@ internal class PipelineDiscoverer : CSharpSyntaxWalker
                 throw new ShaderGenerationException($"{typeName} must specify entry points with {nameof(VertexEntryPointAttribute)} and {nameof(FragmentEntryPointAttribute)}.");
         }
 
-        string? vertexEntryPointFullName = model.GetDeclaredSymbol(vertEntryPoints[0].methodSyntax)?.GetFullMetadataName();
-        string? fragmentEntryPointFullName = model.GetDeclaredSymbol(fragEntryPoints[0].methodSyntax)?.GetFullMetadataName();
+        var vertexEntrySymbol = model.GetDeclaredSymbol(vertEntryPoints[0].methodSyntax);
+        var fragmentEntrySymbol = model.GetDeclaredSymbol(fragEntryPoints[0].methodSyntax);
 
-        TypeAndMethodName? vsName = null;
-        TypeAndMethodName? fsName = null;
+        ShaderGenerationException.ThrowIfNull(vertexEntrySymbol, "Unable to find declared symbol for method marked {0}", nameof(VertexEntryPointAttribute));
+        ShaderGenerationException.ThrowIfNull(fragmentEntrySymbol, "Unable to find declared symbol for method marked {0}", nameof(FragmentEntryPointAttribute));
 
-        ShaderGenerationException.ThrowIf(vertexEntryPointFullName == null || !TypeAndMethodName.TryCreate(vertexEntryPointFullName, out vsName),
-            "{0} has an incomplete or invalid vertex shader name.", nameof(GraphicsPipelineAttribute));
+        var vertexEntryDeclaration = Utilities.GetMethodDeclarationData(vertexEntrySymbol);
+        var fragmentEntryDeclaration = Utilities.GetMethodDeclarationData(fragmentEntrySymbol);
 
-        ShaderGenerationException.ThrowIf(fragmentEntryPointFullName == null || !TypeAndMethodName.TryCreate(fragmentEntryPointFullName, out fsName),
-            "{0} has an incomplete or invalid fragment shader name.", nameof(GraphicsPipelineAttribute));
-
-        if (!_discoveredNames.Add(pipelineName))
-            throw new ShaderGenerationException("Multiple pipelines with the same name were defined: " + pipelineName);
-
-        _discoveredPipelines.Add(new(pipelineName, vsName, fsName));
+        _discoveredNames.Add(pipelineName);
+        _discoveredPipelines.Add(new(pipelineName, vertexEntryDeclaration, fragmentEntryDeclaration));
     }
 
     private void ValidateComputePipeline(TypeDeclarationSyntax classDeclarationSyntax, ComputePipelineAttribute data)
@@ -101,7 +101,7 @@ internal class PipelineDiscoverer : CSharpSyntaxWalker
         throw new NotImplementedException();
     }
 
-    private static (MethodDeclarationSyntax methodSyntax, AttributeSyntax? attributeSyntax)[] GetEntryPoints<T>(TypeDeclarationSyntax classDeclarationSyntax, SemanticModel model) where T : Attribute
+    private static (MethodDeclarationSyntax methodSyntax, AttributeSyntax? attributeSyntax)[] GetMarkedMethods<T>(TypeDeclarationSyntax classDeclarationSyntax, SemanticModel model) where T : Attribute
     {
         return classDeclarationSyntax.Members.OfType<MethodDeclarationSyntax>().Select(methodSyntax =>
         {

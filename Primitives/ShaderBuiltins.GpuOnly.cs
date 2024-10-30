@@ -24,8 +24,8 @@ namespace GLSH
             SamplerResource sampler,
             Vector2 texCoords,
             uint sampleIndex) => throw new ShaderBuiltinException();
-        public static T Load<T>(RWTexture2DResource<T> texture, UInt2 texCoords) where T : struct => throw new ShaderBuiltinException();
-        public static T Store<T>(RWTexture2DResource<T> texture, UInt2 texCoords, T value) where T : struct => throw new ShaderBuiltinException();
+        public static T Load<T>(RWTexture2DResource<T> texture, uint2 texCoords) where T : struct => throw new ShaderBuiltinException();
+        public static T Store<T>(RWTexture2DResource<T> texture, uint2 texCoords, T value) where T : struct => throw new ShaderBuiltinException();
         public static float SampleComparisonLevelZero(DepthTexture2DResource texture, SamplerComparisonResource sampler, Vector2 texCoords, float compareValue)
             => throw new ShaderBuiltinException();
         public static float SampleComparisonLevelZero(DepthTexture2DArrayResource texture, SamplerComparisonResource sampler, Vector2 texCoords, uint arrayLayer, float compareValue)
@@ -66,8 +66,8 @@ namespace GLSH
         // Built-in variables
         public static uint VertexID => throw new ShaderBuiltinException();
         public static uint InstanceID => throw new ShaderBuiltinException();
-        public static UInt3 DispatchThreadID => throw new ShaderBuiltinException();
-        public static UInt3 GroupThreadID => throw new ShaderBuiltinException();
+        public static uint3 DispatchThreadID => throw new ShaderBuiltinException();
+        public static uint3 GroupThreadID => throw new ShaderBuiltinException();
         public static bool IsFrontFace => throw new ShaderBuiltinException();
 
     }

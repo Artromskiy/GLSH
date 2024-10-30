@@ -30,92 +30,58 @@ public class MinExample
     {
         FragmentInput output;
 
-        TestStruct t = new TestStruct();
-        t.Increment();
-        t.Value += 1;
-        t.vall = t.Value;
-        
-        //bool4 b = new(true);
-        //b = bool4.Mix(b, b, b);
-        DoSome();
-        DoInt(GetInt());
+        TestStruct ts = new TestStruct();
+        ts.AutoProp = new float2(1);
+        var b = ts.AutoProp;
+        ts.Prop = new float2(1);
+        b = ts.Prop;
+        ts.SetMethod(new float2(1));
+        ts.SetMethodAutoProp(new float2(1));
+        ts.SetMethodProp(new float2(1));
+        b = ts.GetMethod();
+        b = ts.GetMethodAutoProp();
+        b = ts.GetMethodProp();
 
-        float4 someFloat = new (0f);
-        someFloat += new float4(1);
-        someFloat -= new float4(3);
-        someFloat /= new float4(new float2(1), 3);
-        //someFloat = new(default(float2), 3);
-        someFloat = float4.Abs(someFloat);
-
+        ts.Prop = new float2(1);
         Vector4 worldPosition = Mul(World, new Vector4(input.Position, 1));
         Vector4 viewPosition = Mul(View, worldPosition);
         output.Position = Mul(Projection, viewPosition);
         output.TextureCoord = input.TextureCoord;
+
         return output;
     }
-
-    public void DoInt(int val)
-    {
-        DoInt2(val);
-    }
-
-    public int DoInt2(int val)
-    {
-        return GetInt();
-    }
-
-    public int GetInt()
-    {
-        return 0;
-    }
-
-    public void DoSome()
-    {
-        DoInt2(0);
-        GetInt();
-        DoInt(DoInt2(DoInt2(0)));
-    }
-
-
-    private struct TestStruct
-    {
-        public float vall;
-        public float Value
-        {
-            get
-            {
-                return GetValue() + GetValue2();
-            }
-            set
-            {
-                vall = value;
-            }
-        }
-        public void Increment()
-        {
-            vall = Value + GetValue();
-        }
-
-        public TestStruct()
-        {
-            Value = 0;
-            Increment();
-        }
-    }
-
-    private static int GetValue()
-    {
-        return 3 + GetValue2();
-    }
-    private static int GetValue2()
-    {
-        return 3;
-    }
-
 
     [FragmentEntryPoint]
     public Vector4 FragmentShaderFunc(FragmentInput input)
     {
         return Sample(SurfaceTexture, Sampler, input.TextureCoord);
+    }
+
+    private struct TestStruct
+    {
+        private float2 field;
+        public float2 AutoProp { get; set; }
+        public float2 Prop
+        {
+            get => field;
+            set => field = value;
+        }
+        public float2 GetMethod() => field;
+        public void SetMethod(float2 val) => field = val;
+        public float2 GetMethodAutoProp() => AutoProp;
+        public void SetMethodAutoProp(float2 val) => AutoProp = val;
+        public float2 GetMethodProp() => Prop;
+        public void SetMethodProp(float2 val) => Prop = val;
+        /*
+        public static void Prop_set(ref TestStruct @this, float2 value)
+        {
+            @this.field = value;
+        }
+
+        public static void SetMethodProp(ref TestStruct @this, float2 val)
+        {
+            Prop_set(ref @this, val);
+        }
+        */
     }
 }

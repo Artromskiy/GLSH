@@ -1,27 +1,22 @@
-using System;
-
 namespace GLSH.Compiler.Internal;
 
 internal class PipelineInfo
 {
     public readonly string name;
-    public readonly TypeAndMethodName? vertexEntry;
-    public readonly TypeAndMethodName? fragmentEntry;
-    public readonly TypeAndMethodName? computeEntry;
+    public readonly MethodDeclarationData vertexEntry;
+    public readonly MethodDeclarationData fragmentEntry;
+    public readonly MethodDeclarationData computeEntry;
 
-    public PipelineInfo(string name, TypeAndMethodName vs, TypeAndMethodName fs)
+    public PipelineInfo(string name, MethodDeclarationData vertexEntry, MethodDeclarationData fragmentEntry)
     {
-        if (vs == null && fs == null)
-            throw new ArgumentException("At least one of vs or fs must be non-null.");
-
         this.name = name;
-        vertexEntry = vs;
-        fragmentEntry = fs;
+        this.vertexEntry = vertexEntry;
+        this.fragmentEntry = fragmentEntry;
     }
 
-    public PipelineInfo(string name, TypeAndMethodName cs)
+    public PipelineInfo(string name, MethodDeclarationData computeEntry)
     {
         this.name = name;
-        computeEntry = cs;
+        this.computeEntry = computeEntry;
     }
 }

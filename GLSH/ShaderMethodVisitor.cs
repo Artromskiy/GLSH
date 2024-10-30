@@ -57,7 +57,8 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
         sb.AppendLine(functionDeclStr);
         sb.AppendLine(blockResult);
-        return new MethodProcessResult(sb.ToString(), _resourcesUsed);
+        //return new MethodProcessResult(sb.ToString(), _resourcesUsed);
+        return new MethodProcessResult(sb.ToString());
     }
 
     [Obsolete("Rewrite this hell")]
@@ -132,7 +133,8 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         SymbolInfo exprSymbol = GetModel(node).GetSymbolInfo(node.Expression);
         if (exprSymbol.Symbol.Kind != SymbolKind.NamedType)
         {
-            bool isIndexerAccess = _backend.IsIndexerAccess(GetModel(node).GetSymbolInfo(node.Name));
+            //bool isIndexerAccess = _backend.IsIndexerAccess(GetModel(node).GetSymbolInfo(node.Name)); // Just why?
+            bool isIndexerAccess = false;
             if (isIndexerAccess)
                 return $"{Visit(node.Expression)}{Visit(node.Name)}";
             else
@@ -161,7 +163,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         string typeName = exprSymbol.Symbol.GetFullMetadataName();
         string? targetName = Visit(node.Name);
         Debug.Assert(targetName != null);
-        return _backend.FormatInvocation(_setName, typeName, targetName, []);
+        return _backend.FormatInvocation(typeName, targetName, []);
 
     }
 
@@ -180,7 +182,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
             string type = symbolInfo.Symbol.ContainingType.ToDisplayString();
             string method = symbolInfo.Symbol.Name;
             ValidateFunctionUsage(method);
-            return _backend.FormatInvocation(_setName, type, method, parameterInfos);
+            return _backend.FormatInvocation(type, method, parameterInfos);
         }
 
         if (node.Expression is not MemberAccessExpressionSyntax maes)
@@ -226,7 +228,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 
 
         pis.AddRange(GetParameterInfos(node.ArgumentList));
-        return _backend.FormatInvocation(_setName, containingType, methodName, [.. pis]);
+        return _backend.FormatInvocation(containingType, methodName, [.. pis]);
     }
 
 
@@ -268,7 +270,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         ShaderGenerationException.ThrowIfNull(symbolInfo.Symbol, "Unable to get symbol");
         string fullName = symbolInfo.Symbol.GetFullMetadataName();
         InvocationParameterInfo[] parameters = GetParameterInfos(node.ArgumentList);
-        return _backend.FormatInvocation(_setName, fullName, ".ctor", parameters);
+        return _backend.FormatInvocation(fullName, ".ctor", parameters);
     }
 
     public override string? VisitImplicitObjectCreationExpression(ImplicitObjectCreationExpressionSyntax node)
@@ -278,7 +280,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         ShaderGenerationException.ThrowIfNull(operation.Type, "Unable to get symbol");
         string fullName = operation.Type.GetFullMetadataName();
         InvocationParameterInfo[] parameters = GetParameterInfos(node.ArgumentList);
-        return _backend.FormatInvocation(_setName, fullName, ".ctor", parameters);
+        return _backend.FormatInvocation(fullName, ".ctor", parameters);
     }
 
     public override string? VisitRangeExpression(RangeExpressionSyntax node)
@@ -311,16 +313,16 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         else if (symbol.Kind == SymbolKind.Field && containingTypeName == _containingTypeName)
         {
             string symbolName = symbol.Name;
-            ResourceDefinition? referencedResource = _backend.GetContext(_setName).Resources.SingleOrDefault(rd => rd.name == symbolName);
-            if (referencedResource != null)
-            {
-                _resourcesUsed.Add(referencedResource);
-            }
+            //ResourceDefinition? referencedResource = _backend.GetContext(_setName).Resources.SingleOrDefault(rd => rd.name == symbolName);
+            //if (referencedResource != null)
+            //{
+            //    _resourcesUsed.Add(referencedResource);
+            //}
 
             return _backend.CorrectFieldAccess(symbolInfo);
         }
         else if (symbol.Kind == SymbolKind.Property)
-            return _backend.FormatInvocation(_setName, containingTypeName, symbol.Name, []);
+            return _backend.FormatInvocation(containingTypeName, symbol.Name, []);
         else if (symbol is ILocalSymbol ls && ls.HasConstantValue)
             return string.Format(CultureInfo.InvariantCulture, "{0}", ls.ConstantValue);
 
@@ -331,7 +333,19 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     public override string VisitLiteralExpression(LiteralExpressionSyntax node)
     {
         string literal = node.ToFullString().Trim();
-        return LanguageBackend.CorrectLiteral(literal);
+        return CorrectLiteral(literal);
+    }
+
+
+    internal static string CorrectLiteral(string literal)
+    {
+        if (!literal.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
+            literal.EndsWith("f", StringComparison.OrdinalIgnoreCase) &&
+            !literal.Contains('.'))
+            // This isn't a hack at all
+            return literal.Insert(literal.Length - 1, ".");
+
+        return literal;
     }
 
     public override string VisitIfStatement(IfStatementSyntax node)
@@ -401,7 +415,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         SemanticModel model = GetModel(node);
         string varType = model.GetFullTypeName(node.Type);
         TypeReference typeRef = new(varType, model.GetTypeInfo(node.Type).Type);
-        string mappedType = _backend.CSharpToShaderType(typeRef);
+        string mappedType = _backend.CSharpToShaderType(typeRef.name);
         VariableDeclaratorSyntax varDeclarator = node.Variables[0];
         string identifier = _backend.CorrectIdentifier(varDeclarator.Identifier.ToString());
 
@@ -411,11 +425,10 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         string? rightExpr = base.Visit(varDeclarator.Initializer.Value);
         string rightExprType = model.GetFullTypeName(varDeclarator.Initializer.Value);
         string assignedValue = _backend.CorrectAssignedValue(varType, rightExpr, rightExprType);
-        string initializer = varDeclarator.Initializer.EqualsToken.ToString();
+        string equalsToken = varDeclarator.Initializer.EqualsToken.ToString();
 
-        return $"{mappedType} {identifier} {initializer} {assignedValue};";
+        return $"{mappedType} {identifier} {equalsToken} {assignedValue};";
     }
-
 
     public override string VisitBracketedArgumentList(BracketedArgumentListSyntax node)
     {
@@ -470,7 +483,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     private string GetParameterDeclList() => string.Join(", ", _shaderFunction.parameters.Select(FormatParameter));
 
     private string FormatParameter(ParameterDefinition pd) =>
-        $"{_backend.ParameterDirection(pd.direction)} {_backend.CSharpToShaderType(pd.type)} {_backend.CorrectIdentifier(pd.name)}";
+        $"{_backend.ParameterDirection(pd.direction)} {_backend.CSharpToShaderType(pd.type.name)} {_backend.CorrectIdentifier(pd.name)}";
 
     private InvocationParameterInfo[] GetParameterInfos(ArgumentListSyntax? argumentList) =>
         argumentList?.Arguments.Select(GetInvocationParameterInfo).ToArray() ?? [];
@@ -591,5 +604,4 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         string funcName = _shaderFunction.IsEntryPoint ? shaderFunctionName : $"{fullDeclType}_{shaderFunctionName}";
         return $"{returnType} {funcName}({GetParameterDeclList()})";
     }
-
 }

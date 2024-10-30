@@ -18,12 +18,12 @@ internal static class GlslKnownTypes
         { typeof(Vector3).FullName!, "vec3" },
         { typeof(Vector4).FullName!, "vec4" },
         { typeof(Matrix4x4).FullName!, "mat4" },
-        { typeof(UInt2).FullName!, "uvec2" },
-        { typeof(UInt3).FullName!, "uvec3" },
-        { typeof(UInt4).FullName!, "uvec4" },
-        { typeof(Int2).FullName!, "ivec2" },
-        { typeof(Int3).FullName!, "ivec3" },
-        { typeof(Int4).FullName!, "ivec4" },
+        { typeof(uint2).FullName!, "uvec2" },
+        { typeof(uint3).FullName!, "uvec3" },
+        { typeof(uint4).FullName!, "uvec4" },
+        { typeof(int2).FullName!, "ivec2" },
+        { typeof(int3).FullName!, "ivec3" },
+        { typeof(int4).FullName!, "ivec4" },
     };
 
     private static readonly Dictionary<string, string> _knownOpaqueTypes = new()

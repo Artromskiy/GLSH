@@ -1,258 +1,206 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Operations;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 
-namespace GLSH.Compiler.Internal
+namespace GLSH.Compiler.Internal;
+
+/// <summary>
+/// Walks given entry function and returns all method declarations used to call it.
+/// Method declarations are ordered in list in a way that any method's dependencies are already present in that list before
+/// </summary>
+internal class CallGraphWalker : CSharpSyntaxWalker
 {
-    internal class CallGraphWalker : CSharpSyntaxWalker
+    protected readonly Compilation _compilation;
+
+    private readonly List<MethodDeclarationData> _orderedMethods = [];
+    private readonly HashSet<MethodDeclarationData> _visitedDeclarations = [];
+
+    public ReadOnlySpan<MethodDeclarationData> OrderedMethods => CollectionsMarshal.AsSpan(_orderedMethods);
+
+    private readonly Dictionary<SyntaxTree, SemanticModel> _semanticModelCache = [];
+    private readonly Dictionary<SyntaxNode, SymbolInfo> _symbolCache = [];
+
+
+    public CallGraphWalker(Compilation compilation, MethodDeclarationData method) : base()
     {
-        private readonly Compilation _compilation;
-        private readonly List<MethodDeclData> methodDeclarations = [];
-        private readonly HashSet<MethodDeclData> visitedDeclarations = [];
+        _compilation = compilation;
+        SyntaxNode? decl = Utilities.GetMethodSyntax(method, _compilation);
+        Debug.Assert(decl != null);
+        Visit(decl);
+    }
 
+    protected SemanticModel GetModel(SyntaxNode node)
+    {
+        if (!_semanticModelCache.TryGetValue(node.SyntaxTree, out SemanticModel? model))
+            _semanticModelCache[node.SyntaxTree] = model = _compilation.GetSemanticModel(node.SyntaxTree);
+        return model;
+    }
 
-        private SemanticModel GetModel(SyntaxNode node) => _compilation.GetSemanticModel(node.SyntaxTree);
-        private SymbolInfo GetInfo(SyntaxNode node) => GetModel(node).GetSymbolInfo(node);
-        public CallGraphWalker(Compilation compilation, TypeAndMethodName name) : base()
+    protected SymbolInfo GetInfo(SyntaxNode node)
+    {
+        if (!_symbolCache.TryGetValue(node, out SymbolInfo symbol))
+            _symbolCache[node] = symbol = GetModel(node).GetSymbolInfo(node);
+        return symbol;
+    }
+
+    protected SyntaxNode? GetOriginalDeclaration(SyntaxNode node)
+    {
+        SymbolInfo info = GetInfo(node);
+        ISymbol? symbol = info.Symbol ?? info.CandidateSymbols.FirstOrDefault();
+        return symbol?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
+    }
+
+    public sealed override void VisitInvocationExpression(InvocationExpressionSyntax node) // methods
+    {
+        base.VisitInvocationExpression(node);
+
+        SyntaxNode? declaration = GetOriginalDeclaration(node);
+        if (declaration is not MethodDeclarationSyntax methodDecl)
+            return;
+
+        string name = methodDecl.Identifier.ToString();
+        string structName = Utilities.GetFunctionContainingTypeName(methodDecl, GetModel(methodDecl));
+        string returnType = GetName(methodDecl.ReturnType);
+        ParamData[] paramDatas = methodDecl.ParameterList.Parameters.Select(GetParamData).ToArray();
+        MethodDeclarationData methodData = new MethodDeclarationData(structName, name, returnType, paramDatas);
+        if (_visitedDeclarations.Add(methodData))
         {
-            _compilation = compilation;
-            SyntaxNode? decl = null;
-            bool isConstructor = name.methodName == ".ctor";
-            INamedTypeSymbol symb = _compilation.GetTypeByMetadataName(name.containingTypeName)!;
-            var children = symb.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().ChildNodes();
-            if (!isConstructor)
-                decl = children?.FirstOrDefault(n => n is MethodDeclarationSyntax mds && mds.Identifier.ToString() == name.methodName);
-            else
-                decl = children?.FirstOrDefault(n => n is ConstructorDeclarationSyntax);
+            base.Visit(methodDecl.Body);
+            _orderedMethods.Add(methodData);
+        }
+    }
 
-            Visit(decl);
+    public sealed override void VisitObjectCreationExpression(ObjectCreationExpressionSyntax node) // constructors
+    {
+        base.VisitObjectCreationExpression(node);
+
+        SyntaxNode? declaration = GetOriginalDeclaration(node);
+        if (declaration is not ConstructorDeclarationSyntax ctorDeclaration)
+            return;
+        string ctorId = ctorDeclaration.Identifier.ToString();
+        string name = ".ctor";
+        string className = Utilities.GetFunctionContainingTypeName(ctorDeclaration, GetModel(ctorDeclaration));
+        string returnType = className;
+        ParamData[] paramDatas = ctorDeclaration.ParameterList.Parameters.Select(GetParamData).ToArray();
+        MethodDeclarationData methodData = new(className, name, returnType, paramDatas);
+
+        if (_visitedDeclarations.Add(methodData))
+        {
+            base.Visit(ctorDeclaration.Body);
+            _orderedMethods.Add(methodData);
+        }
+    }
+    public override void Visit(SyntaxNode? node)
+    {
+        base.Visit(node);
+        if (node == null)
+            return;
+
+        Conversion conv = GetModel(node).GetConversion(node);
+        if (!conv.IsUserDefined)
+            return;
+
+        ConversionOperatorDeclarationSyntax? operatorDecl = conv.MethodSymbol?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as ConversionOperatorDeclarationSyntax;
+        Debug.Assert(operatorDecl != null);
+
+        string name = "." + operatorDecl.ImplicitOrExplicitKeyword.ValueText;
+        string structName = Utilities.GetFunctionContainingTypeName(operatorDecl, GetModel(operatorDecl));
+        string returnType = GetName(operatorDecl.Type);
+        ParamData[] paramDatas = operatorDecl.ParameterList.Parameters.Select(GetParamData).ToArray();
+        MethodDeclarationData methodData = new(structName, name, returnType, paramDatas);
+        if (_visitedDeclarations.Add(methodData))
+        {
+            base.Visit(operatorDecl.Body);
+            _orderedMethods.Add(methodData);
         }
 
-        public override void Visit(SyntaxNode? node)
+        base.Visit(operatorDecl);
+    }
+
+    public sealed override void VisitAssignmentExpression(AssignmentExpressionSyntax node) // property inside struct
+    {
+        base.VisitAssignmentExpression(node);
+        VisitProperty(node.Right);
+        VisitProperty(node.Left);
+    }
+
+    public sealed override void VisitMemberAccessExpression(MemberAccessExpressionSyntax node) // properties
+    {
+        base.VisitMemberAccessExpression(node);
+        VisitProperty(node);
+    }
+
+    public sealed override void VisitElementAccessExpression(ElementAccessExpressionSyntax node) // indexers
+    {
+        base.VisitElementAccessExpression(node);
+    }
+
+    public sealed override void VisitBinaryExpression(BinaryExpressionSyntax node) // overloaded operators
+    {
+        base.VisitBinaryExpression(node);
+    }
+
+    public sealed override void VisitCastExpression(CastExpressionSyntax node) // explicit operators
+    {
+        base.VisitCastExpression(node);
+        IConversionOperation? conversion = GetModel(node).GetOperation(node) as IConversionOperation;
+        bool b = conversion?.IsImplicit ?? false;
+    }
+
+    private void VisitProperty(SyntaxNode node)
+    {
+        SyntaxNode? declaration = GetOriginalDeclaration(node);
+        if (declaration is not PropertyDeclarationSyntax propDeclaration)
+            return;
+
+        if (!(propDeclaration.AccessorList?.Accessors.All(a => a.Body != null || a.ExpressionBody != null) ?? false)) // auto property
+            return;
+
+        Utilities.AccessType accessType = Utilities.GetAccessType(node);
+
+        string returnType = GetName(propDeclaration.Type);
+        string name = propDeclaration.Identifier.ToString();
+        string className = Utilities.GetFunctionContainingTypeName(propDeclaration, GetModel(propDeclaration));
+        ParamData[] paramDatas = [new ParamData(returnType, ParameterDirection.In)];
+        var setMethodData = new MethodDeclarationData(className, "get_" + name, returnType, []);
+        var getMethodData = new MethodDeclarationData(className, "set_" + name, typeof(void).FullName!, paramDatas);
+
+        if ((accessType == Utilities.AccessType.Get || accessType == Utilities.AccessType.GetAndSet) && _visitedDeclarations.Add(setMethodData)) // get
         {
-            base.Visit(node);
+            AccessorDeclarationSyntax? getter = propDeclaration.AccessorList?.Accessors.Where(a => a.IsKind(SyntaxKind.SetAccessorDeclaration)).FirstOrDefault();
+            base.Visit(getter);
+            _orderedMethods.Add(setMethodData);
         }
-
-        public override void VisitInvocationExpression(InvocationExpressionSyntax node) // methods
+        if ((accessType == Utilities.AccessType.Set || accessType == Utilities.AccessType.GetAndSet) && _visitedDeclarations.Add(getMethodData)) // set
         {
-            base.VisitInvocationExpression(node);
-
-            var declaration = GetOriginalDeclaration(node);
-            if (declaration is not MethodDeclarationSyntax methodDecl)
-                return;
-
-            var name = methodDecl.Identifier.ToString();
-            var className = Utilities.GetFunctionContainingTypeName(methodDecl, GetModel(methodDecl));
-            var returnType = GetName(methodDecl.ReturnType);
-            var paramDatas = methodDecl.ParameterList.Parameters.Select(GetParamData).ToArray();
-            var methodData = new MethodDeclData(new(className, name), returnType, paramDatas);
-            if (visitedDeclarations.Add(methodData))
-            {
-                base.Visit(methodDecl.Body);
-                methodDeclarations.Add(methodData);
-            }
+            AccessorDeclarationSyntax? setter = propDeclaration.AccessorList?.Accessors.Where(a => a.IsKind(SyntaxKind.GetAccessorDeclaration)).FirstOrDefault();
+            base.Visit(setter);
+            _orderedMethods.Add(getMethodData);
         }
+    }
 
-        public override void VisitObjectCreationExpression(ObjectCreationExpressionSyntax node) // constructors
+
+
+    private string GetName(TypeSyntax typeSyntax)
+    {
+        return GetModel(typeSyntax).GetSymbolInfo(typeSyntax).Symbol.GetFullMetadataName();
+    }
+
+    private ParamData GetParamData(ParameterSyntax item)
+    {
+        string typeName = GetName(item.Type);
+        ParameterDirection direction = (GetModel(item).GetDeclaredSymbol(item))!.RefKind switch
         {
-            base.VisitObjectCreationExpression(node);
-
-            var declaration = GetOriginalDeclaration(node);
-            if (declaration is not ConstructorDeclarationSyntax ctorDeclaration)
-                return;
-            var ctorId = ctorDeclaration.Identifier.ToString();
-            var name = ".ctor";
-            var className = Utilities.GetFunctionContainingTypeName(ctorDeclaration, GetModel(ctorDeclaration));
-            var returnType = className;
-            var paramDatas = ctorDeclaration.ParameterList.Parameters.Select(GetParamData).ToArray();
-            var methodData = new MethodDeclData(new(className, name), returnType, paramDatas);
-
-            if (visitedDeclarations.Add(methodData))
-            {
-                base.Visit(ctorDeclaration.Body);
-                methodDeclarations.Add(methodData);
-            }
-        }
-
-        public override void VisitAssignmentExpression(AssignmentExpressionSyntax node) // property inside struct
-        {
-            base.VisitAssignmentExpression(node);
-            base.Visit(node.Left);
-            base.Visit(node.Right);
-            VisitProperty(node.Right);
-            VisitProperty(node.Left);
-        }
-
-        public override void VisitMemberAccessExpression(MemberAccessExpressionSyntax node) // properties
-        {
-            base.VisitMemberAccessExpression(node);
-            VisitProperty(node);
-        }
-
-        private void VisitProperty(SyntaxNode node)
-        {
-            var declaration = GetOriginalDeclaration(node);
-            if (declaration is not PropertyDeclarationSyntax propDeclaration)
-                return;
-
-            if (!(propDeclaration.AccessorList?.Accessors.All(a => a.Body != null || a.ExpressionBody != null) ?? false)) // auto property
-                return;
-
-            var accessType = GetAccessType(node);
-
-            var name = propDeclaration.Identifier.ToString();
-            var className = Utilities.GetFunctionContainingTypeName(propDeclaration, GetModel(propDeclaration));
-            var returnType = accessType == AccessType.Set ? typeof(void).FullName! : GetName(propDeclaration.Type);
-            ParamData[] paramDatas = [];
-            var methodData = new MethodDeclData(new(className, name), returnType, paramDatas);
-
-            if (visitedDeclarations.Add(methodData))
-            {
-                var getter = propDeclaration.AccessorList?.Accessors.Where(a => a.IsKind(SyntaxKind.SetAccessorDeclaration)).FirstOrDefault();
-                var setter = propDeclaration.AccessorList?.Accessors.Where(a => a.IsKind(SyntaxKind.GetAccessorDeclaration)).FirstOrDefault();
-                if (accessType != AccessType.GetAndSet)
-                {
-                    base.Visit(accessType == AccessType.Get ? getter : setter);
-                }
-                else
-                {
-                    base.Visit(getter);
-                    base.Visit(setter);
-                }
-                methodDeclarations.Add(methodData);
-            }
-        }
-
-
-        public override void VisitElementAccessExpression(ElementAccessExpressionSyntax node) // indexers
-        {
-            base.VisitElementAccessExpression(node);
-        }
-
-        public override void VisitBinaryExpression(BinaryExpressionSyntax node) // overloaded operators
-        {
-            base.VisitBinaryExpression(node);
-
-            var info = GetInfo(node);
-            var symbol = info.Symbol ?? info.CandidateSymbols.FirstOrDefault();
-            ShaderGenerationException.ThrowIf(symbol == null, $"A constructor reference could not be identified: {0}", node);
-            var declaration = symbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
-            if (declaration is not PropertyDeclarationSyntax propDeclaration)
-                return;
-        }
-
-        public override void VisitCastExpression(CastExpressionSyntax node) // explicit operators
-        {
-            base.VisitCastExpression(node);
-        }
-
-
-        private string GetName(TypeSyntax typeSyntax)
-        {
-            return GetModel(typeSyntax).GetSymbolInfo(typeSyntax).Symbol.GetFullMetadataName();
-        }
-
-        private ParamData GetParamData(ParameterSyntax item)
-        {
-            var typeName = GetName(item.Type);
-            var direction = (GetModel(item).GetDeclaredSymbol(item))!.RefKind switch
-            {
-                RefKind.Out => ParameterDirection.Out,
-                RefKind.Ref => ParameterDirection.InOut,
-                _ => ParameterDirection.In,
-            };
-            return new ParamData(typeName, direction);
-        }
-
-        private SyntaxNode? GetOriginalDeclaration(SyntaxNode node)
-        {
-            var info = GetInfo(node);
-            var symbol = info.Symbol ?? info.CandidateSymbols.FirstOrDefault();
-            //ShaderGenerationException.ThrowIf(symbol == null, $"A method reference could not be identified: {0}", node);
-            return symbol?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
-        }
-
-        [DebuggerDisplay("{DebuggerDisplay,nq}")]
-        private readonly struct MethodDeclData : IEquatable<MethodDeclData>
-        {
-            public readonly TypeAndMethodName methodName;
-            public readonly string returnTypeName;
-            public readonly ParamData[] parameters;
-
-            private string DebuggerDisplay => methodName.fullMethodName;
-
-            public MethodDeclData(TypeAndMethodName methodName, string returnTypeName, ParamData[] parameters)
-            {
-                this.methodName = methodName;
-                this.returnTypeName = returnTypeName;
-                this.parameters = parameters;
-            }
-
-            public readonly bool Equals(MethodDeclData other)
-            {
-                return methodName.Equals(other.methodName) &&
-                returnTypeName == other.returnTypeName &&
-                parameters.SequenceEqual(other.parameters);
-            }
-
-            public override readonly bool Equals(object? obj) => obj is MethodDeclData other && Equals(other);
-            public override int GetHashCode() => HashCode.Combine(methodName, returnTypeName);
-        }
-
-        private readonly struct ParamData : IEquatable<ParamData>
-        {
-            public readonly string typeName;
-            public readonly ParameterDirection direction;
-
-            public ParamData(string typeName, ParameterDirection direction)
-            {
-                this.typeName = typeName;
-                this.direction = direction;
-            }
-
-            public readonly bool Equals(ParamData other) => typeName == other.typeName && direction == other.direction;
-
-            public override bool Equals(object? obj) => obj is ParamData other && Equals(other);
-            public override readonly int GetHashCode() => HashCode.Combine(typeName, direction);
-        }
-
-        private enum AccessType
-        {
-            Get,
-            Set,
-            GetAndSet
-        }
-
-        //
-        // ++/--    pre/postfix increments            get/set
-        // =        lhs of simple assignments         set
-        // +=, -=   lhs of other assigments           get/set
-        // x.y      rhs, of compound member access    recurr up
-        //
-        // any other use is just a get
-        //
-        // TOOD: ref parameters?
-        //
-        private AccessType GetAccessType(SyntaxNode node)
-        {
-            var kind = node.Parent.Kind();
-
-            if (kind == SyntaxKind.PostIncrementExpression ||
-                kind == SyntaxKind.PostDecrementExpression ||
-                kind == SyntaxKind.PreIncrementExpression ||
-                kind == SyntaxKind.PreDecrementExpression)
-                return AccessType.GetAndSet;
-
-            if (node.Parent is AssignmentExpressionSyntax syntax && syntax.Left == node)
-                return kind == SyntaxKind.SimpleAssignmentExpression ? AccessType.Set : AccessType.GetAndSet;
-            if (node.Parent is MemberAccessExpressionSyntax m && m.Name == node)
-                return GetAccessType(node.Parent);
-
-            return AccessType.Get;
-        }
+            RefKind.Out => ParameterDirection.Out,
+            RefKind.Ref => ParameterDirection.InOut,
+            _ => ParameterDirection.In,
+        };
+        return new ParamData(typeName, direction);
     }
 }

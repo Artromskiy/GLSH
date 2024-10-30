@@ -1,7 +1,6 @@
 using GLSH.Compiler.Internal;
 using Microsoft.CodeAnalysis;
 using System;
-using System.Collections.Generic;
 
 namespace GLSH.Compiler;
 
@@ -38,40 +37,26 @@ public partial class ShaderGenerator
 
     private void GenerateShaders(PipelineInfo pipelineInfo, ShaderGenerationResult output)
     {
-        HashSet<SyntaxTree> treesToVisit = [];
 
-        if (pipelineInfo.vertexEntry != null)
-            GetTrees(treesToVisit, pipelineInfo.vertexEntry.containingTypeName);
-        if (pipelineInfo.fragmentEntry != null)
-            GetTrees(treesToVisit, pipelineInfo.fragmentEntry.containingTypeName);
-        if (pipelineInfo.computeEntry != null)
-            GetTrees(treesToVisit, pipelineInfo.computeEntry.containingTypeName);
+        var orderedVertexMethods = Walkers.GetOrderedMethodDeclarations(_compilation, pipelineInfo.vertexEntry);
+        var orderedFragmentMethods = Walkers.GetOrderedMethodDeclarations(_compilation, pipelineInfo.fragmentEntry);
 
-        _language.InitContext(pipelineInfo.name);
+        var orderedVertexStructs = Walkers.GetOrderedStructDeclarations(_compilation, pipelineInfo.vertexEntry);
+        var orderedFragmentStructs = Walkers.GetOrderedStructDeclarations(_compilation, pipelineInfo.fragmentEntry);
 
-        CallGraphWalker w = new(_compilation, pipelineInfo.vertexEntry);
+        var res = _language.ProcessEntryFunction(pipelineInfo.vertexEntry);
 
-        ShaderSyntaxWalker walker = new(_compilation, _language, pipelineInfo);
+        //var orderedComputeMethods = ShaderWalkers.GetOrderedMethodDeclarations(_compilation, pipelineInfo.computeEntry);
 
-        foreach (SyntaxTree tree in treesToVisit)
-            walker.Visit(tree.GetRoot());
+        //ShaderSyntaxWalker walker = new(_compilation, _language, pipelineInfo);
 
-        ShaderModel model = _language.GetShaderModel(pipelineInfo.name);
-        ShaderFunction? vsFunc = pipelineInfo.vertexEntry != null ? model.GetFunction(pipelineInfo.vertexEntry.fullMethodName) : null;
-        ShaderFunction? fsFunc = pipelineInfo.fragmentEntry != null ? model.GetFunction(pipelineInfo.fragmentEntry.fullMethodName) : null;
-        ShaderFunction? csFunc = pipelineInfo.computeEntry != null ? model.GetFunction(pipelineInfo.computeEntry.fullMethodName) : null;
-        string? vsCode = vsFunc != null ? _language.ProcessEntryFunction(pipelineInfo.name, vsFunc).fullText : null;
-        string? fsCode = fsFunc != null ? _language.ProcessEntryFunction(pipelineInfo.name, fsFunc).fullText : null;
-        string? csCode = csFunc != null ? _language.ProcessEntryFunction(pipelineInfo.name, csFunc).fullText : null;
+        //foreach (SyntaxTree tree in treesToVisit)
+        //    walker.Visit(tree.GetRoot());
 
-        output.AddShaderSet(new(pipelineInfo.name, vsCode, fsCode, csCode, vsFunc, fsFunc, csFunc, model));
-    }
-
-    private void GetTrees(HashSet<SyntaxTree> treesToVisit, string typeName)
-    {
-        INamedTypeSymbol? typeSymbol = _compilation.GetTypeByMetadataName(typeName);
-        ShaderGenerationException.ThrowIfNull(typeSymbol, "No type was found with the name {0}", typeName);
-        foreach (SyntaxReference syntaxRef in typeSymbol.DeclaringSyntaxReferences)
-            treesToVisit.Add(syntaxRef.SyntaxTree);
+        //string? vsCode = _language.ProcessEntryFunction(pipelineInfo.name, vsFunc).fullText : null;
+        //string? fsCode = _language.ProcessEntryFunction(pipelineInfo.name, fsFunc).fullText : null;
+        //string? csCode = _language.ProcessEntryFunction(pipelineInfo.name, csFunc).fullText : null;
+        //
+        //output.AddShaderSet(new(pipelineInfo.name, vsCode, fsCode, csCode, vsFunc, fsFunc, csFunc, model));
     }
 }

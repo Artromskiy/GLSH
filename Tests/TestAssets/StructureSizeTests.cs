@@ -42,10 +42,10 @@ namespace Tests.TestAssets
         {
             public int One;
             public Vector3 Two;
-            public Int3 Three;
+            public int3 Three;
             public Vector4 Four;
             public uint Five;
-            public Int4 Six;
+            public int4 Six;
         }
     }
 }

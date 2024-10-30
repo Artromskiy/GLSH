@@ -4,9 +4,9 @@ namespace GLSH.Compiler;
 
 public class ShaderGenerationResult
 {
-    private readonly List<GeneratedShaderSet> _generatedShaders = [];
+    private readonly List<GeneratedPipeline> _generatedShaders = [];
 
-    public IReadOnlyList<GeneratedShaderSet> GetOutput()
+    public IReadOnlyList<GeneratedPipeline> GetOutput()
     {
         if (_generatedShaders.Count == 0)
             return [];
@@ -14,7 +14,7 @@ public class ShaderGenerationResult
         return _generatedShaders;
     }
 
-    internal void AddShaderSet(GeneratedShaderSet gss)
+    internal void AddShaderSet(GeneratedPipeline gss)
     {
         _generatedShaders.Add(gss);
     }

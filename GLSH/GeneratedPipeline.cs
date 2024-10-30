@@ -4,7 +4,7 @@ namespace GLSH.Compiler;
 /// Represents the concrete output of a shader generation for a specific shader set,
 /// created using a specific LanguageBackend.
 /// </summary>
-public class GeneratedShaderSet
+public class GeneratedPipeline
 {
     public readonly string name;
     public readonly string vertexShaderCode;
@@ -13,10 +13,10 @@ public class GeneratedShaderSet
     public readonly ShaderFunction vertexFunction;
     public readonly ShaderFunction fragmentFunction;
     public readonly ShaderFunction computeFunction;
-    public readonly ShaderModel model;
+    //public readonly ShaderModel model;
 
-    public GeneratedShaderSet(string name, string vsCode, string fsCode, string csCode,
-        ShaderFunction vertexfunction, ShaderFunction fragmentFunction, ShaderFunction computeFunction, ShaderModel model)
+    public GeneratedPipeline(string name, string vsCode, string fsCode, string csCode,
+        ShaderFunction vertexfunction, ShaderFunction fragmentFunction, ShaderFunction computeFunction)
     {
         if (string.IsNullOrEmpty(vsCode) && string.IsNullOrEmpty(fsCode) && string.IsNullOrEmpty(csCode))
             throw new ShaderGenerationException("At least one of vsCode, fsCode, or csCode must be non-empty");
@@ -28,6 +28,6 @@ public class GeneratedShaderSet
         vertexFunction = vertexfunction;
         this.fragmentFunction = fragmentFunction;
         this.computeFunction = computeFunction;
-        this.model = model;
+        //this.model = model;
     }
 }

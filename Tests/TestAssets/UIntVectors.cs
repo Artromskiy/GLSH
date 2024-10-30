@@ -10,18 +10,18 @@ namespace Tests.TestAssets
         public struct VertexInput
         {
             [Layout(location: 0)]
-            public UInt2 U32x2;
+            public uint2 U32x2;
             [Layout(location: 1)]
-            public UInt3 U32x3;
+            public uint3 U32x3;
             [Layout(location: 2)]
-            public UInt4 U32x4;
+            public uint4 U32x4;
 
             [Layout(location: 0)]
-            public Int2 I32x2;
+            public int2 I32x2;
             [Layout(location: 0)]
-            public Int3 I32x3;
+            public int3 I32x3;
             [Layout(location: 0)]
-            public Int4 I32x4;
+            public int4 I32x4;
         }
 
         [VertexEntryPoint]
@@ -29,16 +29,16 @@ namespace Tests.TestAssets
         {
             SystemPosition4 output;
             output.Position = new System.Numerics.Vector4(
-                input.U32x2.X + input.U32x3.X + input.U32x4.X,
-                input.U32x2.Y + input.U32x3.Y + input.U32x4.Y,
-                input.U32x3.Z + input.U32x4.Z,
-                input.U32x4.Z);
+                input.U32x2.x + input.U32x3.x + input.U32x4.x,
+                input.U32x2.y + input.U32x3.y + input.U32x4.y,
+                input.U32x3.z + input.U32x4.z,
+                input.U32x4.z);
 
             output.Position += new System.Numerics.Vector4(
-                input.I32x2.X + input.I32x3.X + input.I32x4.X,
-                input.I32x2.Y + input.I32x3.Y + input.I32x4.Y,
-                input.I32x3.Z + input.I32x4.Z,
-                input.I32x4.W);
+                input.I32x2.x + input.I32x3.x + input.I32x4.x,
+                input.I32x2.y + input.I32x3.y + input.I32x4.y,
+                input.I32x3.z + input.I32x4.z,
+                input.I32x4.w);
 
             return output;
         }

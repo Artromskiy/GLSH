@@ -55,29 +55,29 @@ public static class GlslKnownIdentifiers
     { nameof(Matrix4x4.M43), "[2][3]" },
     { nameof(Matrix4x4.M44), "[3][3]" },};
     private static Dictionary<string, string> uint2Mappings => _uint2Mappings ??= new(){
-    { nameof(UInt2.X), "x" },
-    { nameof(UInt2.Y), "y" },};
+    { nameof(uint2.x), "x" },
+    { nameof(uint2.y), "y" },};
     private static Dictionary<string, string> uint3Mappings => _uint3Mappings ??= new(){
-    { nameof(UInt3.X), "x" },
-    { nameof(UInt3.Y), "y" },
-    { nameof(UInt3.Z), "z" },};
+    { nameof(uint3.x), "x" },
+    { nameof(uint3.y), "y" },
+    { nameof(uint3.z), "z" },};
     private static Dictionary<string, string> uint4Mappings => _uint4Mappings ??= new(){
-    { nameof(UInt4.X), "x" },
-    { nameof(UInt4.Y), "y" },
-    { nameof(UInt4.Z), "z" },
-    { nameof(UInt4.W), "w" },};
+    { nameof(uint4.x), "x" },
+    { nameof(uint4.y), "y" },
+    { nameof(uint4.z), "z" },
+    { nameof(uint4.w), "w" },};
     private static Dictionary<string, string> int2Mappings => _int2Mappings ??= new(){
-    { nameof(Int2.X), "x" },
-    { nameof(Int2.Y), "y" },};
+    { nameof(int2.x), "x" },
+    { nameof(int2.y), "y" },};
     private static Dictionary<string, string> int3Mappings => _int3Mappings ??= new(){
-    { nameof(Int3.X), "x" },
-    { nameof(Int3.Y), "y" },
-    { nameof(Int3.Z), "z" },};
+    { nameof(int3.x), "x" },
+    { nameof(int3.y), "y" },
+    { nameof(int3.z), "z" },};
     private static readonly Dictionary<string, string> int4Mappings = _int4Mappings ??= new(){
-    { nameof(Int4.X), "x" },
-    { nameof(Int4.Y), "y" },
-    { nameof(Int4.Z), "z" },
-    { nameof(Int4.W), "w" },};
+    { nameof(int4.x), "x" },
+    { nameof(int4.y), "y" },
+    { nameof(int4.z), "z" },
+    { nameof(int4.w), "w" },};
     private static readonly Dictionary<string, string> mathfMappings = _mathf4Mappings ??= new(){
     // TODO Note MathF is not included in .Net Standard
     { "E", "2.71828182845905" },
@@ -91,12 +91,12 @@ public static class GlslKnownIdentifiers
         ret.Add(typeof(Vector3).FullName!, v3Mappings);
         ret.Add(typeof(Vector4).FullName!, v4Mappings);
         ret.Add(typeof(Matrix4x4).FullName!, m4x4Mappings);
-        ret.Add(typeof(UInt2).FullName!, uint2Mappings);
-        ret.Add(typeof(UInt3).FullName!, uint3Mappings);
-        ret.Add(typeof(UInt4).FullName!, uint4Mappings);
-        ret.Add(typeof(Int2).FullName!, int2Mappings);
-        ret.Add(typeof(Int3).FullName!, int3Mappings);
-        ret.Add(typeof(Int4).FullName!, int4Mappings);
+        ret.Add(typeof(uint2).FullName!, uint2Mappings);
+        ret.Add(typeof(uint3).FullName!, uint3Mappings);
+        ret.Add(typeof(uint4).FullName!, uint4Mappings);
+        ret.Add(typeof(int2).FullName!, int2Mappings);
+        ret.Add(typeof(int3).FullName!, int3Mappings);
+        ret.Add(typeof(int4).FullName!, int4Mappings);
         ret.Add(typeof(MathF).FullName!, mathfMappings);
 
         return ret;

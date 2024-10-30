@@ -1,11 +1,10 @@
-using GLSH.Attributes;
 using GLSH.Compiler.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 namespace GLSH.Compiler;
@@ -98,65 +97,76 @@ internal static class Utilities
         return symbolInfo.Symbol.GetFullMetadataName();
     }
 
-    [Obsolete("Rewrite this hell")]
-    internal static ShaderFunctionAndMethodDeclarationSyntax GetShaderFunction(BaseMethodDeclarationSyntax node, Compilation compilation, bool generateOrderedFunctionList)
+    public static MethodDeclarationData GetMethodDeclarationData(IMethodSymbol methodSymbol)
     {
-        SemanticModel semanticModel = compilation.GetSemanticModel(node.SyntaxTree);
-        string functionName;
-        TypeReference returnTypeReference;
-        UInt3 computeGroupCounts = new();
+        var returnTypeName = methodSymbol.ReturnType.GetFullMetadataName();
+        var methodName = methodSymbol.Name;
+        var containingType = methodSymbol.ContainingSymbol.GetFullMetadataName();
+        var parameters = methodSymbol.Parameters.Select(GetParamData).ToArray();
+        return new MethodDeclarationData(containingType, methodName, returnTypeName, parameters);
+    }
 
-        if (node is MethodDeclarationSyntax mds)
+    public static IMethodSymbol? GetMethodSymbol(MethodDeclarationData method, Compilation compilation)
+    {
+        var type = compilation.GetTypeByMetadataName(method.containingType);
+        return type?.GetMembers().OfType<IMethodSymbol>().FirstOrDefault(methodSymbol => GetMethodDeclarationData(methodSymbol) == method);
+    }
+
+    public static SyntaxNode? GetMethodSyntax(MethodDeclarationData method, Compilation compilation)
+    {
+        return GetMethodSymbol(method, compilation)?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
+    }
+
+    private static ParamData GetParamData(IParameterSymbol item)
+    {
+        var typeName = item.Type.GetFullMetadataName();
+        var direction = item.RefKind switch
         {
-            functionName = mds.Identifier.ToFullString();
-            returnTypeReference = new(semanticModel.GetFullTypeName(mds.ReturnType), semanticModel.GetTypeInfo(mds.ReturnType).Type);
-        }
-        else if (node is ConstructorDeclarationSyntax cds)
-        {
-            functionName = ".ctor";
-            ITypeSymbol typeSymbol = semanticModel.GetDeclaredSymbol(cds)!.ContainingType;
-            returnTypeReference = new(GetFullTypeName(typeSymbol), typeSymbol);
-        }
-        else
-        {
-            throw new ArgumentOutOfRangeException(nameof(node), "Unsupported BaseMethodDeclarationSyntax type.");
-        }
+            RefKind.Out => ParameterDirection.Out,
+            RefKind.Ref => ParameterDirection.InOut,
+            _ => ParameterDirection.In,
+        };
+        return new ParamData(typeName, direction);
+    }
 
-        ShaderFunctionType type;
 
-        if (AttributeHelper.TryGetAttribute<VertexEntryPointAttribute>(node, semanticModel, out _))
-            type = ShaderFunctionType.VertexEntryPoint;
-        else if (AttributeHelper.TryGetAttribute<FragmentEntryPointAttribute>(node, semanticModel, out _))
-            type = ShaderFunctionType.FragmentEntryPoint;
-        else if (AttributeHelper.TryGetAttribute<ComputeEntryPointAttribute>(node, semanticModel, out var computeEntryAttributeSyntax))
-        {
-            var data = computeEntryAttributeSyntax.CreateAttributeOfType<ComputeEntryPointAttribute>(semanticModel);
-            computeGroupCounts.X = data.localSizeX;
-            computeGroupCounts.Y = data.localSizeY;
-            computeGroupCounts.Z = data.localSizeZ;
-            type = ShaderFunctionType.ComputeEntryPoint;
-        }
-        else
-            type = ShaderFunctionType.Normal;
+    public enum AccessType
+    {
+        Get,
+        Set,
+        GetAndSet
+    }
 
-        string nestedTypePrefix = GetFunctionContainingTypeName(node, semanticModel);
+    //
+    // ++/--    pre/postfix increments            get/set
+    // =        lhs of simple assignments         set
+    // +=, -=   lhs of other assigments           get/set
+    // x.y      rhs, of compound member access    recurr up
+    //
+    // any other use is just a get
+    //
+    // TOOD: ref parameters?
+    //
+    public static AccessType GetAccessType(SyntaxNode node)
+    {
+        SyntaxKind kind = node.Parent.Kind();
 
-        List<ParameterDefinition> parameters = [];
+        if (kind == SyntaxKind.PostIncrementExpression ||
+            kind == SyntaxKind.PostDecrementExpression ||
+            kind == SyntaxKind.PreIncrementExpression ||
+            kind == SyntaxKind.PreDecrementExpression)
+            return AccessType.GetAndSet;
 
-        foreach (ParameterSyntax ps in node.ParameterList.Parameters)
-            parameters.Add(ParameterDefinition.GetParameterDefinition(compilation, ps));
+        if (node.Parent is AssignmentExpressionSyntax syntax && syntax.Left == node)
+            return kind == SyntaxKind.SimpleAssignmentExpression ? AccessType.Set : AccessType.GetAndSet;
+        if (node.Parent is MemberAccessExpressionSyntax m && m.Name == node)
+            return GetAccessType(node.Parent);
 
-        ShaderFunction sf = new(nestedTypePrefix, functionName, returnTypeReference, [.. parameters], type, computeGroupCounts);
+        return AccessType.Get;
+    }
 
-        ShaderFunctionAndMethodDeclarationSyntax[] orderedFunctionList = [];
-
-        if (type != ShaderFunctionType.Normal && generateOrderedFunctionList)
-        {
-            FunctionCallGraphDiscoverer fcgd = new(compilation, new(sf.declaringType, sf.name));
-            fcgd.GenerateFullGraph();
-            orderedFunctionList = fcgd.GetOrderedCallList();
-        }
-
-        return new ShaderFunctionAndMethodDeclarationSyntax(sf, node, orderedFunctionList);
+    public static string Indent(this string? s, int lvl = 1)
+    {
+        return new string(' ', lvl * 4) + s;
     }
 }

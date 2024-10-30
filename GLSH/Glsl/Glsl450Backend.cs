@@ -1,3 +1,4 @@
+using GLSH.Compiler.Internal;
 using Microsoft.CodeAnalysis;
 using System.Diagnostics;
 using System.Numerics;
@@ -5,20 +6,112 @@ using System.Text;
 
 namespace GLSH.Compiler.Glsl;
 
-public class Glsl450Backend : GlslBackendBase
+public class Glsl450Backend : LanguageBackend
 {
-    public Glsl450Backend(Compilation compilation) : base(compilation)
+    protected const string fragIn = "fsin_";
+    private const string inIdf = "input";
+    private const string outIdf = "output";
+
+    public Glsl450Backend(Compilation compilation) : base(compilation) { }
+
+    protected sealed override string GenerateFullTextCore(MethodDeclarationData entryFunction)
     {
+        StringBuilder sb = new();
+
+        foreach (var structure in _structsCache[entryFunction])
+            WriteStructure(sb, structure);
+
+        foreach (var method in _methodsCache[entryFunction])
+            WriteMethod(sb, method);
+
+
+        // Write header last
+        // Write structure declarations
+        // Write resource declarations
+        // Write method declarations
+
+        //WriteMainFunction(setName, sb, entryPoint.function);
+
+        StringBuilder versionSB = new();
+        WriteVersionHeader(versionSB);
+
+        sb.Insert(0, versionSB.ToString());
+
+        return sb.ToString();
     }
+
+    private void WriteStructure(StringBuilder sb, StructDeclarationData structDecl)
+    {
+        StringBuilder fb = new();
+        foreach (var field in structDecl.fields)
+            fb.AppendLine($"    {CSharpToShaderTypeCore(field.typeName)} {CorrectIdentifier(field.fieldName)};");
+
+        sb.AppendLine(
+        $$"""
+        struct {{CSharpToShaderTypeCore(structDecl.name)}}
+        {
+        {{fb}}};
+        """
+        );
+    }
+
+    private void WriteMethod(StringBuilder sb, MethodDeclarationData methodDecl)
+    {
+        var fw = new MethodWriter(_compilation, this);
+        var syntax = Utilities.GetMethodSyntax(methodDecl, _compilation);
+        var method = fw.Visit(syntax);
+        sb.Append(method);
+    }
+
+
+    private void WriteInputDeclarations(StringBuilder sb, ref string? fragCoordName, StructureDefinition inputType, ShaderFunction entryFunction)
+    {
+        // Declare "in" variables
+        int inVarIndex = 0;
+        fragCoordName = null;
+        foreach (FieldDefinition field in inputType.fields)
+        {
+            WriteInOutVariable(sb, true, entryFunction.type == ShaderFunctionType.VertexEntryPoint,
+                CSharpToShaderTypeCore(field.type.name), CorrectIdentifier(field.name), inVarIndex);
+            inVarIndex += 1;
+        }
+    }
+
+    private void WriteOutOfVertexDeclarations(StringBuilder sb, StructureDefinition outputType)
+    {
+        int outVarIndex = 0;
+        foreach (FieldDefinition field in outputType.fields)
+        {
+            WriteInOutVariable(sb, false, true,
+                CSharpToShaderTypeCore(field.type.name),
+                "out_" + CorrectIdentifier(field.name),
+                outVarIndex);
+            outVarIndex += 1;
+        }
+    }
+
+    protected override string CSharpToIdentifierNameCore(string typeName, string identifier)
+    {
+        return GlslKnownIdentifiers.GetMappedIdentifier(typeName, identifier);
+    }
+
+    internal override string CorrectIdentifier(string identifier)
+    {
+        return identifier;
+    }
+
+    internal override string CorrectCastExpression(string type, string expression)
+    {
+        return $"{type}({expression})";
+    }
+
 
     protected override string CSharpToShaderTypeCore(string fullType)
     {
         return GlslKnownTypes.GetMappedName(fullType).Replace('.', '_').Replace('+', '_');
     }
 
-    protected override void WriteVersionHeader(ShaderFunction function,
-        ShaderFunctionAndMethodDeclarationSyntax[] orderedFunctions,
-        StringBuilder sb)
+    protected void WriteVersionHeader(StringBuilder sb)
     {
         sb.AppendLine(
         """
@@ -28,7 +121,8 @@ public class Glsl450Backend : GlslBackendBase
         """);
     }
 
-    protected override void WriteUniform(StringBuilder sb, ResourceDefinition rd)
+
+    protected void WriteUniform(StringBuilder sb, ResourceDefinition rd)
     {
         string layout = FormatLayoutStr(rd);
 
@@ -36,57 +130,14 @@ public class Glsl450Backend : GlslBackendBase
         $$"""
         {{layout}} uniform {{rd.name}}
         {
-            {{CSharpToShaderType(rd.valueType.name)}} field_{{CorrectIdentifier(rd.name.Trim())}};
+            {{CSharpToShaderTypeCore(rd.valueType.name)}} field_{{CorrectIdentifier(rd.name.Trim())}};
         };
 
         """);
     }
 
-    protected override void WriteStructuredBuffer(StringBuilder sb, ResourceDefinition rd, bool isReadOnly, int index)
-    {
-        string valueType = rd.valueType.name;
-        string type = valueType == typeof(AtomicBufferUInt32).FullName ? "uint" :
-            valueType == typeof(AtomicBufferInt32).FullName ? "int" : CSharpToShaderType(rd.valueType.name);
 
-        string layout = FormatLayoutStr(rd, "std430");
-        string readOnlyStr = isReadOnly ? " readonly" : " ";
-
-        sb.AppendLine(
-        $$"""
-        {{layout}}{{readOnlyStr}} buffer {{rd.name}}
-        {
-            {{type}} field_{{CorrectIdentifier(rd.name.Trim())}}[];
-        };
-        """);
-    }
-
-    protected override void WriteSampler(StringBuilder sb, ResourceDefinition rd) =>
-        WriteTexture(sb, rd, "sampler");
-    protected override void WriteSamplerComparison(StringBuilder sb, ResourceDefinition rd) =>
-        WriteTexture(sb, rd, "samplerShadow");
-    protected override void WriteTexture2D(StringBuilder sb, ResourceDefinition rd) =>
-        WriteTexture(sb, rd, "texture2D");
-    protected override void WriteTexture2DArray(StringBuilder sb, ResourceDefinition rd) =>
-        WriteTexture(sb, rd, "texture2DArray");
-    protected override void WriteTextureCube(StringBuilder sb, ResourceDefinition rd) =>
-        WriteTexture(sb, rd, "textureCube");
-    protected override void WriteTexture2DMS(StringBuilder sb, ResourceDefinition rd) =>
-        WriteTexture(sb, rd, "texture2DMS");
-    protected override void WriteDepthTexture2D(StringBuilder sb, ResourceDefinition rd) =>
-        WriteTexture2D(sb, rd);
-    protected override void WriteDepthTexture2DArray(StringBuilder sb, ResourceDefinition rd) =>
-        WriteTexture2DArray(sb, rd);
-    private void WriteTexture(StringBuilder sb, ResourceDefinition rd, string uniformName) =>
-        sb.AppendLine($"{FormatLayoutStr(rd)} uniform {uniformName} {CorrectIdentifier(rd.name)};");
-
-
-    protected override void WriteInOutVariable(
-        StringBuilder sb,
-        bool isInVar,
-        bool isVertexStage,
-        string normalizedType,
-        string normalizedIdentifier,
-        int index)
+    protected void WriteInOutVariable(StringBuilder sb, bool isInVar, bool isVertexStage, string normalizedType, string normalizedIdentifier, int index)
     {
         string qualifier = isInVar ? "in" : "out";
         string identifier;
@@ -103,7 +154,7 @@ public class Glsl450Backend : GlslBackendBase
 
     }
 
-    protected override void WriteRWTexture2D(StringBuilder sb, ResourceDefinition rd, int index)
+    protected void WriteRWTexture2D(StringBuilder sb, ResourceDefinition rd, int index)
     {
         string layoutType;
 
@@ -117,7 +168,7 @@ public class Glsl450Backend : GlslBackendBase
         sb.Append($"{FormatLayoutStr(rd, layoutType)} uniform image2D {CorrectIdentifier(rd.name)};");
     }
 
-    protected override string FormatInvocationCore(string setName, string type, string method, InvocationParameterInfo[] parameterInfos)
+    protected override string FormatInvocationCore(string type, string method, InvocationParameterInfo[] parameterInfos)
     {
         return Glsl450KnownFunctions.TranslateMethodInvocation(type, method, parameterInfos);
     }
@@ -126,5 +177,25 @@ public class Glsl450Backend : GlslBackendBase
     {
         string storageSpecPart = storageSpec != null ? $"{storageSpec}, " : string.Empty;
         return $"layout({storageSpecPart}set = {rd.set}, binding = {rd.binding})";
+    }
+
+    internal override string GetComputeGroupCountsDeclaration(uint3 groupCounts)
+    {
+        return " ";
+    }
+
+    internal override string ParameterDirection(ParameterDirection direction)
+    {
+        return " ";
+    }
+
+    public override string CorrectArgumentRefKind(string refKind)
+    {
+        return refKind == "ref" ? "inout" : " ";
+    }
+
+    public override string GetMethodName(MethodDeclarationData method)
+    {
+        throw new System.NotImplementedException();
     }
 }

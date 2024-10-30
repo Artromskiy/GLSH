@@ -32,12 +32,12 @@ public static class TypeSizeCache
         { typeof(Vector3).FullName!, 16 },
         { typeof(Vector4).FullName!, 16 },
         { typeof(Matrix4x4).FullName!, 16 },
-        { typeof(UInt2).FullName!, 8 },
-        { typeof(UInt3).FullName!, 16 },
-        { typeof(UInt4).FullName!, 16 },
-        { typeof(Int2).FullName!, 8 },
-        { typeof(Int3).FullName!, 16 },
-        { typeof(Int4).FullName!, 16 },
+        { typeof(uint2).FullName!, 8 },
+        { typeof(uint3).FullName!, 16 },
+        { typeof(uint4).FullName!, 16 },
+        { typeof(int2).FullName!, 8 },
+        { typeof(int3).FullName!, 16 },
+        { typeof(int4).FullName!, 16 },
     };
 
     private static readonly ConcurrentDictionary<ITypeSymbol, AlignmentInfo> s_cachedSizes

@@ -1,7 +1,6 @@
 using GLSH.Compiler.Internal;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
@@ -223,8 +222,8 @@ public static class Glsl450KnownFunctions
         ret.Add(typeof(Vector2).FullName!, new DictionaryTypeInvocationTranslator(v2Mappings));
         ret.Add(typeof(Vector3).FullName!, new DictionaryTypeInvocationTranslator(v3Mappings));
         ret.Add(typeof(Vector4).FullName!, new DictionaryTypeInvocationTranslator(v4Mappings));
-        ret.Add(typeof(UInt2).FullName!, new DictionaryTypeInvocationTranslator(u2Mappings));
-        ret.Add(typeof(Int2).FullName!, new DictionaryTypeInvocationTranslator(u2Mappings));
+        ret.Add(typeof(uint2).FullName!, new DictionaryTypeInvocationTranslator(u2Mappings));
+        ret.Add(typeof(int2).FullName!, new DictionaryTypeInvocationTranslator(u2Mappings));
         ret.Add(typeof(Matrix4x4).FullName!, new DictionaryTypeInvocationTranslator(m4x4Mappings));
         ret.Add(typeof(MathF).FullName!, new DictionaryTypeInvocationTranslator(mathfMappings));
         ret.Add(typeof(ShaderSwizzle).FullName!, new SwizzleTranslator());
@@ -557,8 +556,8 @@ public static class Glsl450KnownFunctions
         if (name == typeof(Vector2).FullName!) { backendTypeName = "vec2"; elementCount = 2; }
         else if (name == typeof(Vector3).FullName!) { backendTypeName = "vec3"; elementCount = 3; }
         else if (name == typeof(Vector4).FullName!) { backendTypeName = "vec4"; elementCount = 4; }
-        else if (name == typeof(Int2).FullName!) { backendTypeName = "ivec2"; elementCount = 2; }
-        else if (name == typeof(UInt2).FullName!) { backendTypeName = "uvec2"; elementCount = 2; }
+        else if (name == typeof(int2).FullName!) { backendTypeName = "ivec2"; elementCount = 2; }
+        else if (name == typeof(uint2).FullName!) { backendTypeName = "uvec2"; elementCount = 2; }
         else { throw new ShaderGenerationException("VectorCtor translator was called on an invalid type: " + name); }
     }
 
