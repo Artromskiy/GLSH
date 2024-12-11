@@ -1,7 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
-using System;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace GLSH.Compiler.Internal
@@ -12,95 +12,161 @@ namespace GLSH.Compiler.Internal
         {
             if (NeedsPropertyWrap(node))
             {
-                var access = Utilities.GetAccessType(node);
-                if (access == Utilities.AccessType.Set || access == Utilities.AccessType.GetAndSet)
-                    throw new NotImplementedException();
-                else
-                    return WrappedGetter(node);
+                ShaderGenerationException.ThrowIf(Utilities.GetAccessType(node) != AccessType.Get,
+                    "Setter usage should be handled by VisitAssignmentExpression");
+                return WrappedGetter(node, new(_backend.GetThisToken()));
             }
+            ShaderGenerationException.ThrowIf(NeedsMethodWrap(node),
+                "Method usage should be handled by VisitMemberAccessExpression or VisitInvocationExpression");
 
             var symbol = GetModel(node).GetSymbolInfo(node).Symbol;
-            if (symbol is IFieldSymbol || symbol is IPropertySymbol)
-                return "this." + node.Identifier.ValueText;
+
+            // self access
+            if ((symbol is IFieldSymbol || symbol is IPropertySymbol) &&
+                containingType == symbol.ContainingType.GetFullMetadataName())
+                return $"{_backend.GetThisToken()}.{node.Identifier.ValueText}";
 
             return node.Identifier.ValueText;
         }
 
         public override string? VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
         {
-            return base.VisitMemberAccessExpression(node);
+            if (NeedsPropertyWrap(node))
+            {
+                ShaderGenerationException.ThrowIf(Utilities.GetAccessType(node) != AccessType.Get,
+                    "Setter usage should be handled by VisitAssignmentExpression");
+
+                InvocationArgument parameter = new(Visit(node.Expression) ?? _backend.GetThisToken());
+                return WrappedGetter(node.Name, parameter);
+            }
+            if (NeedsMethodWrap(node))
+            {
+                var arg = Visit(node.Expression);
+                InvocationArgument[] invocationParameters = [];
+                if (arg != null)
+                    invocationParameters = [new(arg)];
+                return WrappedMethod(node.Name, invocationParameters);
+            }
+            return Visit(node.Expression) + "." + Visit(node.Name);
         }
 
-        public override string? VisitVariableDeclaration(VariableDeclarationSyntax node)
+        /// <summary>
+        /// Used to find imlicit casts
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        public override string? Visit(SyntaxNode? node)
         {
-            var type = GetGlTypeName(node.Type);
-            var declarator = node.Variables[0];
-            var identifier = declarator.Identifier;
-            var right = base.Visit(declarator.Initializer.Value);
-
-            return $"{type} {identifier} = {right};";
+            if (node != null)
+            {
+                var methodConversion = GetModel(node).GetConversion(node).MethodSymbol;
+            }
+            return base.Visit(node);
         }
+
+
 
         public override string? VisitAssignmentExpression(AssignmentExpressionSyntax node)
         {
-            bool wrapRhs = node.Right is IdentifierNameSyntax && NeedsPropertyWrap(node.Right);
-            bool wrapLhs = node.Left is IdentifierNameSyntax && NeedsPropertyWrap(node.Left);
+            var nameSyntax = node.Left is IdentifierNameSyntax id ? id : (node.Left as MemberAccessExpressionSyntax)!.Name;
+            var inoutThis = (node.Left as MemberAccessExpressionSyntax)?.Expression;
 
-            string? rightExpr = wrapRhs ? WrappedGetter(node.Right) : Visit(node.Right);
-            string? leftExpr = wrapLhs ? WrappedSetter(node.Left, rightExpr) : Visit(node.Left);
+            bool wrapLhs = NeedsPropertyWrap(node.Left);
 
+            string rightExpr = Visit(node.Right);
             if (wrapLhs)
-                return leftExpr;
+            {
+                InvocationArgument inoutParam = new(Visit(inoutThis) ?? _backend.GetThisToken());
+                return WrappedSetter(nameSyntax!, new(rightExpr), inoutParam);
+            }
+            string? leftExpr = Visit(node.Left);
 
             return $"{leftExpr} {node.OperatorToken.ValueText} {rightExpr}";
         }
 
         public override string? VisitInvocationExpression(InvocationExpressionSyntax node)
         {
-            if (node.Expression is IdentifierNameSyntax ins)
-            {
-                SymbolInfo symbolInfo = GetModel(node).GetSymbolInfo(ins);
-                string type = symbolInfo.Symbol.ContainingType.GetFullMetadataName();
-                string method = symbolInfo.Symbol.Name;
-                var args = string.Join(", ", node.ArgumentList.Arguments.Select(a => a.RefKindKeyword.ValueText + " " + Visit(a.Expression)));
-                return type + "." + method + $"({args})";
-            }
-            return null;
+            var nameSyntax = node.Expression is IdentifierNameSyntax id ? id : (node.Expression as MemberAccessExpressionSyntax)!.Name;
+            var inoutThis = (node.Expression as MemberAccessExpressionSyntax)?.Expression;
+
+            var inoutThisParameter = Visit(inoutThis);
+            List<InvocationArgument> allArgs = [.. GetArguments(node.ArgumentList)];
+            if (inoutThisParameter != null)
+                allArgs.Insert(0, new(inoutThisParameter));
+
+            return WrappedMethod(nameSyntax, [.. allArgs]);
+        }
+
+        private InvocationArgument[] GetArguments(ArgumentListSyntax? argumentListSyntax)
+        {
+            if (argumentListSyntax == null)
+                return [];
+            return argumentListSyntax.Arguments.Select(a => new InvocationArgument(Visit(a.Expression))).ToArray();
         }
 
         private bool NeedsPropertyWrap(ExpressionSyntax node)
         {
             var symbol = GetModel(node).GetSymbolInfo(node).Symbol;
-            var isProp = symbol is IPropertySymbol;
             var propSyntax = symbol?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax;
             bool isMethodProp = !(propSyntax?.AccessorList?.Accessors.All(a => a.Body == null && a.ExpressionBody == null) ?? true);
             return isMethodProp;
         }
 
-        private string WrappedGetter(ExpressionSyntax node)
+        public override string VisitBinaryExpression(BinaryExpressionSyntax node)
+        {
+            var info = GetModel(node).GetSymbolInfo(node).Symbol;
+            var typeName = info.ContainingType.GetFullMetadataName();
+            var methodName = info.Name;
+            var left = Visit(node.Left)!;
+            var right = Visit(node.Right)!;
+            return _backend.FormatBinaryExpression(typeName, methodName, left, right);
+        }
+
+        private bool NeedsMethodWrap(ExpressionSyntax node)
+        {
+            var symbol = GetModel(node).GetSymbolInfo(node).Symbol;
+            return symbol?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is MethodDeclarationSyntax;
+        }
+
+        private string WrappedMethod(SyntaxNode node, InvocationArgument[] args)
+        {
+            var symbolInfo = GetModel(node).GetSymbolInfo(node);
+            return WrappedMethod(symbolInfo.Symbol as IMethodSymbol, args);
+        }
+
+        private string WrappedMethod(IMethodSymbol method, InvocationArgument[] args)
+        {
+            var methodName = method.Name;
+            var typeName = method.ContainingType.GetFullMetadataName();
+            return _backend.FormatInvocation(typeName, methodName, args);
+        }
+
+        private string WrappedGetter(SimpleNameSyntax node, InvocationArgument inoutThis)
         {
             var propSymbol = GetModel(node).GetSymbolInfo(node).Symbol;
             var propDeclSyntax = propSymbol?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax;
             var accessor = propDeclSyntax?.AccessorList?.Accessors.FirstOrDefault(a => a.IsKind(SyntaxKind.GetAccessorDeclaration));
             var method = GetModel(accessor).GetDeclaredSymbol(accessor);
-            return $"{GetMethodName(method)}(inout this)";
+            return WrappedMethod(method, [inoutThis]);
         }
 
-        private string WrappedSetter(ExpressionSyntax node, string? parameter)
+        private string WrappedSetter(SimpleNameSyntax node, InvocationArgument value, InvocationArgument inoutThis)
         {
             var propSymbol = GetModel(node).GetSymbolInfo(node).Symbol;
             var propDeclSyntax = propSymbol?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax;
             var accessor = propDeclSyntax?.AccessorList?.Accessors.FirstOrDefault(a => a.IsKind(SyntaxKind.SetAccessorDeclaration));
             var method = GetModel(accessor).GetDeclaredSymbol(accessor);
-            return $"{GetMethodName(method)}(inout this, {parameter})";
+            return WrappedMethod(method, [inoutThis, value]);
         }
 
-        private string GetMethodName(IMethodSymbol method)
+        public override string? VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
         {
-            var typeName = method.ContainingType.GetFullMetadataName();
-            var methodName = method.Name;
-            var fullName = $"{typeName}.{methodName}";
-            return _backend.CSharpToShaderType(fullName);
+            return WrappedMethod(node, GetArguments(node.ArgumentList));
+        }
+
+        public override string? VisitImplicitObjectCreationExpression(ImplicitObjectCreationExpressionSyntax node)
+        {
+            return WrappedMethod(node, GetArguments(node.ArgumentList));
         }
     }
 }

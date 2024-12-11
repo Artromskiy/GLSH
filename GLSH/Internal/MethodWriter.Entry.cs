@@ -11,7 +11,7 @@ internal partial class MethodWriter : CSharpSyntaxVisitor<string>
 {
     private readonly Compilation _compilation;
     private readonly LanguageBackend _backend;
-    private readonly StringBuilder stringBuilder = new();
+    private string containingType;
 
     public MethodWriter(Compilation compilation, LanguageBackend backend)
     {
@@ -26,6 +26,12 @@ internal partial class MethodWriter : CSharpSyntaxVisitor<string>
     {
         var csName = GetCsTypeName(node);
         return csName != null ? _backend.CSharpToShaderType(csName) : null;
+    }
+
+    public string WriteMethod(MethodDeclarationData methodDeclarationData)
+    {
+        var syntax = Utilities.GetMethodSyntax(methodDeclarationData, _compilation);
+        return Visit(syntax);
     }
 
     public override string? VisitMethodDeclaration(MethodDeclarationSyntax node)
@@ -44,25 +50,24 @@ internal partial class MethodWriter : CSharpSyntaxVisitor<string>
         return declaration + body;
     }
 
-    private string GetMethodDefinition(IMethodSymbol symbol)
+    private string GetMethodDefinition(IMethodSymbol method)
     {
-        var returnType = _backend.CSharpToShaderType(symbol.ReturnType.GetFullMetadataName());
-        var containingType = _backend.CSharpToShaderType(symbol.ContainingType.GetFullMetadataName());
-        var methodName = GetMethodName(symbol);
-        List<string> parameters = [];
+        var returnType = method.ReturnType.GetFullMetadataName();
+        containingType = method.ContainingType.GetFullMetadataName();
+        List<InvocationParameter> parameters = [];
 
-        if (!symbol.IsStatic) // convert to extension-like thing
-            parameters.Add($"inout {containingType} this");
+        if (!method.IsStatic) // convert to extension-like thing
+            parameters.Add(new(containingType, _backend.GetThisToken(), ParameterDirection.InOut));
 
-        parameters.AddRange(symbol.Parameters.Select(p =>
+        parameters.AddRange(method.Parameters.Select(p =>
         {
-            var refKind = _backend.CorrectArgumentRefKind(p.RefKind.ToString());
-            var typeName = _backend.CSharpToShaderType(p.Type.GetFullMetadataName());
+            var direction = Utilities.RefKindToDirection(p.RefKind);
+            var typeName = p.Type.GetFullMetadataName();
             var identifier = p.Name;
-            return $"{refKind} {typeName} {identifier}";
+            return new InvocationParameter(typeName, identifier, direction);
         }));
 
-        return $"{returnType} {methodName}({string.Join(", ", parameters)})";
+        return _backend.FormatDeclaration(returnType, containingType, method.Name, [.. parameters]);
     }
 
     private string? GetBodyDeclaration(IMethodSymbol symbol, BlockSyntax? block, ArrowExpressionClauseSyntax? arrow)
@@ -71,12 +76,13 @@ internal partial class MethodWriter : CSharpSyntaxVisitor<string>
             return Visit(block);
 
         bool isVoid = symbol.ReturnType.GetFullMetadataName() == typeof(void).FullName!;
-        var returnKeyword = isVoid ? "" : "return";
+        var returnKeyword = isVoid ? "" : "return ";
+        var resultString = $"{returnKeyword}{Visit(arrow!.Expression)};";
         return
         $$"""
 
         {
-            {{returnKeyword}} {{Visit(arrow!.Expression)}};
+        {{resultString.Indent()}}
         }
 
         """;

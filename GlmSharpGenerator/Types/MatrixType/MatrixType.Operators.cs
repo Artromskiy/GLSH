@@ -28,6 +28,7 @@ namespace GlmSharpGenerator.Types
                     Comment = $"Executes a matrix-matrix-multiplication {Name} * {rhs.Name} -> {resultType.Name}.",
                     Parameters = [$"{Name} lhs", $"{rhs.Name} rhs"],
                     Code = [$"new {resultType.Name}({ctrParams1})"],
+                    GlslName = "op_Multiply",
                 };
             }
 
@@ -38,17 +39,26 @@ namespace GlmSharpGenerator.Types
             {
                 Comment = "Executes a matrix-vector-multiplication.",
                 Parameters = [$"{Name} m", $"{inpType.Name} v"],
-                Code = [$"new {retType.Name}({ctrParams2})"]
+                Code = [$"new {retType.Name}({ctrParams2})"],
+                GlslName = "op_Multiply",
             };
 
             // arithmetic operators
-            foreach (var kvp in new Dictionary<string, string>
+            var operatorToComment = new Dictionary<string, string>
             {
                 {"+", "+ (addition)"},
                 {"-", "- (subtraction)"},
                 {"/", "/ (division)"},
                 {"*", "* (multiplication)"} // only scalar
-            })
+            };
+            var operatorToName = new Dictionary<string, string>
+            {
+                {"+", "op_Addition"},
+                {"-", "op_Subtraction"},
+                {"/", "op_Division"},
+                {"*", "op_Multiply"} // only scalar
+            };
+            foreach (var kvp in operatorToComment)
             {
                 var op = kvp.Key;
                 var opComment = kvp.Value;
@@ -58,32 +68,24 @@ namespace GlmSharpGenerator.Types
                     {
                         Comment = $"Executes a component-wise {opComment}.",
                         Parameters = this.LhsRhs(),
-                        Code = [$"new {Name}({Fields.Select(f => $"lhs{f} {op} rhs{f}").CommaSeparated()})"]
+                        Code = [$"new {Name}({Fields.Select(f => $"lhs{f} {op} rhs{f}").CommaSeparated()})"],
+                        GlslName = operatorToName[op]
                     };
                 yield return new Operator(this, op) // scalar * matrix
                 {
                     Comment = $"Executes a component-wise {opComment} with scalar.",
                     Parameters = [$"{BaseTypeName} s", $"{Name} m"],
-                    Code = [$"new {Name}({Fields.Select(f => $"s {op} m{f}").CommaSeparated()})"]
+                    Code = [$"new {Name}({Fields.Select(f => $"s {op} m{f}").CommaSeparated()})"],
+                    GlslName = operatorToName[op]
                 };
                 yield return new Operator(this, op) // matrix * scalar
                 {
                     Comment = $"Executes a component-wise {opComment} with scalar.",
                     Parameters = [$"{Name} m", $"{BaseTypeName} s"],
-                    Code = [$"new {Name}({Fields.Select(f => $"m{f} {op} s").CommaSeparated()})"]
+                    Code = [$"new {Name}({Fields.Select(f => $"m{f} {op} s").CommaSeparated()})"],
+                    GlslName = operatorToName[op]
                 };
             }
         }
-
-        private IEnumerable<string> Legacy()
-        {
-            // matrix-matrix-division
-            if (Rows == Columns && BaseType.IsSigned)
-            {
-                foreach (var line in "Executes a matrix-matrix-divison A / B == A * B^-1 (use with caution).".AsComment()) yield return line;
-                yield return string.Format("public static {0} operator/({0} A, {0} B) => A * B.Inverse;", NameThat);
-            }
-        }
-
     }
 }

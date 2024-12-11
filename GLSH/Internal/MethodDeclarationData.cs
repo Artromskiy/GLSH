@@ -42,7 +42,6 @@ public readonly struct MethodDeclarationData : IEquatable<MethodDeclarationData>
 }
 
 [DebuggerDisplay("{ToString()}")]
-
 public readonly struct ParamData : IEquatable<ParamData>
 {
     public readonly string typeName;

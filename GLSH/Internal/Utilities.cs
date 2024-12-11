@@ -1,4 +1,3 @@
-using GLSH.Compiler.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -7,7 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-namespace GLSH.Compiler;
+namespace GLSH.Compiler.Internal;
 
 internal static class Utilities
 {
@@ -129,13 +128,13 @@ internal static class Utilities
         return new ParamData(typeName, direction);
     }
 
-
-    public enum AccessType
+    public static ParameterDirection RefKindToDirection(RefKind refKind) => refKind switch
     {
-        Get,
-        Set,
-        GetAndSet
-    }
+        RefKind.Out => ParameterDirection.Out,
+        RefKind.Ref => ParameterDirection.InOut,
+        _ => ParameterDirection.In
+    };
+
 
     //
     // ++/--    pre/postfix increments            get/set
@@ -168,5 +167,10 @@ internal static class Utilities
     public static string Indent(this string? s, int lvl = 1)
     {
         return new string(' ', lvl * 4) + s;
+    }
+
+    public static bool IsAutoProperty(PropertyDeclarationSyntax propDeclaration)
+    {
+        return propDeclaration.AccessorList?.Accessors.All(a => a.Body == null && a.ExpressionBody == null) ?? true;
     }
 }

@@ -1,5 +1,8 @@
+using System;
+
 namespace GLSH.Compiler;
 
+[Obsolete]
 public enum ShaderResourceKind
 {
     Uniform,

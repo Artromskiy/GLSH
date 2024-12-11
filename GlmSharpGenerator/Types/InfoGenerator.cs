@@ -38,7 +38,13 @@ namespace GlmSharpGenerator.Types
             foreach (var item in KnownFunctons())
                 yield return item.Indent(2);
 
+            foreach (var item in KnownOperators())
+                yield return item.Indent(2);
+
             foreach (var item in KnownFunctonsGlobal())
+                yield return item.Indent(2);
+
+            foreach (var item in KnownOperatorsGlobal())
                 yield return item.Indent(2);
 
             yield return "}".Indent();
@@ -83,12 +89,46 @@ namespace GlmSharpGenerator.Types
             }
         }
 
+        private static IEnumerable<string> KnownOperators()
+        {
+            foreach (var item in AbstractType.Types)
+            {
+                HashSet<string> writtenOperatorNames = [];
+                var allOperators = item.Value.members.Where
+                    (member => (member.GetType() == typeof(Operator) || member.GetType() == typeof(ComponentWiseOperator)) &&
+                    member.Static && !member.Extension);
+
+                yield return $"private static readonly Dictionary<string, string> known{item.Key}Operators = new Dictionary<string, string>()";
+                yield return "{";
+
+                foreach (var member in allOperators)
+                {
+                    var realName = member.Name[8..]; // remove "operator" in the beginning
+                    if (writtenOperatorNames.Add(member.GlslName))
+                    {
+                        yield return $"{{\"{member.GlslName}\", \"{realName}\"}},".Indent();
+                    }
+                }
+
+                yield return "};";
+            }
+        }
+
         private static IEnumerable<string> KnownFunctonsGlobal()
         {
             yield return $"public static readonly Dictionary<string, Dictionary<string, string>> knownFunctionsGlobal = new Dictionary<string, Dictionary<string, string>>()";
             yield return "{";
             foreach (var item in AbstractType.Types)
                 yield return $"{{typeof({item.Value.Name}).FullName!, known{item.Key}Functions }},".Indent();
+            yield return "};";
+        }
+
+        private static IEnumerable<string> KnownOperatorsGlobal()
+        {
+            yield return $"public static readonly Dictionary<string, Dictionary<string, string>> knownOperatorsGlobal = new Dictionary<string, Dictionary<string, string>>()";
+            yield return "{";
+            foreach (var item in AbstractType.Types)
+                yield return $"{{typeof({item.Value.Name}).FullName!, known{item.Key}Operators }},".Indent();
             yield return "};";
         }
     }

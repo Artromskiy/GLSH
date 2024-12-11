@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 
 namespace GLSH.Compiler.Internal;
@@ -10,9 +11,16 @@ internal partial class MethodWriter
         throw new NotImplementedException("Range expressions are not supported");
     }
 
-    public override string? VisitDefaultExpression(DefaultExpressionSyntax node)
+
+    // We should create appropriate postfix methods in glsl
+    public override string? VisitPostfixUnaryExpression(PostfixUnaryExpressionSyntax node)
     {
-        // We should call default constructor, to do this, we need to create glsl method returning defaultType for each C# type, which uses default initialization (yeah, constructor chain)
-        throw new NotImplementedException("Default variable creation is not supported");
+        return base.VisitPostfixUnaryExpression(node);
+    }
+
+    // We should create appropriate prefix methods in glsl
+    public override string? VisitPrefixUnaryExpression(PrefixUnaryExpressionSyntax node)
+    {
+        return base.VisitPrefixUnaryExpression(node);
     }
 }

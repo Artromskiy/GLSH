@@ -1,7 +1,10 @@
+using GLSH.Compiler.Internal;
 using Microsoft.CodeAnalysis;
+using System;
 
 namespace GLSH.Compiler;
 
+[Obsolete]
 public class TypeReference
 {
     public readonly string name;

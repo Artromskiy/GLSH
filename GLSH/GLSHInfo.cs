@@ -587,6 +587,306 @@ namespace GLSH
             {nameof(double4x4.Transpose), "transpose"},
             {nameof(double4x4.Determinant), "determinant"},
         };
+        private static readonly Dictionary<string, string> knownint2Operators = new Dictionary<string, string>()
+        {
+            {"op_Equality", "=="},
+            {"op_Inequality", "!="},
+            {"op_UnaryNegation", "-"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Multiply", "*"},
+            {"op_Division", "/"},
+            {"op_OnesComplement", "~"},
+            {"op_Modulus", "%"},
+            {"op_ExclusiveOr", "^"},
+            {"op_BitwiseOr", "|"},
+            {"op_BitwiseAnd", "&"},
+            {"op_LeftShift", "<<"},
+            {"op_RightShift", ">>"},
+        };
+        private static readonly Dictionary<string, string> knownint3Operators = new Dictionary<string, string>()
+        {
+            {"op_Equality", "=="},
+            {"op_Inequality", "!="},
+            {"op_UnaryNegation", "-"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Multiply", "*"},
+            {"op_Division", "/"},
+            {"op_OnesComplement", "~"},
+            {"op_Modulus", "%"},
+            {"op_ExclusiveOr", "^"},
+            {"op_BitwiseOr", "|"},
+            {"op_BitwiseAnd", "&"},
+            {"op_LeftShift", "<<"},
+            {"op_RightShift", ">>"},
+        };
+        private static readonly Dictionary<string, string> knownint4Operators = new Dictionary<string, string>()
+        {
+            {"op_Equality", "=="},
+            {"op_Inequality", "!="},
+            {"op_UnaryNegation", "-"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Multiply", "*"},
+            {"op_Division", "/"},
+            {"op_OnesComplement", "~"},
+            {"op_Modulus", "%"},
+            {"op_ExclusiveOr", "^"},
+            {"op_BitwiseOr", "|"},
+            {"op_BitwiseAnd", "&"},
+            {"op_LeftShift", "<<"},
+            {"op_RightShift", ">>"},
+        };
+        private static readonly Dictionary<string, string> knownuint2Operators = new Dictionary<string, string>()
+        {
+            {"op_Equality", "=="},
+            {"op_Inequality", "!="},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Multiply", "*"},
+            {"op_Division", "/"},
+            {"op_OnesComplement", "~"},
+            {"op_Modulus", "%"},
+            {"op_ExclusiveOr", "^"},
+            {"op_BitwiseOr", "|"},
+            {"op_BitwiseAnd", "&"},
+            {"op_LeftShift", "<<"},
+            {"op_RightShift", ">>"},
+        };
+        private static readonly Dictionary<string, string> knownuint3Operators = new Dictionary<string, string>()
+        {
+            {"op_Equality", "=="},
+            {"op_Inequality", "!="},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Multiply", "*"},
+            {"op_Division", "/"},
+            {"op_OnesComplement", "~"},
+            {"op_Modulus", "%"},
+            {"op_ExclusiveOr", "^"},
+            {"op_BitwiseOr", "|"},
+            {"op_BitwiseAnd", "&"},
+            {"op_LeftShift", "<<"},
+            {"op_RightShift", ">>"},
+        };
+        private static readonly Dictionary<string, string> knownuint4Operators = new Dictionary<string, string>()
+        {
+            {"op_Equality", "=="},
+            {"op_Inequality", "!="},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Multiply", "*"},
+            {"op_Division", "/"},
+            {"op_OnesComplement", "~"},
+            {"op_Modulus", "%"},
+            {"op_ExclusiveOr", "^"},
+            {"op_BitwiseOr", "|"},
+            {"op_BitwiseAnd", "&"},
+            {"op_LeftShift", "<<"},
+            {"op_RightShift", ">>"},
+        };
+        private static readonly Dictionary<string, string> knownfloat2Operators = new Dictionary<string, string>()
+        {
+            {"op_Equality", "=="},
+            {"op_Inequality", "!="},
+            {"op_UnaryNegation", "-"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Multiply", "*"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knownfloat3Operators = new Dictionary<string, string>()
+        {
+            {"op_Equality", "=="},
+            {"op_Inequality", "!="},
+            {"op_UnaryNegation", "-"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Multiply", "*"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knownfloat4Operators = new Dictionary<string, string>()
+        {
+            {"op_Equality", "=="},
+            {"op_Inequality", "!="},
+            {"op_UnaryNegation", "-"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Multiply", "*"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knowndouble2Operators = new Dictionary<string, string>()
+        {
+            {"op_Equality", "=="},
+            {"op_Inequality", "!="},
+            {"op_UnaryNegation", "-"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Multiply", "*"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knowndouble3Operators = new Dictionary<string, string>()
+        {
+            {"op_Equality", "=="},
+            {"op_Inequality", "!="},
+            {"op_UnaryNegation", "-"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Multiply", "*"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knowndouble4Operators = new Dictionary<string, string>()
+        {
+            {"op_Equality", "=="},
+            {"op_Inequality", "!="},
+            {"op_UnaryNegation", "-"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Multiply", "*"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knownbool2Operators = new Dictionary<string, string>()
+        {
+            {"op_Equality", "=="},
+            {"op_Inequality", "!="},
+        };
+        private static readonly Dictionary<string, string> knownbool3Operators = new Dictionary<string, string>()
+        {
+            {"op_Equality", "=="},
+            {"op_Inequality", "!="},
+        };
+        private static readonly Dictionary<string, string> knownbool4Operators = new Dictionary<string, string>()
+        {
+            {"op_Equality", "=="},
+            {"op_Inequality", "!="},
+        };
+        private static readonly Dictionary<string, string> knownfloat2x2Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knownfloat3x2Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knownfloat4x2Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knownfloat2x3Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knownfloat3x3Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knownfloat4x3Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knownfloat2x4Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knownfloat3x4Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knownfloat4x4Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knowndouble2x2Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knowndouble3x2Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knowndouble4x2Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knowndouble2x3Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knowndouble3x3Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knowndouble4x3Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knowndouble2x4Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knowndouble3x4Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
+        private static readonly Dictionary<string, string> knowndouble4x4Operators = new Dictionary<string, string>()
+        {
+            {"op_Multiply", "*"},
+            {"op_Addition", "+"},
+            {"op_Subtraction", "-"},
+            {"op_Division", "/"},
+        };
         public static readonly Dictionary<string, Dictionary<string, string>> knownFunctionsGlobal = new Dictionary<string, Dictionary<string, string>>()
         {
             {typeof(int2).FullName!, knownint2Functions },
@@ -622,6 +922,42 @@ namespace GLSH
             {typeof(double2x4).FullName!, knowndouble2x4Functions },
             {typeof(double3x4).FullName!, knowndouble3x4Functions },
             {typeof(double4x4).FullName!, knowndouble4x4Functions },
+        };
+        public static readonly Dictionary<string, Dictionary<string, string>> knownOperatorsGlobal = new Dictionary<string, Dictionary<string, string>>()
+        {
+            {typeof(int2).FullName!, knownint2Operators },
+            {typeof(int3).FullName!, knownint3Operators },
+            {typeof(int4).FullName!, knownint4Operators },
+            {typeof(uint2).FullName!, knownuint2Operators },
+            {typeof(uint3).FullName!, knownuint3Operators },
+            {typeof(uint4).FullName!, knownuint4Operators },
+            {typeof(float2).FullName!, knownfloat2Operators },
+            {typeof(float3).FullName!, knownfloat3Operators },
+            {typeof(float4).FullName!, knownfloat4Operators },
+            {typeof(double2).FullName!, knowndouble2Operators },
+            {typeof(double3).FullName!, knowndouble3Operators },
+            {typeof(double4).FullName!, knowndouble4Operators },
+            {typeof(bool2).FullName!, knownbool2Operators },
+            {typeof(bool3).FullName!, knownbool3Operators },
+            {typeof(bool4).FullName!, knownbool4Operators },
+            {typeof(float2x2).FullName!, knownfloat2x2Operators },
+            {typeof(float3x2).FullName!, knownfloat3x2Operators },
+            {typeof(float4x2).FullName!, knownfloat4x2Operators },
+            {typeof(float2x3).FullName!, knownfloat2x3Operators },
+            {typeof(float3x3).FullName!, knownfloat3x3Operators },
+            {typeof(float4x3).FullName!, knownfloat4x3Operators },
+            {typeof(float2x4).FullName!, knownfloat2x4Operators },
+            {typeof(float3x4).FullName!, knownfloat3x4Operators },
+            {typeof(float4x4).FullName!, knownfloat4x4Operators },
+            {typeof(double2x2).FullName!, knowndouble2x2Operators },
+            {typeof(double3x2).FullName!, knowndouble3x2Operators },
+            {typeof(double4x2).FullName!, knowndouble4x2Operators },
+            {typeof(double2x3).FullName!, knowndouble2x3Operators },
+            {typeof(double3x3).FullName!, knowndouble3x3Operators },
+            {typeof(double4x3).FullName!, knowndouble4x3Operators },
+            {typeof(double2x4).FullName!, knowndouble2x4Operators },
+            {typeof(double3x4).FullName!, knowndouble3x4Operators },
+            {typeof(double4x4).FullName!, knowndouble4x4Operators },
         };
     }
 }

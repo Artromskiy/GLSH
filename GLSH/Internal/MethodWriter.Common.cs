@@ -1,7 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System;
 using System.Linq;
 using System.Text;
 
@@ -12,11 +11,12 @@ internal partial class MethodWriter
     public override string VisitIfStatement(IfStatementSyntax node)
     {
         StringBuilder sb = new();
-        sb.AppendLine("if (" + Visit(node.Condition) + ")");
+        sb.AppendLine($"if ({Visit(node.Condition)})");
         sb.AppendLine(Visit(node.Statement));
         sb.AppendLine(Visit(node.Else));
         return sb.ToString();
     }
+
 
     public override string VisitElseClause(ElseClauseSyntax node)
     {
@@ -29,13 +29,10 @@ internal partial class MethodWriter
 
     public override string VisitForStatement(ForStatementSyntax node)
     {
-        string? declaration = Visit(node.Declaration);
-        string? condition = Visit(node.Condition);
-        Asserts.NotNull(condition, declaration);
         string incrementers = string.Join(", ", node.Incrementors.Select(Visit));
         return
         $$"""
-        for ({{declaration}} {{condition}}; {{incrementers}})
+        for ({{Visit(node.Declaration)}} {{Visit(node.Condition)}}; {{incrementers}})
         {{Visit(node.Statement)}}
         """;
     }
@@ -109,24 +106,44 @@ internal partial class MethodWriter
         return $"{Visit(node.Expression)};";
     }
 
+    public override string? VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
+    {
+        return Visit(node.Declaration);
+    }
+
     public override string? VisitLiteralExpression(LiteralExpressionSyntax node)
     {
-        return node.ToFullString();
+        if (!node.IsKind(SyntaxKind.DefaultLiteralExpression))
+            node.ToFullString();
+
+        var typeName = GetModel(node).GetTypeInfo(node).Type.GetFullMetadataName();
+        return _backend.FormatInvocation(typeName, "default", []);
     }
 
-    public override string VisitBinaryExpression(BinaryExpressionSyntax node)
+    public override string? VisitDefaultExpression(DefaultExpressionSyntax node)
     {
-        string token = node.OperatorToken.ToFullString().Trim();
-        string opToken = node.OperatorToken.ValueText;
-        ShaderGenerationException.ThrowIf(token == "%=",
-            "Modulus operator not supported in shader functions. Use ShaderBuiltins.Mod instead.");
-
-        string? leftExpr = Visit(node.Left);
-        string? rightExpr = Visit(node.Right);
-        Asserts.NotNull(leftExpr, rightExpr);
-        return $"{leftExpr} {opToken} {rightExpr}";
-        //return _backend.CorrectBinaryExpression(leftExpr, leftExprType, operatorToken, rightExpr, rightExprType);
+        var typeName = GetModel(node.Type).GetSymbolInfo(node.Type).Symbol.GetFullMetadataName();
+        return _backend.FormatInvocation(typeName, "default", []);
     }
 
+    public override string? VisitEqualsValueClause(EqualsValueClauseSyntax node)
+    {
+        return " = " + Visit(node.Value);
+    }
 
+    public override string? VisitVariableDeclarator(VariableDeclaratorSyntax node)
+    {
+        return $"{node.Identifier.ValueText} {Visit(node.Initializer)}";
+    }
+
+    public override string? VisitVariableDeclaration(VariableDeclarationSyntax node)
+    {
+        StringBuilder sb = new();
+        var vars = node.Variables;
+        var type = GetGlTypeName(node.Type);
+        for (int i = 0; i < vars.Count - 1; i++)
+            sb.AppendLine($"{type} {Visit(vars[i])};");
+        sb.Append($"{GetGlTypeName(node.Type)} {Visit(node.Variables[^1])};");
+        return sb.ToString();
+    }
 }

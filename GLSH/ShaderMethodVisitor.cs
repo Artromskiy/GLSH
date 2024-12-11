@@ -11,6 +11,7 @@ using System.Text;
 
 namespace GLSH.Compiler;
 
+[Obsolete]
 public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
 {
     protected readonly Compilation _compilation;
@@ -176,7 +177,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     {
         if (node.Expression is IdentifierNameSyntax ins)
         {
-            InvocationParameterInfo[] parameterInfos = GetParameterInfos(node.ArgumentList);
+            InvocationArgument[] parameterInfos = GetParameterInfos(node.ArgumentList);
             SymbolInfo symbolInfo = GetModel(node).GetSymbolInfo(ins);
             Debug.Assert(symbolInfo.Symbol != null);
             string type = symbolInfo.Symbol.ContainingType.ToDisplayString();
@@ -205,13 +206,13 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         string methodName = ims.MetadataName;
         ValidateFunctionUsage(methodName);
 
-        List<InvocationParameterInfo> pis = [];
+        List<InvocationArgument> pis = [];
         if (ims.IsExtensionMethod)
         {
             string? identifier = Visit(maes.Expression);
             string identifierType = GetModel(maes.Expression).GetFullTypeName(maes.Expression);
             Debug.Assert(identifier != null);
-            pis.Add(new InvocationParameterInfo(identifier, identifierType));// Might need FullTypeName here too.
+            pis.Add(new InvocationArgument(identifierType));// Might need FullTypeName here too.
         }
 
         else if (!ims.IsStatic) // Add implicit "this" parameter.
@@ -223,7 +224,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
                 identifier = Visit(identNameSyntax);
 
             Debug.Assert(identifier != null);
-            pis.Add(new InvocationParameterInfo(containingType, identifier));
+            pis.Add(new InvocationArgument(identifier));
         }
 
 
@@ -245,8 +246,8 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         string? rightExpr = Visit(node.Right);
         string rightExprType = GetModel(node).GetFullTypeName(node.Right);
         Asserts.NotNull(leftExpr, rightExpr);
-
-        return _backend.CorrectBinaryExpression(leftExpr, leftExprType, operatorToken, rightExpr, rightExprType);
+        return _backend.FormatBinaryExpression(leftExpr, leftExprType, operatorToken, rightExpr);
+        //return _backend.FormatBinaryExpression(leftExpr, leftExprType, operatorToken, rightExpr, rightExprType);
     }
 
     public override string VisitParenthesizedExpression(ParenthesizedExpressionSyntax node) =>
@@ -269,7 +270,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         SymbolInfo symbolInfo = GetModel(node).GetSymbolInfo(node.Type);
         ShaderGenerationException.ThrowIfNull(symbolInfo.Symbol, "Unable to get symbol");
         string fullName = symbolInfo.Symbol.GetFullMetadataName();
-        InvocationParameterInfo[] parameters = GetParameterInfos(node.ArgumentList);
+        InvocationArgument[] parameters = GetParameterInfos(node.ArgumentList);
         return _backend.FormatInvocation(fullName, ".ctor", parameters);
     }
 
@@ -279,7 +280,7 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
         Debug.Assert(operation != null);
         ShaderGenerationException.ThrowIfNull(operation.Type, "Unable to get symbol");
         string fullName = operation.Type.GetFullMetadataName();
-        InvocationParameterInfo[] parameters = GetParameterInfos(node.ArgumentList);
+        InvocationArgument[] parameters = GetParameterInfos(node.ArgumentList);
         return _backend.FormatInvocation(fullName, ".ctor", parameters);
     }
 
@@ -483,16 +484,16 @@ public partial class ShaderMethodVisitor : CSharpSyntaxVisitor<string>
     private string GetParameterDeclList() => string.Join(", ", _shaderFunction.parameters.Select(FormatParameter));
 
     private string FormatParameter(ParameterDefinition pd) =>
-        $"{_backend.ParameterDirection(pd.direction)} {_backend.CSharpToShaderType(pd.type.name)} {_backend.CorrectIdentifier(pd.name)}";
+        $"{_backend.FormatDirection(pd.direction)} {_backend.CSharpToShaderType(pd.type.name)} {_backend.CorrectIdentifier(pd.name)}";
 
-    private InvocationParameterInfo[] GetParameterInfos(ArgumentListSyntax? argumentList) =>
+    private InvocationArgument[] GetParameterInfos(ArgumentListSyntax? argumentList) =>
         argumentList?.Arguments.Select(GetInvocationParameterInfo).ToArray() ?? [];
 
-    private InvocationParameterInfo GetInvocationParameterInfo(ArgumentSyntax argSyntax)
+    private InvocationArgument GetInvocationParameterInfo(ArgumentSyntax argSyntax)
     {
         TypeInfo typeInfo = GetModel(argSyntax).GetTypeInfo(argSyntax.Expression);
         ShaderGenerationException.ThrowIfNull(typeInfo.Type, "Unable to get symbol");
-        return new InvocationParameterInfo(typeInfo.Type.ToDisplayString(), Visit(argSyntax.Expression));
+        return new InvocationArgument(Visit(argSyntax.Expression));
     }
 
     private void ValidateFunctionUsage(string? functionName)
