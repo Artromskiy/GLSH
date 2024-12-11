@@ -75,7 +75,7 @@ internal class CallGraphWalker : CSharpSyntaxWalker
         MethodDeclarationData methodData = new MethodDeclarationData(structName, name, returnType, paramDatas);
         if (_visitedDeclarations.Add(methodData))
         {
-            base.Visit(methodDecl.Body);
+            Visit(methodDecl.Body);
             _orderedMethods.Add(methodData);
         }
     }
@@ -83,27 +83,11 @@ internal class CallGraphWalker : CSharpSyntaxWalker
     {
         base.VisitImplicitObjectCreationExpression(node);
 
-        // Default constructor is called first
-        var syntax = GetModel(node).GetTypeInfo(node).Type?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
-        if (syntax is StructDeclarationSyntax typeSyntax)
-            VisitTypeDefault(typeSyntax);
-
         // Then search for methods in constructors
         if (GetOriginalDeclaration(node) is not ConstructorDeclarationSyntax ctorDeclaration)
             return;
 
-        string ctorId = ctorDeclaration.Identifier.ToString();
-        string name = ".ctor";
-        string className = Utilities.GetFunctionContainingTypeName(ctorDeclaration, GetModel(ctorDeclaration));
-        string returnType = className;
-        ParamData[] paramDatas = ctorDeclaration.ParameterList.Parameters.Select(GetParamData).ToArray();
-        MethodDeclarationData methodData = new(className, name, returnType, paramDatas);
-
-        if (_visitedDeclarations.Add(methodData))
-        {
-            base.Visit(ctorDeclaration.Body);
-            _orderedMethods.Add(methodData);
-        }
+        VisitContructor(ctorDeclaration);
     }
 
     /// <summary>
@@ -116,65 +100,11 @@ internal class CallGraphWalker : CSharpSyntaxWalker
     {
         base.VisitObjectCreationExpression(node);
 
-        // Default constructor is called first
-        var syntax = GetModel(node).GetTypeInfo(node).Type?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
-        if (syntax is StructDeclarationSyntax typeSyntax)
-            VisitTypeDefault(typeSyntax);
-
         // Then search for methods in constructors
         if (GetOriginalDeclaration(node) is not ConstructorDeclarationSyntax ctorDeclaration)
             return;
 
-        string ctorId = ctorDeclaration.Identifier.ToString();
-        string name = ".ctor";
-        string className = Utilities.GetFunctionContainingTypeName(ctorDeclaration, GetModel(ctorDeclaration));
-        string returnType = className;
-        ParamData[] paramDatas = ctorDeclaration.ParameterList.Parameters.Select(GetParamData).ToArray();
-        MethodDeclarationData methodData = new(className, name, returnType, paramDatas);
-
-        if (_visitedDeclarations.Add(methodData))
-        {
-            base.Visit(ctorDeclaration.Body);
-            _orderedMethods.Add(methodData);
-        }
-    }
-
-    /// <summary>
-    /// Visits default expression, and every dependent struct declaration recursively.
-    /// Adds new <see cref="MethodDeclarationData"/> to list
-    /// in deepest first order.
-    /// </summary>
-    /// <param name="node"></param>
-    public sealed override void VisitDefaultExpression(DefaultExpressionSyntax node)
-    {
-        base.VisitDefaultExpression(node);
-        VisitTypeDefault(node.Type);
-
-        // Go to struct declaration
-        // Find every member (field, autoProp)
-        // Go to every type of member
-        // repeat till it's know type or default type
-        // foreach strcut before exit create default constructor
-        // it will set every member to it's constant default (0, 0.0f, etc)
-        // or to it's default member call
-    }
-
-
-    /// <summary>
-    /// Visits default literal expression, and every dependent struct declaration recursively.
-    /// Adds new <see cref="MethodDeclarationData"/> to list
-    /// in deepest first order.
-    /// </summary>
-    /// <param name="node"></param>
-    public sealed override void VisitLiteralExpression(LiteralExpressionSyntax node)
-    {
-        base.VisitLiteralExpression(node);
-        if (!node.IsKind(SyntaxKind.DefaultLiteralExpression))
-            return;
-
-        var syntax = GetModel(node).GetTypeInfo(node).Type?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
-        if (syntax is StructDeclarationSyntax typeSyntax)
-            VisitTypeDefault(typeSyntax);
+        VisitContructor(ctorDeclaration);
     }
 
     public override void Visit(SyntaxNode? node)
@@ -239,6 +169,21 @@ internal class CallGraphWalker : CSharpSyntaxWalker
         base.VisitBinaryExpression(node);
     }
 
+    private void VisitContructor(ConstructorDeclarationSyntax ctorDeclaration)
+    {
+        string ctorId = ctorDeclaration.Identifier.ToString();
+        string name = ".ctor";
+        string className = Utilities.GetFunctionContainingTypeName(ctorDeclaration, GetModel(ctorDeclaration));
+        string returnType = className;
+        ParamData[] paramDatas = ctorDeclaration.ParameterList.Parameters.Select(GetParamData).ToArray();
+        MethodDeclarationData methodData = new(className, name, returnType, paramDatas);
+
+        if (_visitedDeclarations.Add(methodData))
+        {
+            Visit(ctorDeclaration.Body);
+            _orderedMethods.Add(methodData);
+        }
+    }
 
     /// <summary>
     /// Visits property declaration, and it's body recursively.
@@ -267,59 +212,15 @@ internal class CallGraphWalker : CSharpSyntaxWalker
         if ((accessType == AccessType.Get || accessType == AccessType.GetAndSet) && _visitedDeclarations.Add(setMethodData)) // get
         {
             AccessorDeclarationSyntax? getter = propDeclaration.AccessorList?.Accessors.Where(a => a.IsKind(SyntaxKind.SetAccessorDeclaration)).FirstOrDefault();
-            base.Visit(getter);
+            Visit(getter);
             _orderedMethods.Add(setMethodData);
         }
         if ((accessType == AccessType.Set || accessType == AccessType.GetAndSet) && _visitedDeclarations.Add(getMethodData)) // set
         {
             AccessorDeclarationSyntax? setter = propDeclaration.AccessorList?.Accessors.Where(a => a.IsKind(SyntaxKind.GetAccessorDeclaration)).FirstOrDefault();
-            base.Visit(setter);
+            Visit(setter);
             _orderedMethods.Add(getMethodData);
         }
-    }
-
-    /// <summary>
-    /// Visits struct declaration, and it's members's types declarations recursively.
-    /// Adds new <see cref="MethodDeclarationData"/> to list
-    /// in deepest first order.
-    /// </summary>
-    /// <param name="node"></param>
-    private void VisitTypeDefault(StructDeclarationSyntax structDeclaration)
-    {
-        var typeName = GetModel(structDeclaration).GetDeclaredSymbol(structDeclaration)?.GetFullMetadataName();
-        if (typeName == null)
-            return;
-
-        MethodDeclarationData defaultCtor = new(typeName, "default", typeName, []);
-        if (!_visitedDeclarations.Add(defaultCtor))
-            return;
-
-        foreach (var member in structDeclaration.Members)
-        {
-            if (member is FieldDeclarationSyntax fieldDeclaration)
-            {
-                VisitTypeDefault(fieldDeclaration.Declaration.Type);
-            }
-            else if (member is PropertyDeclarationSyntax propertyDeclaration &&
-                Utilities.IsAutoProperty(propertyDeclaration))
-            {
-                VisitTypeDefault(propertyDeclaration.Type);
-            }
-        }
-        _orderedMethods.Add(defaultCtor);
-    }
-
-    /// <summary>
-    /// Visits struct declaration, and it's members's types declarations recursively.
-    /// Adds new <see cref="MethodDeclarationData"/> to list
-    /// in deepest first order.
-    /// </summary>
-    /// <param name="node"></param>
-    private void VisitTypeDefault(TypeSyntax typeSyntax)
-    {
-        if (GetOriginalDeclaration(typeSyntax) is not StructDeclarationSyntax structDeclaration)
-            return;
-        VisitTypeDefault(structDeclaration);
     }
 
     private string GetName(TypeSyntax typeSyntax)

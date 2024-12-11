@@ -3,10 +3,10 @@ using System;
 
 namespace GLSH.Compiler.Glsl;
 
-internal class DefaultCtorWriter
+internal class DefaultWriter
 {
     private readonly LanguageBackend _backend;
-    public DefaultCtorWriter(LanguageBackend backend)
+    public DefaultWriter(LanguageBackend backend)
     {
         _backend = backend;
     }

@@ -1,6 +1,5 @@
 using GLSH.Compiler.Internal;
 using Microsoft.CodeAnalysis;
-using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -11,13 +10,13 @@ public class Glsl450Backend : LanguageBackend
 {
     private const string ThisToken = "glsh_this";
     private readonly StructWriter _structWriter;
-    private readonly DefaultCtorWriter _defaultWriter;
+    private readonly DefaultWriter _defaultWriter;
     private readonly MethodWriter _methodWriter;
 
     public Glsl450Backend(Compilation compilation) : base(compilation)
     {
         _structWriter = new StructWriter(this);
-        _defaultWriter = new DefaultCtorWriter(this);
+        _defaultWriter = new DefaultWriter(this);
         _methodWriter = new MethodWriter(compilation, this);
     }
 
