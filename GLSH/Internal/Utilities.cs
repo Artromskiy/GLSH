@@ -98,11 +98,16 @@ internal static class Utilities
 
     public static MethodDeclarationData GetMethodDeclarationData(IMethodSymbol methodSymbol)
     {
-        var returnTypeName = methodSymbol.ReturnType.GetFullMetadataName();
         var methodName = methodSymbol.Name;
         var containingType = methodSymbol.ContainingSymbol.GetFullMetadataName();
+        var returnTypeName = methodName == ".ctor" ? containingType : methodSymbol.ReturnType.GetFullMetadataName();
         var parameters = methodSymbol.Parameters.Select(GetParamData).ToArray();
         return new MethodDeclarationData(containingType, methodName, returnTypeName, parameters);
+    }
+
+    public static INamedTypeSymbol GetTypeSymbol(StructDeclarationData structDeclaration, Compilation compilation)
+    {
+        return compilation.GetTypeByMetadataName(structDeclaration.name)!;
     }
 
     public static IMethodSymbol? GetMethodSymbol(MethodDeclarationData method, Compilation compilation)

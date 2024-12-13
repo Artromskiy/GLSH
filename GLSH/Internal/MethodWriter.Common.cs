@@ -17,6 +17,15 @@ internal partial class MethodWriter
         return sb.ToString();
     }
 
+    public override string? VisitBlock(BlockSyntax node)
+    {
+        StringBuilder sb = new();
+        sb.AppendLine().AppendLine("{");
+        foreach (var statement in node.Statements)
+            sb.AppendLine(Visit(statement).Indent());
+        sb.AppendLine("}");
+        return sb.ToString();
+    }
 
     public override string VisitElseClause(ElseClauseSyntax node)
     {
@@ -75,7 +84,6 @@ internal partial class MethodWriter
         """;
     }
 
-
     public override string VisitCaseSwitchLabel(CaseSwitchLabelSyntax node)
     {
         return $"case {Visit(node.Value)}:";
@@ -117,23 +125,23 @@ internal partial class MethodWriter
             node.ToFullString();
 
         var typeName = GetModel(node).GetTypeInfo(node).Type.GetFullMetadataName();
-        return _backend.FormatInvocation(typeName, "default", []);
+        return _backend.FormatInvocation(typeName, GLSHConstants.Default, []);
     }
 
     public override string? VisitDefaultExpression(DefaultExpressionSyntax node)
     {
         var typeName = GetModel(node.Type).GetSymbolInfo(node.Type).Symbol.GetFullMetadataName();
-        return _backend.FormatInvocation(typeName, "default", []);
+        return _backend.FormatInvocation(typeName, GLSHConstants.Default, []);
     }
 
     public override string? VisitEqualsValueClause(EqualsValueClauseSyntax node)
     {
-        return " = " + Visit(node.Value);
+        return $" = {Visit(node.Value)}";
     }
 
     public override string? VisitVariableDeclarator(VariableDeclaratorSyntax node)
     {
-        return $"{node.Identifier.ValueText} {Visit(node.Initializer)}";
+        return $"{node.Identifier.ValueText}{Visit(node.Initializer)}";
     }
 
     public override string? VisitVariableDeclaration(VariableDeclarationSyntax node)

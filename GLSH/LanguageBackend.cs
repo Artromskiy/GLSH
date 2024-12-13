@@ -66,5 +66,4 @@ public abstract class LanguageBackend
     public abstract string FormatInvocation(string type, string method, InvocationArgument[] arguments);
     public abstract string FormatDeclaration(string returnType, string type, string method, InvocationParameter[] parameters);
     public abstract string FormatBinaryExpression(string type, string method, string leftExpr, string rightExpr);
-    public abstract string GetThisToken();
 }

@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace GLSH.Compiler.Internal;
 
-[DebuggerDisplay("{ToString()}")]
+[DebuggerDisplay("{Display()}")]
 public readonly struct StructDeclarationData : IEquatable<StructDeclarationData>
 {
     public readonly string name;
@@ -14,7 +14,7 @@ public readonly struct StructDeclarationData : IEquatable<StructDeclarationData>
         this.name = name;
         this.fields = fields;
     }
-    public override string ToString() => $"{name} [{fields.Length}]";
+    private string Display() => $"{name} [{fields.Length}]";
     public override int GetHashCode() => name.GetHashCode();
     public bool Equals(StructDeclarationData other) => name == other.name;
     public override bool Equals(object? obj) => obj is StructDeclarationData other && Equals(other);
@@ -23,6 +23,7 @@ public readonly struct StructDeclarationData : IEquatable<StructDeclarationData>
 }
 
 
+[DebuggerDisplay("{Display()}")]
 public readonly struct StructField : IEquatable<StructField>
 {
     public readonly string typeName;
@@ -34,7 +35,7 @@ public readonly struct StructField : IEquatable<StructField>
         this.fieldName = fieldName;
     }
 
-    public override string ToString() => $"{typeName} {fieldName}";
+    public string Display() => $"{typeName} {fieldName}";
 
     public bool Equals(StructField other) => typeName == other.typeName && fieldName == other.fieldName;
     public override bool Equals(object? obj) => obj is StructField other && Equals(other);

@@ -71,7 +71,6 @@ internal class CallsAndStructsGraphWalker : CallGraphWalker
 
         public override void VisitFieldDeclaration(FieldDeclarationSyntax node)
         {
-            var type = node.Declaration.Type;
             var typeName = _compilation.GetSemanticModel(node.SyntaxTree).GetTypeInfo(node.Declaration.Type).Type?.GetFullMetadataName();
             if (typeName == null)
                 return;
@@ -85,7 +84,7 @@ internal class CallsAndStructsGraphWalker : CallGraphWalker
 
         public override void VisitPropertyDeclaration(PropertyDeclarationSyntax node)
         {
-            if (node.AccessorList?.Accessors.Any(a => a.Body != null || a.ExpressionBody != null) ?? true)
+            if (!Utilities.IsAutoProperty(node))
                 return;
             var typeName = _compilation.GetSemanticModel(node.SyntaxTree).GetTypeInfo(node.Type).Type?.GetFullMetadataName();
             if (typeName == null)

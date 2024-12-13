@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace GLSH.Compiler.Internal;
 
-[DebuggerDisplay("{ToString()}")]
+[DebuggerDisplay("{Display()}")]
 public readonly struct MethodDeclarationData : IEquatable<MethodDeclarationData>
 {
     public readonly string containingType;
@@ -13,7 +13,7 @@ public readonly struct MethodDeclarationData : IEquatable<MethodDeclarationData>
     private readonly ParamData[] _parameters;
     public ReadOnlySpan<ParamData> Parameters => _parameters;
 
-    public override string ToString()
+    private string Display()
     {
         var par = _parameters.Length == 0 ? "()" : $"({_parameters.Length})";
         return $"{returnTypeName} {containingType}.{methodName}{par}";
@@ -41,7 +41,7 @@ public readonly struct MethodDeclarationData : IEquatable<MethodDeclarationData>
     public static bool operator !=(MethodDeclarationData left, MethodDeclarationData right) => !(left == right);
 }
 
-[DebuggerDisplay("{ToString()}")]
+[DebuggerDisplay("{Display()}")]
 public readonly struct ParamData : IEquatable<ParamData>
 {
     public readonly string typeName;
@@ -53,7 +53,7 @@ public readonly struct ParamData : IEquatable<ParamData>
         this.direction = direction;
     }
 
-    public override string ToString() => $"{direction.ToString().ToLower()} {typeName}";
+    private string Display() => $"{direction.ToString().ToLower()} {typeName}";
 
     public readonly bool Equals(ParamData other) => typeName == other.typeName && direction == other.direction;
     public override bool Equals(object? obj) => obj is ParamData other && Equals(other);

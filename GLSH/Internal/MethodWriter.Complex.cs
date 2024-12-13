@@ -14,7 +14,7 @@ namespace GLSH.Compiler.Internal
             {
                 ShaderGenerationException.ThrowIf(Utilities.GetAccessType(node) != AccessType.Get,
                     "Setter usage should be handled by VisitAssignmentExpression");
-                return WrappedGetter(node, new(_backend.GetThisToken()));
+                return WrappedGetter(node, new(GLSHConstants.ThisToken));
             }
             ShaderGenerationException.ThrowIf(NeedsMethodWrap(node),
                 "Method usage should be handled by VisitMemberAccessExpression or VisitInvocationExpression");
@@ -24,7 +24,7 @@ namespace GLSH.Compiler.Internal
             // self access
             if ((symbol is IFieldSymbol || symbol is IPropertySymbol) &&
                 containingType == symbol.ContainingType.GetFullMetadataName())
-                return $"{_backend.GetThisToken()}.{node.Identifier.ValueText}";
+                return $"{GLSHConstants.ThisToken}.{node.Identifier.ValueText}";
 
             return node.Identifier.ValueText;
         }
@@ -36,7 +36,7 @@ namespace GLSH.Compiler.Internal
                 ShaderGenerationException.ThrowIf(Utilities.GetAccessType(node) != AccessType.Get,
                     "Setter usage should be handled by VisitAssignmentExpression");
 
-                InvocationArgument parameter = new(Visit(node.Expression) ?? _backend.GetThisToken());
+                InvocationArgument parameter = new(Visit(node.Expression) ?? GLSHConstants.ThisToken);
                 return WrappedGetter(node.Name, parameter);
             }
             if (NeedsMethodWrap(node))
@@ -76,7 +76,7 @@ namespace GLSH.Compiler.Internal
             string rightExpr = Visit(node.Right);
             if (wrapLhs)
             {
-                InvocationArgument inoutParam = new(Visit(inoutThis) ?? _backend.GetThisToken());
+                InvocationArgument inoutParam = new(Visit(inoutThis) ?? GLSHConstants.ThisToken);
                 return WrappedSetter(nameSyntax!, new(rightExpr), inoutParam);
             }
             string? leftExpr = Visit(node.Left);
@@ -86,15 +86,16 @@ namespace GLSH.Compiler.Internal
 
         public override string? VisitInvocationExpression(InvocationExpressionSyntax node)
         {
-            var nameSyntax = node.Expression is IdentifierNameSyntax id ? id : (node.Expression as MemberAccessExpressionSyntax)!.Name;
-            var inoutThis = (node.Expression as MemberAccessExpressionSyntax)?.Expression;
+            var methodNameIdentifierSyntax = node.Expression is IdentifierNameSyntax id ? id : (node.Expression as MemberAccessExpressionSyntax)!.Name;
+            var inoutThisParameter = Visit((node.Expression as MemberAccessExpressionSyntax)?.Expression);
 
-            var inoutThisParameter = Visit(inoutThis);
+            var symbolInfo = GetModel(node).GetSymbolInfo(node).Symbol as IMethodSymbol;
+
             List<InvocationArgument> allArgs = [.. GetArguments(node.ArgumentList)];
             if (inoutThisParameter != null)
                 allArgs.Insert(0, new(inoutThisParameter));
 
-            return WrappedMethod(nameSyntax, [.. allArgs]);
+            return WrappedMethod(methodNameIdentifierSyntax, [.. allArgs]);
         }
 
         private InvocationArgument[] GetArguments(ArgumentListSyntax? argumentListSyntax)
@@ -136,8 +137,10 @@ namespace GLSH.Compiler.Internal
 
         private string WrappedMethod(IMethodSymbol method, InvocationArgument[] args)
         {
+            bool hasDeclaration = method.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() != null;
             var methodName = method.Name;
             var typeName = method.ContainingType.GetFullMetadataName();
+            
             return _backend.FormatInvocation(typeName, methodName, args);
         }
 
@@ -147,6 +150,7 @@ namespace GLSH.Compiler.Internal
             var propDeclSyntax = propSymbol?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax;
             var accessor = propDeclSyntax?.AccessorList?.Accessors.FirstOrDefault(a => a.IsKind(SyntaxKind.GetAccessorDeclaration));
             var method = GetModel(accessor).GetDeclaredSymbol(accessor);
+            var method2 = GetModel(accessor).GetSymbolInfo(accessor);
             return WrappedMethod(method, [inoutThis]);
         }
 
@@ -156,6 +160,7 @@ namespace GLSH.Compiler.Internal
             var propDeclSyntax = propSymbol?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax;
             var accessor = propDeclSyntax?.AccessorList?.Accessors.FirstOrDefault(a => a.IsKind(SyntaxKind.SetAccessorDeclaration));
             var method = GetModel(accessor).GetDeclaredSymbol(accessor);
+            var method2 = GetModel(accessor).GetSymbolInfo(accessor);
             return WrappedMethod(method, [inoutThis, value]);
         }
 

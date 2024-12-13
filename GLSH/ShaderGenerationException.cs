@@ -8,10 +8,6 @@ namespace GLSH.Compiler;
 
 public class ShaderGenerationException : Exception
 {
-    public ShaderGenerationException()
-    {
-    }
-
     public ShaderGenerationException(string message) : base(message)
     {
     }

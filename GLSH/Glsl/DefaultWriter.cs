@@ -15,7 +15,7 @@ internal class DefaultWriter
     {
         string type = structDeclaration.name;
         string declarationString = _backend.FormatDeclaration(type, type, "default", []);
-        string thisToken = _backend.GetThisToken();
+        string thisToken = GLSHConstants.ThisToken;
         string returnString = $"return {thisToken};".Indent();
         string resultDecl = $"{_backend.CSharpToShaderType(type)} {thisToken};".Indent();
         return
@@ -23,16 +23,19 @@ internal class DefaultWriter
         {{declarationString}}
         {
         {{resultDecl}}
-        {{string.Join(Environment.NewLine, Array.ConvertAll(structDeclaration.fields, field => FieldToString(field, thisToken)))}}
+        {{FieldsToString(structDeclaration.fields)}}
         {{returnString}}
         }
 
         """;
     }
 
-    private string FieldToString(StructField field, string thisToken)
+    private string FieldsToString(StructField[] fields)
     {
-        var invocation = _backend.FormatInvocation(field.typeName, "default", []);
-        return $"{thisToken}.{field.fieldName} = {invocation};".Indent();
+        return string.Join(Environment.NewLine, Array.ConvertAll(fields, field =>
+        {
+            var invocation = _backend.FormatInvocation(field.typeName, "default", []);
+            return $"{GLSHConstants.ThisToken}.{field.fieldName} = {invocation};".Indent();
+        }));
     }
 }

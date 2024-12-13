@@ -8,7 +8,6 @@ namespace GLSH.Compiler.Glsl;
 
 public class Glsl450Backend : LanguageBackend
 {
-    private const string ThisToken = "glsh_this";
     private readonly StructWriter _structWriter;
     private readonly DefaultWriter _defaultWriter;
     private readonly MethodWriter _methodWriter;
@@ -24,12 +23,12 @@ public class Glsl450Backend : LanguageBackend
     {
         StringBuilder sb = new();
         sb.AppendLine("// Structs");
-        var structsCache = _structsInfo[entryFunction];
-        foreach (var structure in structsCache)
+        var structsInfo = _structsInfo[entryFunction];
+        foreach (var structure in structsInfo)
             sb.AppendLine(WriteStructure(structure));
 
         sb.AppendLine("// Defaults");
-        foreach (var structure in structsCache)
+        foreach (var structure in structsInfo)
             sb.AppendLine(WriteDefault(structure));
 
         sb.AppendLine("// Methods");
@@ -64,7 +63,7 @@ public class Glsl450Backend : LanguageBackend
     private string WriteDefault(StructDeclarationData structDeclaration)
     {
         string type = structDeclaration.name;
-        var methodDecl = new MethodDeclarationData(type, "default", type, []);
+        var methodDecl = new MethodDeclarationData(type, GLSHConstants.Default, type, []);
         if (!_methodsCache.TryGetValue(methodDecl, out var methodDeclString))
             _methodsCache[methodDecl] = methodDeclString = _defaultWriter.WriteDefault(structDeclaration);
         return methodDeclString;
@@ -127,16 +126,16 @@ public class Glsl450Backend : LanguageBackend
             return $"{value}({formattedArguments})";
 
         // default ctors can be created with one zero argument
-        if ((method == ".ctor" || method == "default") &&
+        if ((method == GLSHConstants.Ctor || method == GLSHConstants.Default) &&
             GLSHInfo.knownTypesToGlslTypes.TryGetValue(type, out value) && arguments.Length == 0)
             return $"{value}(0)";
 
-        // other ctors always match glsl's, so just trunslate type and parse arguments
-        if (method == ".ctor" && GLSHInfo.knownTypesToGlslTypes.TryGetValue(type, out value))
+        // other builtin ctors always match glsl's, so just translate type and parse arguments
+        if (method == GLSHConstants.Ctor && GLSHInfo.knownTypesToGlslTypes.TryGetValue(type, out value))
             return $"{value}({formattedArguments})";
 
-        // in fact it's same as constant expression
-        if (method == "default" && BuiltinTypes.knownTypesToDefault.TryGetValue(type, out var defaultValue))
+        // in fact it's same as extracting constant expression
+        if (method == GLSHConstants.Default && BuiltinTypes.knownTypesToDefault.TryGetValue(type, out var defaultValue))
             return defaultValue;
 
         var fullName = ($"{type}_{method}").Replace('.', '_').Replace('+', '_');
@@ -186,5 +185,4 @@ public class Glsl450Backend : LanguageBackend
         ParameterDirection.InOut => "inout",
         _ => throw new System.NotImplementedException(),
     };
-    public override string GetThisToken() => ThisToken;
 }
